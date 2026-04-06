@@ -529,6 +529,8 @@ input.form-input { padding-left: 2.25rem; }
 .footer-contact svg { color: var(--accent); flex-shrink: 0; margin-top: 0.15rem; }
 .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1.5rem; display: flex; flex-direction: column; gap: 0.25rem; }
 .footer-bottom p { font-size: 0.775rem; color: var(--gray-500); }
+.footer-cookie-btn { background: none; border: none; color: var(--gray-500); font-size: 0.775rem; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 2px; }
+.footer-cookie-btn:hover { color: #fff; }
 
 /* === COOKIE BANNER === */
 .cookie-banner { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 500; max-width: 400px; background: var(--gray-900); color: #fff; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); animation: slideInRight 0.3s ease; }
