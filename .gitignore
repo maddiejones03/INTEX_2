@@ -7,3 +7,4 @@ publish/
 .vs/
 
 .DS_Store
+appsettings.Development.json
