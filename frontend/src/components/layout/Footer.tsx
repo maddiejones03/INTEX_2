@@ -64,6 +64,14 @@ export default function Footer() {
         <div className="footer-bottom">
           <p>© {new Date().getFullYear()} Kanlungan Foundation. All rights reserved.</p>
           <p>Registered Non-Profit Organization · SEC Reg. No. CN200800123</p>
+          <p>
+            <button
+              className="footer-cookie-btn"
+              onClick={() => window.dispatchEvent(new Event('open-cookie-settings'))}
+            >
+              Cookie Settings
+            </button>
+          </p>
         </div>
       </div>
     </footer>

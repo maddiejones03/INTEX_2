@@ -16,6 +16,26 @@ export default function CookieConsent() {
     if (!consent) {
       setTimeout(() => setVisible(true), 1000);
     }
+
+    const handleOpen = () => {
+      // Load current saved preferences into the panel when re-opened
+      const saved = localStorage.getItem('kanlungan_cookie_consent');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setPreferences({
+            necessary: true,
+            analytics: !!parsed.analytics,
+            functional: !!parsed.functional,
+          });
+        } catch { /* ignore */ }
+      }
+      setShowDetails(true);
+      setVisible(true);
+    };
+
+    window.addEventListener('open-cookie-settings', handleOpen);
+    return () => window.removeEventListener('open-cookie-settings', handleOpen);
   }, []);
 
   const acceptAll = () => {
