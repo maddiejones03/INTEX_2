@@ -569,6 +569,6 @@ SELECT
     sh.capacity_girls - COUNT(r.resident_id) AS available_beds
 FROM safehouses sh
 LEFT JOIN residents r
-    ON r.safehouse_id = sh.safehouse_id
-    AND r.case_status = 'Active'
+       ON r.safehouse_id = sh.safehouse_id
+      AND r.case_status = 'Active'
 GROUP BY sh.safehouse_id, sh.name, sh.capacity_girls, sh.current_occupancy;
