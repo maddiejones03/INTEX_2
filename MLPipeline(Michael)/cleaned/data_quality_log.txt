@@ -1,0 +1,34 @@
+============================================================
+FK VALIDATION
+============================================================
+OK     donations.supporter_id -> supporters.supporter_id
+OK     donations.referral_post_id -> social_media_posts.post_id
+OK     donation_allocations.donation_id -> donations.donation_id
+OK     donation_allocations.safehouse_id -> safehouses.safehouse_id
+OK     in_kind_donation_items.donation_id -> donations.donation_id
+OK     residents.safehouse_id -> safehouses.safehouse_id
+OK     process_recordings.resident_id -> residents.resident_id
+OK     home_visitations.resident_id -> residents.resident_id
+OK     education_records.resident_id -> residents.resident_id
+OK     health_wellbeing_records.resident_id -> residents.resident_id
+OK     intervention_plans.resident_id -> residents.resident_id
+OK     incident_reports.resident_id -> residents.resident_id
+OK     incident_reports.safehouse_id -> safehouses.safehouse_id
+OK     partner_assignments.partner_id -> partners.partner_id
+OK     partner_assignments.safehouse_id -> safehouses.safehouse_id
+OK     safehouse_monthly_metrics.safehouse_id -> safehouses.safehouse_id
+============================================================
+LOGICAL CONSISTENCY CHECKS
+============================================================
+MISMATCH donation amount vs allocation sum: 31 donations
+  donation_id=4: amount=1230.56, allocated=799.86
+  donation_id=25: amount=1796.47, allocated=1167.71
+  donation_id=36: amount=766.29, allocated=498.09
+  donation_id=56: amount=1420.82, allocated=923.53
+  donation_id=63: amount=914.95, allocated=594.72
+OK      process_recordings: all records after admission date
+CHRONO  education_records: 56 resident(s) have records before admission
+CHRONO  health_wellbeing_records: 56 resident(s) have records before admission
+OK safehouse occupancy within capacity
+OK all Video/Reel posts have video_views
+OK all boosted posts have boost_budget_php
