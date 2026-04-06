@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/michaeldai/RiderProjects/Intex2/backend/Intext2/Intext2/Intext2.csproj": {}
+    "/Users/ethanjones/Desktop/INTEX2/backend/Intext2/Intext2/Intext2.csproj": {}
   },
   "projects": {
-    "/Users/michaeldai/RiderProjects/Intex2/backend/Intext2/Intext2/Intext2.csproj": {
+    "/Users/ethanjones/Desktop/INTEX2/backend/Intext2/Intext2/Intext2.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/michaeldai/RiderProjects/Intex2/backend/Intext2/Intext2/Intext2.csproj",
+        "projectUniqueName": "/Users/ethanjones/Desktop/INTEX2/backend/Intext2/Intext2/Intext2.csproj",
         "projectName": "Intext2",
-        "projectPath": "/Users/michaeldai/RiderProjects/Intex2/backend/Intext2/Intext2/Intext2.csproj",
-        "packagesPath": "/Users/michaeldai/.nuget/packages/",
-        "outputPath": "/Users/michaeldai/RiderProjects/Intex2/backend/Intext2/Intext2/obj/",
+        "projectPath": "/Users/ethanjones/Desktop/INTEX2/backend/Intext2/Intext2/Intext2.csproj",
+        "packagesPath": "/Users/ethanjones/.nuget/packages/",
+        "outputPath": "/Users/ethanjones/Desktop/INTEX2/backend/Intext2/Intext2/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/michaeldai/.nuget/NuGet/NuGet.Config"
+          "/Users/ethanjones/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net10.0"
