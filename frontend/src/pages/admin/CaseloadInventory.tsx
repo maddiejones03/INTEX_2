@@ -1,23 +1,92 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Search, Plus, Filter, AlertCircle, Eye, Edit2,
-  ChevronLeft, ChevronRight, X, Check, User,
+  ChevronLeft, ChevronRight, X, Check,
 } from 'lucide-react';
-import { mockResidents, mockSafeHouses, mockSocialWorkers } from '../../services/mockData';
-import type { Resident, CaseCategory, CaseStatus } from '../../types';
 
-const CASE_CATEGORIES: CaseCategory[] = ['Trafficked', 'Physical Abuse', 'Sexual Abuse', 'Neglect', 'Psychological Abuse', 'Economic Abuse', 'Abandoned', 'CICL'];
-const CASE_STATUSES: CaseStatus[] = ['Active', 'Reintegrated', 'Transferred', 'Runaway', 'Deceased', 'Closed'];
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
+
+const CASE_CATEGORIES = ['Trafficked', 'Physical Abuse', 'Sexual Abuse', 'Neglect', 'Psychological Abuse', 'Economic Abuse', 'Abandoned', 'CICL'];
+const CASE_STATUSES = ['Active', 'Reintegrated', 'Transferred', 'Runaway', 'Deceased', 'Closed'];
 const PAGE_SIZE = 10;
 
-function ResidentModal({ resident, onClose }: { resident: Resident; onClose: () => void }) {
+interface Resident {
+  residentId: number;
+  caseControlNo: string;
+  internalCode: string;
+  safehouseId: number;
+  caseStatus: string;
+  sex: string;
+  dateOfBirth: string;
+  caseCategory: string;
+  currentRiskLevel: string;
+  initialRiskLevel: string;
+  dateOfAdmission: string;
+  reintegrationStatus: string;
+  assignedSocialWorker: string;
+  createdAt: string;
+}
+
+interface Safehouse {
+  safehouseId: number;
+  name: string;
+  city: string;
+}
+
+interface ResidentDetail {
+  residentId: number;
+  caseControlNo: string;
+  internalCode: string;
+  safehouseId: number;
+  caseStatus: string;
+  sex: string;
+  dateOfBirth: string;
+  caseCategory: string;
+  currentRiskLevel: string;
+  dateOfAdmission: string;
+  reintegrationStatus: string;
+  assignedSocialWorker: string;
+  religion: string;
+  placeOfBirth: string;
+  referralSource: string;
+  familyIs4ps: boolean;
+  familySoloParent: boolean;
+  familyIndigenous: boolean;
+  familyInformalSettler: boolean;
+  isPwd: boolean;
+  pwdType: string;
+  notes_restricted: number;
+  safehouse?: { name: string; city: string };
+}
+
+function ResidentModal({ residentId, onClose }: { residentId: number; onClose: () => void }) {
+  const [resident, setResident] = useState<ResidentDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/residents/${residentId}`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => { setResident(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [residentId]);
+
+  if (loading) return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>
+      </div>
+    </div>
+  );
+
+  if (!resident) return null;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <h2>{resident.firstName} {resident.middleName ? resident.middleName + ' ' : ''}{resident.lastName}</h2>
-            <p className="modal-subtitle">{resident.caseNumber} · {resident.safeHouseName}</p>
+            <h2>{resident.caseControlNo}</h2>
+            <p className="modal-subtitle">{resident.internalCode} · {resident.safehouse?.name ?? `Safehouse ${resident.safehouseId}`}</p>
           </div>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
@@ -26,61 +95,40 @@ function ResidentModal({ resident, onClose }: { resident: Resident; onClose: () 
             <section className="modal-section">
               <h3>Demographics</h3>
               <div className="detail-grid">
-                <div className="detail-item"><span>Date of Birth</span><strong>{new Date(resident.dateOfBirth).toLocaleDateString('en-PH')}</strong></div>
-                <div className="detail-item"><span>Age</span><strong>{resident.age}</strong></div>
-                <div className="detail-item"><span>Gender</span><strong>{resident.gender}</strong></div>
-                <div className="detail-item"><span>Civil Status</span><strong>{resident.civilStatus}</strong></div>
-                <div className="detail-item"><span>Nationality</span><strong>{resident.nationality}</strong></div>
+                <div className="detail-item"><span>Date of Birth</span><strong>{resident.dateOfBirth ? new Date(resident.dateOfBirth).toLocaleDateString() : '—'}</strong></div>
+                <div className="detail-item"><span>Sex</span><strong>{resident.sex}</strong></div>
+                <div className="detail-item"><span>Place of Birth</span><strong>{resident.placeOfBirth || '—'}</strong></div>
                 <div className="detail-item"><span>Religion</span><strong>{resident.religion || '—'}</strong></div>
-                <div className="detail-item"><span>Education</span><strong>{resident.educationLevel}</strong></div>
-                <div className="detail-item"><span>Address</span><strong>{resident.address}</strong></div>
               </div>
             </section>
             <section className="modal-section">
               <h3>Case Information</h3>
               <div className="detail-grid">
                 <div className="detail-item"><span>Case Category</span><strong>{resident.caseCategory}</strong></div>
-                <div className="detail-item"><span>Sub-Categories</span><strong>{resident.caseSubCategory.join(', ')}</strong></div>
-                <div className="detail-item"><span>Status</span><span className={`status-badge status-${resident.caseStatus.toLowerCase().replace(' ', '-')}`}>{resident.caseStatus}</span></div>
-                <div className="detail-item"><span>Admission Date</span><strong>{new Date(resident.admissionDate).toLocaleDateString('en-PH')}</strong></div>
-                <div className="detail-item"><span>Referral Source</span><strong>{resident.referralSource}</strong></div>
-                <div className="detail-item"><span>Social Worker</span><strong>{resident.assignedSocialWorkerName}</strong></div>
+                <div className="detail-item"><span>Status</span><span className={`status-badge status-${resident.caseStatus?.toLowerCase().replace(' ', '-')}`}>{resident.caseStatus}</span></div>
+                <div className="detail-item"><span>Risk Level</span><strong>{resident.currentRiskLevel || '—'}</strong></div>
+                <div className="detail-item"><span>Admission Date</span><strong>{resident.dateOfAdmission ? new Date(resident.dateOfAdmission).toLocaleDateString() : '—'}</strong></div>
+                <div className="detail-item"><span>Referral Source</span><strong>{resident.referralSource || '—'}</strong></div>
+                <div className="detail-item"><span>Social Worker</span><strong>{resident.assignedSocialWorker || '—'}</strong></div>
               </div>
             </section>
             <section className="modal-section">
               <h3>Socio-Demographic Profile</h3>
               <div className="flag-list">
-                <div className={`flag-item ${resident.is4PsBeneficiary ? 'flag-yes' : 'flag-no'}`}>
-                  {resident.is4PsBeneficiary ? '✓' : '✗'} 4Ps Beneficiary
-                </div>
-                <div className={`flag-item ${resident.isSoloParent ? 'flag-yes' : 'flag-no'}`}>
-                  {resident.isSoloParent ? '✓' : '✗'} Solo Parent Household
-                </div>
-                <div className={`flag-item ${resident.isIndigenousGroup ? 'flag-yes' : 'flag-no'}`}>
-                  {resident.isIndigenousGroup ? '✓' : '✗'} Indigenous Group {resident.indigenousGroupName ? `(${resident.indigenousGroupName})` : ''}
-                </div>
-                <div className={`flag-item ${resident.isInformalSettler ? 'flag-yes' : 'flag-no'}`}>
-                  {resident.isInformalSettler ? '✓' : '✗'} Informal Settler
-                </div>
-                <div className={`flag-item ${resident.hasDisability ? 'flag-yes' : 'flag-no'}`}>
-                  {resident.hasDisability ? '✓' : '✗'} Person with Disability {resident.disabilityType ? `(${resident.disabilityType})` : ''}
-                </div>
+                <div className={`flag-item ${resident.familyIs4ps ? 'flag-yes' : 'flag-no'}`}>{resident.familyIs4ps ? '✓' : '✗'} 4Ps Beneficiary</div>
+                <div className={`flag-item ${resident.familySoloParent ? 'flag-yes' : 'flag-no'}`}>{resident.familySoloParent ? '✓' : '✗'} Solo Parent Household</div>
+                <div className={`flag-item ${resident.familyIndigenous ? 'flag-yes' : 'flag-no'}`}>{resident.familyIndigenous ? '✓' : '✗'} Indigenous Group</div>
+                <div className={`flag-item ${resident.familyInformalSettler ? 'flag-yes' : 'flag-no'}`}>{resident.familyInformalSettler ? '✓' : '✗'} Informal Settler</div>
+                <div className={`flag-item ${resident.isPwd ? 'flag-yes' : 'flag-no'}`}>{resident.isPwd ? '✓' : '✗'} Person with Disability {resident.pwdType ? `(${resident.pwdType})` : ''}</div>
               </div>
             </section>
             <section className="modal-section">
               <h3>Reintegration</h3>
               <div className="detail-grid">
-                <div className="detail-item"><span>Status</span><strong>{resident.reintegrationStatus}</strong></div>
-                {resident.reintegrationDate && <div className="detail-item"><span>Date</span><strong>{new Date(resident.reintegrationDate).toLocaleDateString('en-PH')}</strong></div>}
-                {resident.exitReason && <div className="detail-item full-width"><span>Exit Reason</span><strong>{resident.exitReason}</strong></div>}
+                <div className="detail-item"><span>Status</span><strong>{resident.reintegrationStatus || '—'}</strong></div>
               </div>
             </section>
           </div>
-          {resident.notes && (
-            <div className="notes-section">
-              <strong>Notes:</strong> {resident.notes}
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -88,38 +136,91 @@ function ResidentModal({ resident, onClose }: { resident: Resident; onClose: () 
 }
 
 export default function CaseloadInventory() {
-  const [residents] = useState(mockResidents);
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState<CaseStatus | 'All'>('All');
-  const [filterCategory, setFilterCategory] = useState<CaseCategory | 'All'>('All');
-  const [filterSafeHouse, setFilterSafeHouse] = useState<number | 'All'>('All');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [filterCategory, setFilterCategory] = useState('All');
+  const [filterSafehouse, setFilterSafehouse] = useState('All');
   const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState<Resident | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newResident, setNewResident] = useState({ firstName: '', lastName: '', gender: 'Female', dateOfBirth: '', caseCategory: 'Neglect' as CaseCategory, safeHouseId: 1, socialWorkerId: 1 });
+  const [newResident, setNewResident] = useState({ caseControlNo: '', sex: 'Female', dateOfBirth: '', caseCategory: 'Neglect', safehouseId: '' });
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const filtered = residents.filter((r) => {
-    const name = `${r.firstName} ${r.lastName} ${r.caseNumber}`.toLowerCase();
-    return (
-      name.includes(search.toLowerCase()) &&
-      (filterStatus === 'All' || r.caseStatus === filterStatus) &&
-      (filterCategory === 'All' || r.caseCategory === filterCategory) &&
-      (filterSafeHouse === 'All' || r.safeHouseId === filterSafeHouse)
-    );
-  });
+  const fetchResidents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+      if (search) params.set('search', search);
+      if (filterStatus !== 'All') params.set('caseStatus', filterStatus);
+      if (filterCategory !== 'All') params.set('caseCategory', filterCategory);
+      if (filterSafehouse !== 'All') params.set('safehouseId', filterSafehouse);
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+      const res = await fetch(`${API_BASE}/api/residents?${params}`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setResidents(data.items);
+        setTotal(data.total);
+      }
+    } catch (err) {
+      console.error('Failed to fetch residents', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, filterStatus, filterCategory, filterSafehouse]);
 
-  const handleAdd = () => {
-    if (!newResident.firstName.trim() || !newResident.dateOfBirth) {
-      setFormError('First name and date of birth are required.');
+  useEffect(() => { fetchResidents(); }, [fetchResidents]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/reports/residents-by-safehouse`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => setSafehouses(data.map((s: { safehouseId: number; name: string; city: string }) => ({ safehouseId: s.safehouseId, name: s.name, city: s.city }))))
+      .catch(() => {});
+  }, []);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const handleAdd = async () => {
+    if (!newResident.caseControlNo.trim() || !newResident.dateOfBirth) {
+      setFormError('Case control number and date of birth are required.');
       return;
     }
+    setSaving(true);
     setFormError('');
-    setShowAddForm(false);
+    try {
+      const res = await fetch(`${API_BASE}/api/residents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          caseControlNo: newResident.caseControlNo,
+          sex: newResident.sex,
+          dateOfBirth: newResident.dateOfBirth,
+          caseCategory: newResident.caseCategory,
+          safehouseId: Number(newResident.safehouseId),
+          caseStatus: 'Active',
+        }),
+      });
+      if (res.ok) {
+        setShowAddForm(false);
+        setNewResident({ caseControlNo: '', sex: 'Female', dateOfBirth: '', caseCategory: 'Neglect', safehouseId: '' });
+        fetchResidents();
+      } else {
+        setFormError('Failed to create resident.');
+      }
+    } catch {
+      setFormError('Failed to create resident.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  // Summary counts from current page — for accurate counts fetch all
+  const activeCount = residents.filter(r => r.caseStatus === 'Active').length;
 
   return (
     <div className="admin-page">
@@ -136,20 +237,20 @@ export default function CaseloadInventory() {
       {/* Summary */}
       <div className="metrics-grid metrics-grid-4">
         <div className="metric-card metric-card-blue">
-          <div className="metric-value">{residents.filter((r) => r.caseStatus === 'Active').length}</div>
-          <div className="metric-label">Active Cases</div>
+          <div className="metric-value">{total}</div>
+          <div className="metric-label">Total Records</div>
         </div>
         <div className="metric-card metric-card-green">
-          <div className="metric-value">{residents.filter((r) => r.caseStatus === 'Reintegrated').length}</div>
-          <div className="metric-label">Reintegrated</div>
+          <div className="metric-value">{safehouses.length}</div>
+          <div className="metric-label">Safe Houses</div>
         </div>
         <div className="metric-card metric-card-amber">
-          <div className="metric-value">{residents.filter((r) => r.caseStatus === 'Transferred').length}</div>
-          <div className="metric-label">Transferred</div>
+          <div className="metric-value">{activeCount}</div>
+          <div className="metric-label">Active (this page)</div>
         </div>
         <div className="metric-card metric-card-purple">
-          <div className="metric-value">{residents.length}</div>
-          <div className="metric-label">Total Records</div>
+          <div className="metric-value">{totalPages}</div>
+          <div className="metric-label">Pages</div>
         </div>
       </div>
 
@@ -163,45 +264,36 @@ export default function CaseloadInventory() {
           {formError && <div className="alert alert-error"><AlertCircle size={14} /> {formError}</div>}
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">First Name *</label>
-              <input className="form-input" value={newResident.firstName} onChange={(e) => setNewResident({ ...newResident, firstName: e.target.value })} placeholder="First name" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Last Name *</label>
-              <input className="form-input" value={newResident.lastName} onChange={(e) => setNewResident({ ...newResident, lastName: e.target.value })} placeholder="Last name" />
+              <label className="form-label">Case Control No. *</label>
+              <input className="form-input" value={newResident.caseControlNo} onChange={(e) => setNewResident({ ...newResident, caseControlNo: e.target.value })} placeholder="e.g. KF-2024-006" />
             </div>
             <div className="form-group">
               <label className="form-label">Date of Birth *</label>
               <input className="form-input" type="date" value={newResident.dateOfBirth} onChange={(e) => setNewResident({ ...newResident, dateOfBirth: e.target.value })} />
             </div>
             <div className="form-group">
-              <label className="form-label">Gender</label>
-              <select className="form-select" value={newResident.gender} onChange={(e) => setNewResident({ ...newResident, gender: e.target.value })}>
+              <label className="form-label">Sex</label>
+              <select className="form-select" value={newResident.sex} onChange={(e) => setNewResident({ ...newResident, sex: e.target.value })}>
                 <option>Female</option><option>Male</option><option>Other</option>
               </select>
             </div>
             <div className="form-group">
               <label className="form-label">Case Category</label>
-              <select className="form-select" value={newResident.caseCategory} onChange={(e) => setNewResident({ ...newResident, caseCategory: e.target.value as CaseCategory })}>
+              <select className="form-select" value={newResident.caseCategory} onChange={(e) => setNewResident({ ...newResident, caseCategory: e.target.value })}>
                 {CASE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label className="form-label">Safe House</label>
-              <select className="form-select" value={newResident.safeHouseId} onChange={(e) => setNewResident({ ...newResident, safeHouseId: +e.target.value })}>
-                {mockSafeHouses.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Assigned Social Worker</label>
-              <select className="form-select" value={newResident.socialWorkerId} onChange={(e) => setNewResident({ ...newResident, socialWorkerId: +e.target.value })}>
-                {mockSocialWorkers.map((sw) => <option key={sw.id} value={sw.id}>{sw.firstName} {sw.lastName}</option>)}
+              <select className="form-select" value={newResident.safehouseId} onChange={(e) => setNewResident({ ...newResident, safehouseId: e.target.value })}>
+                <option value="">Select safehouse</option>
+                {safehouses.map((s) => <option key={s.safehouseId} value={s.safehouseId}>{s.name}</option>)}
               </select>
             </div>
           </div>
           <div className="form-actions">
             <button className="btn btn-ghost" onClick={() => setShowAddForm(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handleAdd}><Check size={14} /> Create Record</button>
+            <button className="btn btn-primary" onClick={handleAdd} disabled={saving}><Check size={14} /> {saving ? 'Saving...' : 'Create Record'}</button>
           </div>
         </div>
       )}
@@ -210,71 +302,72 @@ export default function CaseloadInventory() {
       <div className="filter-bar">
         <div className="search-wrapper">
           <Search size={16} className="search-icon" />
-          <input className="search-input" placeholder="Search by name or case number…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+          <input className="search-input" placeholder="Search by case number…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
         <div className="filter-group">
           <Filter size={14} />
-          <select className="form-select" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value as typeof filterStatus); setPage(1); }}>
+          <select className="form-select" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
             <option value="All">All Status</option>
             {CASE_STATUSES.map((s) => <option key={s}>{s}</option>)}
           </select>
-          <select className="form-select" value={filterCategory} onChange={(e) => { setFilterCategory(e.target.value as typeof filterCategory); setPage(1); }}>
+          <select className="form-select" value={filterCategory} onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}>
             <option value="All">All Categories</option>
             {CASE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
           </select>
-          <select className="form-select" value={filterSafeHouse} onChange={(e) => { setFilterSafeHouse(e.target.value === 'All' ? 'All' : +e.target.value); setPage(1); }}>
+          <select className="form-select" value={filterSafehouse} onChange={(e) => { setFilterSafehouse(e.target.value); setPage(1); }}>
             <option value="All">All Safe Houses</option>
-            {mockSafeHouses.map((sh) => <option key={sh.id} value={sh.id}>{sh.name}</option>)}
+            {safehouses.map((sh) => <option key={sh.safehouseId} value={sh.safehouseId}>{sh.name}</option>)}
           </select>
         </div>
-        <span className="results-count">{filtered.length} record{filtered.length !== 1 ? 's' : ''}</span>
+        <span className="results-count">{total} record{total !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Table */}
       <div className="table-card">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Case #</th>
-              <th>Name</th>
-              <th>Age / Gender</th>
-              <th>Category</th>
-              <th>Safe House</th>
-              <th>Social Worker</th>
-              <th>Admission</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.map((r) => (
-              <tr key={r.id}>
-                <td className="table-mono">{r.caseNumber}</td>
-                <td>
-                  <div className="table-name-cell">
-                    <div className="table-avatar"><User size={12} /></div>
-                    <div className="table-name">{r.firstName} {r.lastName}</div>
-                  </div>
-                </td>
-                <td className="table-secondary">{r.age} · {r.gender}</td>
-                <td><span className="category-chip">{r.caseCategory}</span></td>
-                <td className="table-secondary">{r.safeHouseName}</td>
-                <td className="table-secondary">{r.assignedSocialWorkerName}</td>
-                <td className="table-secondary">{new Date(r.admissionDate).toLocaleDateString('en-PH')}</td>
-                <td><span className={`status-badge status-${r.caseStatus.toLowerCase().replace(' ', '-')}`}>{r.caseStatus}</span></td>
-                <td>
-                  <div className="action-btns">
-                    <button className="btn-icon" title="View" onClick={() => setSelected(r)}><Eye size={15} /></button>
-                    <button className="btn-icon" title="Edit"><Edit2 size={15} /></button>
-                  </div>
-                </td>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>Loading residents...</div>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Case #</th>
+                <th>Internal Code</th>
+                <th>Sex</th>
+                <th>Category</th>
+                <th>Safe House</th>
+                <th>Social Worker</th>
+                <th>Admission</th>
+                <th>Risk</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-            {paginated.length === 0 && (
-              <tr><td colSpan={9} className="empty-row"><AlertCircle size={16} /> No records match your filters.</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {residents.map((r) => (
+                <tr key={r.residentId}>
+                  <td className="table-mono">{r.caseControlNo}</td>
+                  <td className="table-secondary">{r.internalCode || '—'}</td>
+                  <td className="table-secondary">{r.sex}</td>
+                  <td><span className="category-chip">{r.caseCategory}</span></td>
+                  <td className="table-secondary">{safehouses.find(s => s.safehouseId === r.safehouseId)?.name ?? `#${r.safehouseId}`}</td>
+                  <td className="table-secondary">{r.assignedSocialWorker || '—'}</td>
+                  <td className="table-secondary">{r.dateOfAdmission ? new Date(r.dateOfAdmission).toLocaleDateString() : '—'}</td>
+                  <td><span className={`status-badge ${r.currentRiskLevel === 'High' || r.currentRiskLevel === 'Critical' ? 'status-danger' : ''}`}>{r.currentRiskLevel || '—'}</span></td>
+                  <td><span className={`status-badge status-${r.caseStatus?.toLowerCase().replace(' ', '-')}`}>{r.caseStatus}</span></td>
+                  <td>
+                    <div className="action-btns">
+                      <button className="btn-icon" title="View" onClick={() => setSelectedId(r.residentId)}><Eye size={15} /></button>
+                      <button className="btn-icon" title="Edit"><Edit2 size={15} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {residents.length === 0 && (
+                <tr><td colSpan={10} className="empty-row"><AlertCircle size={16} /> No records match your filters.</td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
 
         {totalPages > 1 && (
           <div className="pagination">
@@ -285,7 +378,7 @@ export default function CaseloadInventory() {
         )}
       </div>
 
-      {selected && <ResidentModal resident={selected} onClose={() => setSelected(null)} />}
+      {selectedId !== null && <ResidentModal residentId={selectedId} onClose={() => setSelectedId(null)} />}
     </div>
   );
 }
