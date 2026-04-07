@@ -28,7 +28,7 @@ import pandas as pd
 
 SOURCE_DIR = Path("lighthouse_csv_v7")
 CLEAN_DIR = Path("cleaned")
-REFERENCE_DATE = pd.Timestamp("2026-04-06")
+REFERENCE_DATE = pd.Timestamp.today()
 
 TABLE_NAMES = [
     "safehouses",
