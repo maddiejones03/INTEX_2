@@ -2,32 +2,38 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Eye, EyeOff, Heart, AlertCircle, Lock, User } from 'lucide-react';
+import { loginUser } from '../../services/authApi';
+import { Eye, EyeOff, Heart, AlertCircle, Lock, Mail } from 'lucide-react';
 
 export default function Login() {
-  const { login, isLoading } = useAuth();
+  const { refreshAuthSession, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: Location })?.from?.pathname || '/admin';
 
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [touched, setTouched] = useState({ username: false, password: false });
+  const [submitting, setSubmitting] = useState(false);
+  const [touched, setTouched] = useState({ email: false, password: false });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-    setTouched({ username: true, password: true });
+    setTouched({ email: true, password: true });
 
-    if (!username.trim() || !password) return;
+    if (!email.trim() || !password) return;
 
-    const result = await login(username.trim(), password);
-    if (result.success) {
+    setSubmitting(true);
+    try {
+      await loginUser(email.trim(), password);
+      await refreshAuthSession();
       navigate(from, { replace: true });
-    } else {
-      setError(result.error || 'Login failed.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -51,23 +57,23 @@ export default function Login() {
           )}
 
           <div className="form-group">
-            <label htmlFor="username" className="form-label">Username</label>
+            <label htmlFor="email" className="form-label">Email</label>
             <div className="input-wrapper">
-              <User size={16} className="input-icon" />
+              <Mail size={16} className="input-icon" />
               <input
-                id="username"
-                type="text"
-                className={`form-input ${touched.username && !username.trim() ? 'input-error' : ''}`}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onBlur={() => setTouched((t) => ({ ...t, username: true }))}
-                placeholder="Enter your username"
-                autoComplete="username"
-                disabled={isLoading}
+                id="email"
+                type="email"
+                className={`form-input ${touched.email && !email.trim() ? 'input-error' : ''}`}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+                placeholder="Enter your email"
+                autoComplete="email"
+                disabled={submitting || isLoading}
               />
             </div>
-            {touched.username && !username.trim() && (
-              <span className="field-error">Username is required.</span>
+            {touched.email && !email.trim() && (
+              <span className="field-error">Email is required.</span>
             )}
           </div>
 
@@ -84,7 +90,7 @@ export default function Login() {
                 onBlur={() => setTouched((t) => ({ ...t, password: true }))}
                 placeholder="Enter your password"
                 autoComplete="current-password"
-                disabled={isLoading}
+                disabled={submitting || isLoading}
               />
               <button
                 type="button"
@@ -103,17 +109,14 @@ export default function Login() {
           <button
             type="submit"
             className="btn btn-primary btn-full"
-            disabled={isLoading}
+            disabled={submitting || isLoading}
           >
-            {isLoading ? <span className="btn-spinner" /> : 'Sign In'}
+            {submitting ? <span className="btn-spinner" /> : 'Sign In'}
           </button>
         </form>
 
         <div className="login-footer">
           <Link to="/">← Back to public site</Link>
-          <p className="login-hint">
-            Demo: <code>admin / admin123</code>
-          </p>
         </div>
       </div>
 

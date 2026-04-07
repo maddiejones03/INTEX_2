@@ -16,7 +16,7 @@ const recentActivity = [
 ];
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { authSession } = useAuth();
   const activeResidents = mockResidents.filter((r) => r.caseStatus === 'Active').length;
   const reintegratedCount = mockResidents.filter((r) => r.caseStatus === 'Reintegrated').length;
   const totalCapacity = mockSafeHouses.reduce((s, h) => s + h.capacity, 0);
@@ -38,7 +38,7 @@ export default function AdminDashboard() {
       <div className="admin-page-header">
         <div>
           <h1>Admin Dashboard</h1>
-          <p>Welcome back, <strong>{user?.firstName}</strong>. Here's today's overview.</p>
+          <p>Welcome back, <strong>{authSession?.username}</strong>. Here's today's overview.</p>
         </div>
         <div className="header-date">
           <Clock size={14} /> {new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

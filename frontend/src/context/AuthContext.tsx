@@ -1,83 +1,57 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
-import type { User } from '../types';
+import { getAuthSession } from '../services/authApi';
+import type { AuthSession } from '../types/AuthSession';
+
+const anonymousSession: AuthSession = {
+  isAuthenticated: false,
+  username: null,
+  email: null,
+  roles: [],
+};
 
 interface AuthContextType {
-  user: User | null;
+  authSession: AuthSession;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  refreshAuthSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock admin user for demo
-const MOCK_USERS: Array<User & { password: string }> = [
-  {
-    id: 1,
-    username: 'admin',
-    password: 'admin123',
-    email: 'admin@kanlungan.org',
-    role: 'admin',
-    firstName: 'Maria',
-    lastName: 'Santos',
-  },
-  {
-    id: 2,
-    username: 'staff',
-    password: 'staff123',
-    email: 'staff@kanlungan.org',
-    role: 'staff',
-    firstName: 'Jose',
-    lastName: 'Reyes',
-  },
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [authSession, setAuthSession] = useState<AuthSession>(anonymousSession);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const stored = localStorage.getItem('kanlungan_user');
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem('kanlungan_user');
-      }
+  const refreshAuthSession = useCallback(async () => {
+    try {
+      const session = await getAuthSession();
+      setAuthSession(session);
+    } catch {
+      setAuthSession(anonymousSession);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
-  const login = async (
-    username: string,
-    password: string
-  ): Promise<{ success: boolean; error?: string }> => {
-    setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const found = MOCK_USERS.find(
-      (u) => u.username === username && u.password === password
-    );
-    if (found) {
-      const { password: _p, ...userWithoutPassword } = found;
-      setUser(userWithoutPassword);
-      localStorage.setItem('kanlungan_user', JSON.stringify(userWithoutPassword));
-      setIsLoading(false);
-      return { success: true };
-    }
-    setIsLoading(false);
-    return { success: false, error: 'Invalid username or password.' };
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('kanlungan_user');
-  };
+  useEffect(() => {
+    refreshAuthSession();
+  }, [refreshAuthSession]);
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, isLoading, login, logout }}
+      value={{
+        authSession,
+        isAuthenticated: authSession.isAuthenticated,
+        isLoading,
+        refreshAuthSession,
+      }}
     >
       {children}
     </AuthContext.Provider>
