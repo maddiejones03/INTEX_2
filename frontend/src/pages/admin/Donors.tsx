@@ -1,55 +1,95 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Search, Plus, Filter, Heart, ChevronDown, ChevronUp,
-  Edit2, Eye, Trash2, X, Check, AlertCircle,
+  Edit2, Eye, X, Check, AlertCircle,
 } from 'lucide-react';
-import { mockDonors, mockDonations } from '../../services/mockData';
-import type { Donor, DonorType } from '../../types';
 
-const DONOR_TYPES: DonorType[] = ['Monetary', 'In-Kind', 'Volunteer', 'Skills', 'Social Media', 'Corporate'];
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 
-const typeColors: Record<DonorType, string> = {
-  Monetary: 'green',
-  'In-Kind': 'blue',
-  Volunteer: 'amber',
-  Skills: 'purple',
-  'Social Media': 'rose',
-  Corporate: 'teal',
-};
+const SUPPORTER_TYPES = ['Individual', 'Corporate', 'Foundation', 'Government', 'NGO', 'Church'];
+const PAGE_SIZE = 20;
 
-function DonorModal({ donor, onClose }: { donor: Donor | null; onClose: () => void }) {
-  const donations = mockDonations.filter((d) => d.donorId === donor?.id);
-  if (!donor) return null;
+interface Supporter {
+  supporterId: number;
+  supporterType: string;
+  displayName: string;
+  organizationName: string;
+  firstName: string;
+  lastName: string;
+  relationshipType: string;
+  region: string;
+  country: string;
+  email: string;
+  phone: string;
+  status: string;
+  createdAt: string;
+  firstDonationDate: string;
+  acquisitionChannel: string;
+  donations?: Donation[];
+}
+
+interface Donation {
+  donationId: number;
+  donationType: string;
+  donationDate: string;
+  amount: number;
+  currencyCode: string;
+  campaignName: string;
+}
+
+function SupporterModal({ supporterId, onClose }: { supporterId: number; onClose: () => void }) {
+  const [supporter, setSupporter] = useState<Supporter | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/supporters/${supporterId}`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => { setSupporter(data); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [supporterId]);
+
+  if (loading) return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>
+      </div>
+    </div>
+  );
+
+  if (!supporter) return null;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{donor.firstName} {donor.lastName}</h2>
-          {donor.organizationName && <p className="modal-subtitle">{donor.organizationName}</p>}
+          <h2>{supporter.displayName}</h2>
+          {supporter.organizationName && <p className="modal-subtitle">{supporter.organizationName}</p>}
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modal-body">
           <div className="detail-grid">
-            <div className="detail-item"><span>Email</span><strong>{donor.email}</strong></div>
-            <div className="detail-item"><span>Phone</span><strong>{donor.phone || '—'}</strong></div>
-            <div className="detail-item"><span>Type</span><span className={`type-badge type-${typeColors[donor.donorType]}`}>{donor.donorType}</span></div>
-            <div className="detail-item"><span>Status</span><span className={`status-badge status-${donor.status.toLowerCase()}`}>{donor.status}</span></div>
-            <div className="detail-item"><span>Total Contributions</span><strong>${donor.totalContributions.toLocaleString()}</strong></div>
-            <div className="detail-item"><span>Last Donation</span><strong>{donor.lastDonationDate ? new Date(donor.lastDonationDate).toLocaleDateString('en-PH') : '—'}</strong></div>
+            <div className="detail-item"><span>Email</span><strong>{supporter.email || '—'}</strong></div>
+            <div className="detail-item"><span>Phone</span><strong>{supporter.phone || '—'}</strong></div>
+            <div className="detail-item"><span>Type</span><strong>{supporter.supporterType}</strong></div>
+            <div className="detail-item"><span>Status</span><span className={`status-badge status-${supporter.status?.toLowerCase()}`}>{supporter.status}</span></div>
+            <div className="detail-item"><span>Region</span><strong>{supporter.region || '—'}</strong></div>
+            <div className="detail-item"><span>Country</span><strong>{supporter.country || '—'}</strong></div>
+            <div className="detail-item"><span>First Donation</span><strong>{supporter.firstDonationDate ? new Date(supporter.firstDonationDate).toLocaleDateString() : '—'}</strong></div>
+            <div className="detail-item"><span>Acquisition Channel</span><strong>{supporter.acquisitionChannel || '—'}</strong></div>
           </div>
-          {donations.length > 0 && (
+          {supporter.donations && supporter.donations.length > 0 && (
             <>
-              <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Contribution History</h3>
+              <h3 style={{ marginTop: '1.5rem', marginBottom: '0.75rem' }}>Donation History</h3>
               <div className="mini-table">
                 <div className="mini-table-header">
-                  <span>Date</span><span>Type</span><span>Description</span><span>Amount</span>
+                  <span>Date</span><span>Type</span><span>Campaign</span><span>Amount</span>
                 </div>
-                {donations.map((d) => (
-                  <div key={d.id} className="mini-table-row">
-                    <span>{new Date(d.date).toLocaleDateString('en-PH')}</span>
-                    <span><span className={`type-badge type-${typeColors[d.type]}`}>{d.type}</span></span>
-                    <span>{d.description}</span>
-                    <span>{d.amount ? `$${d.amount.toLocaleString()}` : 'In-kind'}</span>
+                {supporter.donations.map((d) => (
+                  <div key={d.donationId} className="mini-table-row">
+                    <span>{new Date(d.donationDate).toLocaleDateString()}</span>
+                    <span>{d.donationType}</span>
+                    <span>{d.campaignName || '—'}</span>
+                    <span>{d.amount ? `${d.currencyCode} ${d.amount.toLocaleString()}` : 'In-kind'}</span>
                   </div>
                 ))}
               </div>
@@ -62,53 +102,91 @@ function DonorModal({ donor, onClose }: { donor: Donor | null; onClose: () => vo
 }
 
 export default function Donors() {
-  const [donors, setDonors] = useState(mockDonors);
+  const [supporters, setSupporters] = useState<Supporter[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState<DonorType | 'All'>('All');
-  const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Inactive'>('All');
-  const [sortField, setSortField] = useState<'name' | 'total' | 'date'>('name');
+  const [filterType, setFilterType] = useState('All');
+  const [filterStatus, setFilterStatus] = useState('All');
+  const [sortField, setSortField] = useState<'name' | 'date'>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
-  const [selectedDonor, setSelectedDonor] = useState<Donor | null>(null);
+  const [page, setPage] = useState(1);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newDonor, setNewDonor] = useState({ firstName: '', lastName: '', email: '', donorType: 'Monetary' as DonorType });
+  const [newSupporter, setNewSupporter] = useState({ displayName: '', email: '', supporterType: 'Individual', firstName: '', lastName: '' });
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const fetchSupporters = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+      if (search) params.set('search', search);
+      if (filterType !== 'All') params.set('supporterType', filterType);
+      if (filterStatus !== 'All') params.set('status', filterStatus);
+
+      const res = await fetch(`${API_BASE}/api/supporters?${params}`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setSupporters(data.items);
+        setTotal(data.total);
+      }
+    } catch (err) {
+      console.error('Failed to fetch supporters', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search, filterType, filterStatus]);
+
+  useEffect(() => { fetchSupporters(); }, [fetchSupporters]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const handleSort = (field: typeof sortField) => {
     if (sortField === field) setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
     else { setSortField(field); setSortDir('asc'); }
   };
 
-  const filtered = donors
-    .filter((d) => {
-      const name = `${d.firstName} ${d.lastName} ${d.organizationName || ''}`.toLowerCase();
-      return (
-        name.includes(search.toLowerCase()) &&
-        (filterType === 'All' || d.donorType === filterType) &&
-        (filterStatus === 'All' || d.status === filterStatus)
-      );
-    })
-    .sort((a, b) => {
-      let cmp = 0;
-      if (sortField === 'name') cmp = `${a.firstName}${a.lastName}`.localeCompare(`${b.firstName}${b.lastName}`);
-      else if (sortField === 'total') cmp = a.totalContributions - b.totalContributions;
-      else cmp = (a.lastDonationDate || '').localeCompare(b.lastDonationDate || '');
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
+  const sorted = [...supporters].sort((a, b) => {
+    let cmp = 0;
+    if (sortField === 'name') cmp = a.displayName.localeCompare(b.displayName);
+    else cmp = (a.firstDonationDate || '').localeCompare(b.firstDonationDate || '');
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
 
-  const handleAdd = () => {
-    if (!newDonor.firstName.trim() || !newDonor.email.trim()) {
-      setFormError('First name and email are required.');
+  const handleAdd = async () => {
+    if (!newSupporter.displayName.trim()) {
+      setFormError('Display name is required.');
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newDonor.email)) {
-      setFormError('Please enter a valid email address.');
-      return;
-    }
-    const id = Math.max(...donors.map((d) => d.id)) + 1;
-    setDonors([...donors, { ...newDonor, id, lastName: newDonor.lastName || '', status: 'Active', totalContributions: 0, createdAt: new Date().toISOString() }]);
-    setNewDonor({ firstName: '', lastName: '', email: '', donorType: 'Monetary' });
+    setSaving(true);
     setFormError('');
-    setShowAddForm(false);
+    try {
+      const res = await fetch(`${API_BASE}/api/supporters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          displayName: newSupporter.displayName,
+          email: newSupporter.email,
+          supporterType: newSupporter.supporterType,
+          firstName: newSupporter.firstName,
+          lastName: newSupporter.lastName,
+          status: 'Active',
+        }),
+      });
+      if (res.ok) {
+        setShowAddForm(false);
+        setNewSupporter({ displayName: '', email: '', supporterType: 'Individual', firstName: '', lastName: '' });
+        fetchSupporters();
+      } else {
+        setFormError('Failed to create supporter.');
+      }
+    } catch {
+      setFormError('Failed to create supporter.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const SortIcon = ({ field }: { field: typeof sortField }) =>
@@ -116,7 +194,7 @@ export default function Donors() {
       ? sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
       : null;
 
-  const totalDonations = donors.filter((d) => d.status === 'Active').reduce((s, d) => s + d.totalContributions, 0);
+  const activeCount = supporters.filter(s => s.status === 'Active').length;
 
   return (
     <div className="admin-page">
@@ -130,59 +208,61 @@ export default function Donors() {
         </button>
       </div>
 
-      {/* Summary row */}
+      {/* Summary */}
       <div className="metrics-grid metrics-grid-4">
-        <div className="metric-card metric-card-green">
-          <div className="metric-value">${(totalDonations / 1000000).toFixed(2)}M</div>
-          <div className="metric-label">Total Contributions</div>
-        </div>
         <div className="metric-card metric-card-blue">
-          <div className="metric-value">{donors.filter((d) => d.status === 'Active').length}</div>
-          <div className="metric-label">Active Donors</div>
+          <div className="metric-value">{total}</div>
+          <div className="metric-label">Total Supporters</div>
+        </div>
+        <div className="metric-card metric-card-green">
+          <div className="metric-value">{activeCount}</div>
+          <div className="metric-label">Active (this page)</div>
         </div>
         <div className="metric-card metric-card-amber">
-          <div className="metric-value">{donors.filter((d) => d.donorType === 'Corporate').length}</div>
-          <div className="metric-label">Corporate Partners</div>
+          <div className="metric-value">{supporters.filter(s => s.supporterType === 'Corporate').length}</div>
+          <div className="metric-label">Corporate (this page)</div>
         </div>
         <div className="metric-card metric-card-rose">
-          <div className="metric-value">{mockDonations.length}</div>
-          <div className="metric-label">Total Transactions</div>
+          <div className="metric-value">{totalPages}</div>
+          <div className="metric-label">Pages</div>
         </div>
       </div>
 
-      {/* Add donor form */}
+      {/* Add form */}
       {showAddForm && (
         <div className="inline-form-card">
           <div className="inline-form-header">
             <h3><Plus size={16} /> Add New Donor</h3>
             <button className="btn-icon" onClick={() => setShowAddForm(false)}><X size={16} /></button>
           </div>
-          {formError && (
-            <div className="alert alert-error"><AlertCircle size={14} />{formError}</div>
-          )}
+          {formError && <div className="alert alert-error"><AlertCircle size={14} />{formError}</div>}
           <div className="form-row">
             <div className="form-group">
-              <label className="form-label">First Name *</label>
-              <input className="form-input" value={newDonor.firstName} onChange={(e) => setNewDonor({ ...newDonor, firstName: e.target.value })} placeholder="First name" />
+              <label className="form-label">Display Name *</label>
+              <input className="form-input" value={newSupporter.displayName} onChange={(e) => setNewSupporter({ ...newSupporter, displayName: e.target.value })} placeholder="Full name or org name" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">First Name</label>
+              <input className="form-input" value={newSupporter.firstName} onChange={(e) => setNewSupporter({ ...newSupporter, firstName: e.target.value })} placeholder="First name" />
             </div>
             <div className="form-group">
               <label className="form-label">Last Name</label>
-              <input className="form-input" value={newDonor.lastName} onChange={(e) => setNewDonor({ ...newDonor, lastName: e.target.value })} placeholder="Last name" />
+              <input className="form-input" value={newSupporter.lastName} onChange={(e) => setNewSupporter({ ...newSupporter, lastName: e.target.value })} placeholder="Last name" />
             </div>
             <div className="form-group">
-              <label className="form-label">Email *</label>
-              <input className="form-input" type="email" value={newDonor.email} onChange={(e) => setNewDonor({ ...newDonor, email: e.target.value })} placeholder="email@example.com" />
+              <label className="form-label">Email</label>
+              <input className="form-input" type="email" value={newSupporter.email} onChange={(e) => setNewSupporter({ ...newSupporter, email: e.target.value })} placeholder="email@example.com" />
             </div>
             <div className="form-group">
-              <label className="form-label">Donor Type</label>
-              <select className="form-select" value={newDonor.donorType} onChange={(e) => setNewDonor({ ...newDonor, donorType: e.target.value as DonorType })}>
-                {DONOR_TYPES.map((t) => <option key={t}>{t}</option>)}
+              <label className="form-label">Supporter Type</label>
+              <select className="form-select" value={newSupporter.supporterType} onChange={(e) => setNewSupporter({ ...newSupporter, supporterType: e.target.value })}>
+                {SUPPORTER_TYPES.map((t) => <option key={t}>{t}</option>)}
               </select>
             </div>
           </div>
           <div className="form-actions">
             <button className="btn btn-ghost" onClick={() => setShowAddForm(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handleAdd}><Check size={14} /> Save Donor</button>
+            <button className="btn btn-primary" onClick={handleAdd} disabled={saving}><Check size={14} /> {saving ? 'Saving...' : 'Save Donor'}</button>
           </div>
         </div>
       )}
@@ -191,71 +271,82 @@ export default function Donors() {
       <div className="filter-bar">
         <div className="search-wrapper">
           <Search size={16} className="search-icon" />
-          <input className="search-input" placeholder="Search by name or organization…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className="search-input" placeholder="Search by name or organization…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
         <div className="filter-group">
           <Filter size={14} />
-          <select className="form-select" value={filterType} onChange={(e) => setFilterType(e.target.value as typeof filterType)}>
+          <select className="form-select" value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(1); }}>
             <option value="All">All Types</option>
-            {DONOR_TYPES.map((t) => <option key={t}>{t}</option>)}
+            {SUPPORTER_TYPES.map((t) => <option key={t}>{t}</option>)}
           </select>
-          <select className="form-select" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}>
+          <select className="form-select" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
             <option value="All">All Status</option>
             <option>Active</option>
             <option>Inactive</option>
           </select>
         </div>
-        <span className="results-count">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
+        <span className="results-count">{total} result{total !== 1 ? 's' : ''}</span>
       </div>
 
       {/* Table */}
       <div className="table-card">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th className="sortable" onClick={() => handleSort('name')}>Name <SortIcon field="name" /></th>
-              <th>Type</th>
-              <th>Email</th>
-              <th className="sortable" onClick={() => handleSort('total')}>Total <SortIcon field="total" /></th>
-              <th className="sortable" onClick={() => handleSort('date')}>Last Donation <SortIcon field="date" /></th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((d) => (
-              <tr key={d.id}>
-                <td>
-                  <div className="table-name-cell">
-                    <div className="table-avatar"><Heart size={12} fill="currentColor" /></div>
-                    <div>
-                      <div className="table-name">{d.firstName} {d.lastName}</div>
-                      {d.organizationName && <div className="table-sub">{d.organizationName}</div>}
-                    </div>
-                  </div>
-                </td>
-                <td><span className={`type-badge type-${typeColors[d.donorType]}`}>{d.donorType}</span></td>
-                <td className="table-secondary">{d.email}</td>
-                <td><strong>${d.totalContributions.toLocaleString()}</strong></td>
-                <td className="table-secondary">{d.lastDonationDate ? new Date(d.lastDonationDate).toLocaleDateString('en-PH') : '—'}</td>
-                <td><span className={`status-badge status-${d.status.toLowerCase()}`}>{d.status}</span></td>
-                <td>
-                  <div className="action-btns">
-                    <button className="btn-icon" title="View" onClick={() => setSelectedDonor(d)}><Eye size={15} /></button>
-                    <button className="btn-icon" title="Edit"><Edit2 size={15} /></button>
-                    <button className="btn-icon btn-icon-danger" title="Delete"><Trash2 size={15} /></button>
-                  </div>
-                </td>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>Loading supporters...</div>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th className="sortable" onClick={() => handleSort('name')}>Name <SortIcon field="name" /></th>
+                <th>Type</th>
+                <th>Email</th>
+                <th>Region</th>
+                <th className="sortable" onClick={() => handleSort('date')}>First Donation <SortIcon field="date" /></th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan={7} className="empty-row"><AlertCircle size={16} /> No donors found matching your filters.</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {sorted.map((s) => (
+                <tr key={s.supporterId}>
+                  <td>
+                    <div className="table-name-cell">
+                      <div className="table-avatar"><Heart size={12} fill="currentColor" /></div>
+                      <div>
+                        <div className="table-name">{s.displayName}</div>
+                        {s.organizationName && <div className="table-sub">{s.organizationName}</div>}
+                      </div>
+                    </div>
+                  </td>
+                  <td><span className="category-chip">{s.supporterType}</span></td>
+                  <td className="table-secondary">{s.email || '—'}</td>
+                  <td className="table-secondary">{s.region || s.country || '—'}</td>
+                  <td className="table-secondary">{s.firstDonationDate ? new Date(s.firstDonationDate).toLocaleDateString() : '—'}</td>
+                  <td><span className={`status-badge status-${s.status?.toLowerCase()}`}>{s.status}</span></td>
+                  <td>
+                    <div className="action-btns">
+                      <button className="btn-icon" title="View" onClick={() => setSelectedId(s.supporterId)}><Eye size={15} /></button>
+                      <button className="btn-icon" title="Edit"><Edit2 size={15} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {sorted.length === 0 && (
+                <tr><td colSpan={7} className="empty-row"><AlertCircle size={16} /> No donors found.</td></tr>
+              )}
+            </tbody>
+          </table>
+        )}
+
+        {totalPages > 1 && (
+          <div className="pagination">
+            <button className="btn-icon" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}><ChevronDown size={16} /></button>
+            <span>Page {page} of {totalPages}</span>
+            <button className="btn-icon" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}><ChevronUp size={16} /></button>
+          </div>
+        )}
       </div>
 
-      {selectedDonor && <DonorModal donor={selectedDonor} onClose={() => setSelectedDonor(null)} />}
+      {selectedId !== null && <SupporterModal supporterId={selectedId} onClose={() => setSelectedId(null)} />}
     </div>
   );
 }
