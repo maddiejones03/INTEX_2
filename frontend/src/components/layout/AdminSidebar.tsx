@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FolderOpen, FileText,
-  Home, BarChart3, Heart, ChevronLeft, ChevronRight,
+  Home, BarChart3, Heart, ChevronLeft, ChevronRight, AlertCircle,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -13,6 +13,7 @@ const navItems = [
   { to: '/admin/visitation', label: 'Home Visitation', icon: Home },
   { to: '/admin/reports', label: 'Reports & Analytics', icon: BarChart3 },
   { to: '/admin/staff', label: 'Staff Management', icon: Users },
+  { to: '/admin/early-warning', label: 'Early Warning', icon: AlertCircle },
 ];
 
 export default function AdminSidebar() {

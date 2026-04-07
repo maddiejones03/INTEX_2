@@ -18,6 +18,7 @@ import ProcessRecording from './pages/admin/ProcessRecording';
 import HomeVisitation from './pages/admin/HomeVisitation';
 import Reports from './pages/admin/Reports';
 import StaffManagement from './pages/admin/StaffManagement';
+import EarlyWarning from './pages/admin/EarlyWarning';
 
 function PublicLayout() {
   return (
@@ -67,6 +68,7 @@ export default function App() {
             <Route path="visitation" element={<HomeVisitation />} />
             <Route path="reports" element={<Reports />} />
             <Route path="staff" element={<StaffManagement />} />
+            <Route path="early-warning" element={<EarlyWarning />} />
           </Route>
         </Routes>
       </AuthProvider>

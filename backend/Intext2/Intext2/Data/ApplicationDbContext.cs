@@ -26,6 +26,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<IncidentReport>         IncidentReports         { get; set; }
     public DbSet<SafehouseMonthlyMetric> SafehouseMonthlyMetrics { get; set; }
     public DbSet<PublicImpactSnapshot>   PublicImpactSnapshots   { get; set; }
+    public DbSet<ResidentEarlyWarning>   ResidentEarlyWarnings   { get; set; }
+    public DbSet<RiskAlert>              RiskAlerts              { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
