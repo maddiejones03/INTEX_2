@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 bin/
-obj/
+obj/.env
