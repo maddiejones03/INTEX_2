@@ -1,0 +1,1248 @@
+[
+  {
+    "supporter_id": 40,
+    "display_name": "Lena Nash",
+    "acquisition_channel": "WordOfMouth",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "High",
+    "risk_score": 0.9205,
+    "lifetime_value_php": 1646.05,
+    "priority_score": 1515.13,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "258 days since last gift \u2014 1.6x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 15,
+    "display_name": "Zoe Ortiz",
+    "acquisition_channel": "Website",
+    "supporter_type": "SkillsContributor",
+    "risk_tier": "High",
+    "risk_score": 0.8504,
+    "lifetime_value_php": 925.66,
+    "priority_score": 787.14,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "568 days since last gift \u2014 6.2x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 30,
+    "display_name": "Rina Davis",
+    "acquisition_channel": "SocialMedia",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.1161,
+    "lifetime_value_php": 4713.84,
+    "priority_score": 547.37,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 21,
+    "display_name": "June Usman",
+    "acquisition_channel": "PartnerReferral",
+    "supporter_type": "SocialMediaAdvocate",
+    "risk_tier": "Low",
+    "risk_score": 0.1446,
+    "lifetime_value_php": 2955.69,
+    "priority_score": 427.29,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 3 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 23,
+    "display_name": "Ria White",
+    "acquisition_channel": "Website",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Medium",
+    "risk_score": 0.6171,
+    "lifetime_value_php": 636.53,
+    "priority_score": 392.78,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "376 days since last gift \u2014 1.6x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 41,
+    "display_name": "Cleo Owens",
+    "acquisition_channel": "SocialMedia",
+    "supporter_type": "SocialMediaAdvocate",
+    "risk_tier": "Low",
+    "risk_score": 0.1272,
+    "lifetime_value_php": 2166.7,
+    "priority_score": 275.57,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "438 days since last gift \u2014 2.2x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 20,
+    "display_name": "Ezra Taylor",
+    "acquisition_channel": "PartnerReferral",
+    "supporter_type": "Volunteer",
+    "risk_tier": "Low",
+    "risk_score": 0.019,
+    "lifetime_value_php": 14240.29,
+    "priority_score": 270.61,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "330 days since last gift \u2014 6.4x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 4 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b114240 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 27,
+    "display_name": "Jules Abe",
+    "acquisition_channel": "WordOfMouth",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0432,
+    "lifetime_value_php": 4653.04,
+    "priority_score": 201.07,
+    "risk_reasons": [
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 3,
+    "display_name": "Noah Chen",
+    "acquisition_channel": "SocialMedia",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0125,
+    "lifetime_value_php": 12448.13,
+    "priority_score": 155.57,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "205 days since last gift \u2014 3.3x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 3 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b112448 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 39,
+    "display_name": "Ben Morris",
+    "acquisition_channel": "Event",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0632,
+    "lifetime_value_php": 1943.22,
+    "priority_score": 122.86,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "295 days since last gift \u2014 1.7x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 11,
+    "display_name": "Maya Kim",
+    "acquisition_channel": "SocialMedia",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0277,
+    "lifetime_value_php": 4395.62,
+    "priority_score": 121.68,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 8,
+    "display_name": "Isla Hernandez",
+    "acquisition_channel": "Church",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0117,
+    "lifetime_value_php": 9064.84,
+    "priority_score": 105.73,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b19065 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 36,
+    "display_name": "Lara Johnson",
+    "acquisition_channel": "WordOfMouth",
+    "supporter_type": "SocialMediaAdvocate",
+    "risk_tier": "Low",
+    "risk_score": 0.0241,
+    "lifetime_value_php": 4060.64,
+    "priority_score": 97.99,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "660 days since last gift \u2014 6.4x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 4,
+    "display_name": "Liam Diaz",
+    "acquisition_channel": "Church",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0088,
+    "lifetime_value_php": 9934.62,
+    "priority_score": 87.51,
+    "risk_reasons": [
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 3 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b19935 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 10,
+    "display_name": "Lucas Jones",
+    "acquisition_channel": "Event",
+    "supporter_type": "Volunteer",
+    "risk_tier": "Low",
+    "risk_score": 0.0248,
+    "lifetime_value_php": 3458.54,
+    "priority_score": 85.85,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 18,
+    "display_name": "Theo Reed",
+    "acquisition_channel": "WordOfMouth",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0248,
+    "lifetime_value_php": 3419.58,
+    "priority_score": 84.77,
+    "risk_reasons": [
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 9,
+    "display_name": "Sophia Ibrahim",
+    "acquisition_channel": "PartnerReferral",
+    "supporter_type": "Volunteer",
+    "risk_tier": "Low",
+    "risk_score": 0.008,
+    "lifetime_value_php": 10315.75,
+    "priority_score": 82.65,
+    "risk_reasons": [
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b110316 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 22,
+    "display_name": "Nico Vasquez",
+    "acquisition_channel": "WordOfMouth",
+    "supporter_type": "SkillsContributor",
+    "risk_tier": "Low",
+    "risk_score": 0.0191,
+    "lifetime_value_php": 4326.73,
+    "priority_score": 82.56,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 25,
+    "display_name": "Tina Young",
+    "acquisition_channel": "Church",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.007,
+    "lifetime_value_php": 11540.99,
+    "priority_score": 80.33,
+    "risk_reasons": [
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 3 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b111541 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 45,
+    "display_name": "Noel Turner",
+    "acquisition_channel": "SocialMedia",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0069,
+    "lifetime_value_php": 11184.74,
+    "priority_score": 77.25,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 3 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b111185 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 6,
+    "display_name": "Olivia Ford",
+    "acquisition_channel": "WordOfMouth",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0079,
+    "lifetime_value_php": 9574.27,
+    "priority_score": 75.68,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b19574 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 37,
+    "display_name": "Rae Klein",
+    "acquisition_channel": "Website",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.038,
+    "lifetime_value_php": 1992.44,
+    "priority_score": 75.62,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "449 days since last gift \u2014 2.5x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 32,
+    "display_name": "Luz Fisher",
+    "acquisition_channel": "Event",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0125,
+    "lifetime_value_php": 5685.9,
+    "priority_score": 70.89,
+    "risk_reasons": [
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b15686 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 31,
+    "display_name": "Jon Edwards",
+    "acquisition_channel": "Website",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0065,
+    "lifetime_value_php": 10003.36,
+    "priority_score": 65.48,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 3 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b110003 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 38,
+    "display_name": "Faith Partners",
+    "acquisition_channel": "WordOfMouth",
+    "supporter_type": "PartnerOrganization",
+    "risk_tier": "Low",
+    "risk_score": 0.0095,
+    "lifetime_value_php": 6792.7,
+    "priority_score": 64.6,
+    "risk_reasons": [
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b16793 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 13,
+    "display_name": "Hope Group",
+    "acquisition_channel": "PartnerReferral",
+    "supporter_type": "PartnerOrganization",
+    "risk_tier": "Low",
+    "risk_score": 0.0192,
+    "lifetime_value_php": 3256.82,
+    "priority_score": 62.69,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 5,
+    "display_name": "Emma Evans",
+    "acquisition_channel": "Website",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0128,
+    "lifetime_value_php": 4751.17,
+    "priority_score": 60.82,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 43,
+    "display_name": "Hugo Ross",
+    "acquisition_channel": "Website",
+    "supporter_type": "SocialMediaAdvocate",
+    "risk_tier": "Low",
+    "risk_score": 0.0178,
+    "lifetime_value_php": 3280.16,
+    "priority_score": 58.45,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 34,
+    "display_name": "Mia Hill",
+    "acquisition_channel": "Church",
+    "supporter_type": "SocialMediaAdvocate",
+    "risk_tier": "Low",
+    "risk_score": 0.0237,
+    "lifetime_value_php": 2428.81,
+    "priority_score": 57.6,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "334 days since last gift \u2014 3.6x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 26,
+    "display_name": "Margo Zhang",
+    "acquisition_channel": "WordOfMouth",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0078,
+    "lifetime_value_php": 7109.62,
+    "priority_score": 55.43,
+    "risk_reasons": [
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 3 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b17110 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 2,
+    "display_name": "Aria Brown",
+    "acquisition_channel": "SocialMedia",
+    "supporter_type": "Volunteer",
+    "risk_tier": "Low",
+    "risk_score": 0.0143,
+    "lifetime_value_php": 3877.36,
+    "priority_score": 55.34,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 16,
+    "display_name": "Iris Patel",
+    "acquisition_channel": "Website",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0204,
+    "lifetime_value_php": 2668.23,
+    "priority_score": 54.43,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 29,
+    "display_name": "Seth Clark",
+    "acquisition_channel": "Event",
+    "supporter_type": "Volunteer",
+    "risk_tier": "Low",
+    "risk_score": 0.0108,
+    "lifetime_value_php": 4837.31,
+    "priority_score": 52.07,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 24,
+    "display_name": "Sean Xu",
+    "acquisition_channel": "SocialMedia",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0124,
+    "lifetime_value_php": 4168.88,
+    "priority_score": 51.54,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "174 days since last gift \u2014 1.7x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 35,
+    "display_name": "Jose Inoue",
+    "acquisition_channel": "SocialMedia",
+    "supporter_type": "SocialMediaAdvocate",
+    "risk_tier": "Low",
+    "risk_score": 0.006,
+    "lifetime_value_php": 8547.74,
+    "priority_score": 51.1,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b18548 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 1,
+    "display_name": "Mila Alvarez",
+    "acquisition_channel": "SocialMedia",
+    "supporter_type": "SocialMediaAdvocate",
+    "risk_tier": "Low",
+    "risk_score": 0.0056,
+    "lifetime_value_php": 9000.03,
+    "priority_score": 50.24,
+    "risk_reasons": [
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b19000 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 7,
+    "display_name": "Ethan Garcia",
+    "acquisition_channel": "Event",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0079,
+    "lifetime_value_php": 6003.96,
+    "priority_score": 47.32,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b16004 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 12,
+    "display_name": "Ella Lopez",
+    "acquisition_channel": "Website",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0086,
+    "lifetime_value_php": 5002.38,
+    "priority_score": 43.07,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b15002 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 44,
+    "display_name": "Vera Stone",
+    "acquisition_channel": "WordOfMouth",
+    "supporter_type": "SocialMediaAdvocate",
+    "risk_tier": "Low",
+    "risk_score": 0.0068,
+    "lifetime_value_php": 6064.91,
+    "priority_score": 41.16,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      },
+      {
+        "code": "HIGH_VALUE",
+        "label": "Lifetime value \u20b16065 \u2014 high-priority relationship",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 42,
+    "display_name": "Finn Price",
+    "acquisition_channel": "Website",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0171,
+    "lifetime_value_php": 2146.77,
+    "priority_score": 36.69,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 33,
+    "display_name": "Tara Green",
+    "acquisition_channel": "PartnerReferral",
+    "supporter_type": "InKindDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0088,
+    "lifetime_value_php": 3794.98,
+    "priority_score": 33.48,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "370 days since last gift \u2014 3.6x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "AMOUNT_DECLINING",
+        "label": "Recent gift amounts are lower than historical average",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 19,
+    "display_name": "Nora Singh",
+    "acquisition_channel": "SocialMedia",
+    "supporter_type": "Volunteer",
+    "risk_tier": "Low",
+    "risk_score": 0.0085,
+    "lifetime_value_php": 3765.27,
+    "priority_score": 32.14,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 17,
+    "display_name": "Hana Quinn",
+    "acquisition_channel": "Website",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.0203,
+    "lifetime_value_php": 1406.67,
+    "priority_score": 28.62,
+    "risk_reasons": [
+      {
+        "code": "GAP_OVERDUE",
+        "label": "387 days since last gift \u2014 1.8x their usual gap",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CAMPAIGN_ENGAGED",
+        "label": "Has donated during 2 named campaigns \u2014 shows mission alignment",
+        "direction": "decreases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  },
+  {
+    "supporter_id": 14,
+    "display_name": "Owen Nguyen",
+    "acquisition_channel": "WordOfMouth",
+    "supporter_type": "MonetaryDonor",
+    "risk_tier": "Low",
+    "risk_score": 0.1155,
+    "lifetime_value_php": 27.12,
+    "priority_score": 3.13,
+    "risk_reasons": [
+      {
+        "code": "LOW_MOMENTUM",
+        "label": "Donation frequency has dropped recently",
+        "direction": "increases_risk"
+      },
+      {
+        "code": "CHANNEL_HIGH_RISK",
+        "label": "Acquisition channel historically shows higher lapse rate",
+        "direction": "increases_risk"
+      }
+    ],
+    "last_scored_at": "2026-04-06T23:40:25.119689Z",
+    "snooze_until": null
+  }
+]
