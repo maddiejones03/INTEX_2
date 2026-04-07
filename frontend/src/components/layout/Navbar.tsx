@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { logoutUser } from '../../services/authApi';
 import { Menu, X, Heart, ChevronDown, LogOut, User } from 'lucide-react';
 
 export default function Navbar() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, authSession, refreshAuthSession } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -12,8 +13,9 @@ export default function Navbar() {
 
   const isAdmin = location.pathname.startsWith('/admin');
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logoutUser();
+    await refreshAuthSession();
     navigate('/');
     setProfileOpen(false);
   };
@@ -58,18 +60,20 @@ export default function Navbar() {
                 onClick={() => setProfileOpen(!profileOpen)}
               >
                 <div className="avatar">
-                  {user?.firstName[0]}{user?.lastName[0]}
+                  {authSession.username?.[0]?.toUpperCase() ?? 'U'}
                 </div>
-                <span className="profile-name">{user?.firstName}</span>
+                <span className="profile-name">{authSession.username}</span>
                 <ChevronDown size={14} />
               </button>
               {profileOpen && (
                 <div className="profile-dropdown">
                   <div className="profile-dropdown-header">
-                    <div className="avatar avatar-lg">{user?.firstName[0]}{user?.lastName[0]}</div>
+                    <div className="avatar avatar-lg">
+                      {authSession.username?.[0]?.toUpperCase() ?? 'U'}
+                    </div>
                     <div>
-                      <div className="profile-dropdown-name">{user?.firstName} {user?.lastName}</div>
-                      <div className="profile-dropdown-role">{user?.role}</div>
+                      <div className="profile-dropdown-name">{authSession.username}</div>
+                      <div className="profile-dropdown-role">{authSession.roles[0] ?? 'User'}</div>
                     </div>
                   </div>
                   <div className="profile-dropdown-divider" />
@@ -120,7 +124,11 @@ export default function Navbar() {
             </Link>
           )}
           {isAuthenticated && (
-            <button className="mobile-menu-link" onClick={handleLogout} style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}>
+            <button
+              className="mobile-menu-link"
+              onClick={handleLogout}
+              style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
               Sign Out
             </button>
           )}
