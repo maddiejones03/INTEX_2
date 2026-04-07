@@ -313,7 +313,7 @@ export default function EarlyWarning() {
                       <YAxis domain={[1, 4]} tick={{ fontSize: 9 }} />
                       <Tooltip
                         contentStyle={{ fontSize: '11px' }}
-                        formatter={(v: number) => [v.toFixed(2), 'Cooperation']}
+                        formatter={(v) => [v != null ? Number(v).toFixed(2) : '', 'Cooperation']}
                       />
                       {/* OKR reference: target slope of +0.5/quarter ≈ +0.167/month */}
                       <ReferenceLine
