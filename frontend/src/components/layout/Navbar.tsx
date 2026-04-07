@@ -29,7 +29,7 @@ export default function Navbar() {
       <div className="navbar-inner">
         <Link to="/" className="navbar-brand" onClick={() => setMobileOpen(false)}>
           <Heart size={22} fill="currentColor" />
-          <span>Kanlungan Foundation</span>
+          <span>Laya Foundation</span>
         </Link>
 
         {!isAdmin && (

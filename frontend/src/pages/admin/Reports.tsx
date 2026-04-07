@@ -32,9 +32,9 @@ const annualReport = {
 };
 
 function formatCurrency(value: number) {
-  if (value >= 1000000) return `₱${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `₱${(value / 1000).toFixed(0)}K`;
-  return `₱${value}`;
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+  return `$${value}`;
 }
 
 export default function Reports() {
@@ -85,7 +85,7 @@ export default function Reports() {
         </div>
         <div className="metric-card metric-card-rose">
           <div className="metric-icon icon-rose"><Heart size={18} /></div>
-          <div className="metric-value">₱6.44M</div>
+          <div className="metric-value">$6.44M</div>
           <div className="metric-label">Donations (2024)</div>
           <div className="metric-sub">+12% from 2023</div>
         </div>

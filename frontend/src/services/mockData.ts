@@ -14,14 +14,14 @@ import type {
 export const mockSafeHouses: SafeHouse[] = [
   { id: 1, name: 'Tahanan ng Pag-asa', location: 'Quezon City', capacity: 30, currentOccupancy: 22, contactPerson: 'Ana Dela Cruz', contactNumber: '+63 2 8123 4567', isActive: true },
   { id: 2, name: 'Bahay Kalinga', location: 'Manila', capacity: 25, currentOccupancy: 19, contactPerson: 'Pedro Lim', contactNumber: '+63 2 8234 5678', isActive: true },
-  { id: 3, name: 'Kanlungan Center', location: 'Makati', capacity: 20, currentOccupancy: 14, contactPerson: 'Rosa Garcia', contactNumber: '+63 2 8345 6789', isActive: true },
+  { id: 3, name: 'Laya Center', location: 'Makati', capacity: 20, currentOccupancy: 14, contactPerson: 'Rosa Garcia', contactNumber: '+63 2 8345 6789', isActive: true },
 ];
 
 export const mockSocialWorkers: SocialWorker[] = [
-  { id: 1, firstName: 'Maria', lastName: 'Santos', email: 'msantos@kanlungan.org', safeHouseId: 1, safeHouseName: 'Tahanan ng Pag-asa', caseload: 8, isActive: true },
-  { id: 2, firstName: 'Jose', lastName: 'Reyes', email: 'jreyes@kanlungan.org', safeHouseId: 2, safeHouseName: 'Bahay Kalinga', caseload: 7, isActive: true },
-  { id: 3, firstName: 'Ana', lastName: 'Dela Cruz', email: 'adelacruz@kanlungan.org', safeHouseId: 1, safeHouseName: 'Tahanan ng Pag-asa', caseload: 6, isActive: true },
-  { id: 4, firstName: 'Carlos', lastName: 'Mendoza', email: 'cmendoza@kanlungan.org', safeHouseId: 3, safeHouseName: 'Kanlungan Center', caseload: 9, isActive: true },
+  { id: 1, firstName: 'Maria', lastName: 'Santos', email: 'msantos@layafoundation.org', safeHouseId: 1, safeHouseName: 'Tahanan ng Pag-asa', caseload: 8, isActive: true },
+  { id: 2, firstName: 'Jose', lastName: 'Reyes', email: 'jreyes@layafoundation.org', safeHouseId: 2, safeHouseName: 'Bahay Kalinga', caseload: 7, isActive: true },
+  { id: 3, firstName: 'Ana', lastName: 'Dela Cruz', email: 'adelacruz@layafoundation.org', safeHouseId: 1, safeHouseName: 'Tahanan ng Pag-asa', caseload: 6, isActive: true },
+  { id: 4, firstName: 'Carlos', lastName: 'Mendoza', email: 'cmendoza@layafoundation.org', safeHouseId: 3, safeHouseName: 'Laya Center', caseload: 9, isActive: true },
 ];
 
 export const mockResidents: Resident[] = [
@@ -53,7 +53,7 @@ export const mockResidents: Resident[] = [
   {
     id: 3, caseNumber: 'KF-2024-003', firstName: 'Ramon', lastName: 'Bautista',
     dateOfBirth: '2012-11-05', age: 11, gender: 'Male', address: 'Caloocan City',
-    safeHouseId: 3, safeHouseName: 'Kanlungan Center',
+    safeHouseId: 3, safeHouseName: 'Laya Center',
     caseCategory: 'Neglect', caseSubCategory: ['Physical Neglect', 'Educational Neglect'],
     caseStatus: 'Active', admissionDate: '2024-03-01',
     referralSource: 'Barangay Social Services', assignedSocialWorkerId: 4, assignedSocialWorkerName: 'Carlos Mendoza',

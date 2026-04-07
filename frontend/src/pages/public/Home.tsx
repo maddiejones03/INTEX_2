@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom';
 import {
   Heart, Shield, BookOpen, Users, ArrowRight,
-  TrendingUp, Home as HomeIcon, Star, ChevronRight,
+  TrendingUp, Home as HomeIcon, Star, ChevronRight, Quote, Sprout, Leaf,
 } from 'lucide-react';
 
 const stats = [
   { value: '1,200+', label: 'Survivors Served', desc: 'Since our founding in 2008' },
   { value: '3', label: 'Safe Houses', desc: 'Across Metro Manila' },
   { value: '94%', label: 'Reintegration Rate', desc: 'Successfully returned to families or communities' },
-  { value: '₱8.2M', label: 'Annual Budget', desc: 'Fully donor-funded' },
+  { value: '$8.2M', label: 'Annual Budget', desc: 'Fully donor-funded' },
 ];
 
 const programs = [
@@ -17,55 +17,88 @@ const programs = [
     title: 'Crisis Shelter',
     desc: 'Immediate, safe, confidential shelter for survivors of trafficking, abuse, and neglect.',
     color: 'blue',
+    image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=1200&q=80',
   },
   {
     icon: Heart,
     title: 'Healing & Therapy',
     desc: 'Trauma-informed counseling, individual and group therapy, and psychiatric support.',
     color: 'rose',
+    image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1200&q=80',
   },
   {
     icon: BookOpen,
     title: 'Education Support',
     desc: 'Alternative learning, formal schooling, and vocational training for lasting independence.',
     color: 'amber',
+    image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1200&q=80',
   },
   {
     icon: HomeIcon,
     title: 'Reintegration',
     desc: 'Family reunification, community placement, and post-placement monitoring for every resident.',
     color: 'green',
+    image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1200&q=80',
   },
   {
     icon: Users,
     title: 'Family Strengthening',
     desc: 'Parent support groups, livelihood training, and community case conferences.',
     color: 'purple',
+    image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80',
   },
   {
     icon: TrendingUp,
     title: 'Livelihood Training',
     desc: 'Practical skills and micro-enterprise support to help survivors and families thrive.',
     color: 'teal',
+    image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80',
   },
 ];
 
 const testimonials = [
   {
-    quote: "Kanlungan gave me back my life. I am now in college studying criminology so I can help others like me.",
+    quote: "Laya gave me back my life. I am now in college studying criminology so I can help others like me.",
     name: 'Survivor, Age 20',
     year: 'Resident 2019–2021',
+    image: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=600&q=80',
   },
   {
     quote: "The social workers here did not give up on my daughter. Today our family is together and stronger than ever.",
     name: 'Parent',
     year: 'Family Reintegration 2022',
+    image: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?auto=format&fit=crop&w=600&q=80',
   },
   {
-    quote: "Volunteering at Kanlungan changed how I see the world. These children are resilient beyond imagination.",
+    quote: "Volunteering at Laya changed how I see the world. These children are resilient beyond imagination.",
     name: 'Volunteer Social Worker',
     year: 'Partner since 2020',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
   },
+];
+
+const stories = [
+  {
+    image: 'https://images.unsplash.com/photo-1542204625-de293a0f5d16?auto=format&fit=crop&w=1200&q=80',
+    alt: 'A young woman smiling at her graduation',
+    quote: "I used to think freedom was just a word. Now I live it every day.",
+    name: 'Maria, Age 22',
+    tag: 'Education Graduate',
+  },
+  {
+    image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1200&q=80',
+    alt: 'A family reuniting outdoors',
+    quote: "The Laya team helped us become a family again. We are healing together.",
+    name: 'Elena & Family',
+    tag: 'Family Reintegration',
+  },
+];
+
+const galleryImages = [
+  'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1459183885421-5cc683b8dbba?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1469571486292-b53601020fbb?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=1200&q=80',
 ];
 
 const partners = [
@@ -77,21 +110,36 @@ const partners = [
   'SM Foundation',
 ];
 
+const growthPillars = [
+  { title: 'Growth', text: 'Healing is a process we nurture every day.' },
+  { title: 'Renewal', text: 'Residents rebuild confidence, purpose, and belonging.' },
+  { title: 'Future', text: 'Each step forward opens new life opportunities.' },
+];
+
 export default function Home() {
   return (
     <div className="page-home">
       {/* Hero */}
       <section className="hero">
-        <div className="hero-bg" />
+        <div className="hero-botanical-overlay" />
+        <div
+          className="hero-image-overlay"
+          style={{
+            position: 'absolute', inset: 0, zIndex: 0,
+            backgroundImage: 'url(https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=2000&q=80)',
+            backgroundSize: 'cover', backgroundPosition: 'center',
+            opacity: 0.24,
+          }}
+        />
         <div className="hero-content">
           <div className="hero-badge">
             <Heart size={14} fill="currentColor" /> Non-Profit Organization since 2008
           </div>
           <h1 className="hero-title">
-            Shelter. Healing. <span className="text-accent">Hope.</span>
+            Free. Whole. <span className="text-accent">Home.</span>
           </h1>
           <p className="hero-subtitle">
-            Kanlungan Foundation provides safety, professional care, and a pathway to a better life
+            Laya Foundation provides safety, professional care, and a pathway to a better life
             for children and young women who have survived trafficking, abuse, and neglect in the Philippines.
           </p>
           <div className="hero-actions">
@@ -120,13 +168,29 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="botanical-strip">
+        <div className="container">
+          <div className="botanical-grid">
+            {growthPillars.map((p) => (
+              <div key={p.title} className="botanical-item">
+                <Sprout size={18} className="botanical-icon" />
+                <div>
+                  <strong>{p.title}</strong>
+                  <p>{p.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Mission */}
       <section className="section">
         <div className="container container-narrow">
           <div className="section-label">Our Mission</div>
           <h2 className="section-title">A refuge for those who need it most</h2>
           <p className="section-body">
-            Every child deserves safety, dignity, and the chance to heal. Kanlungan Foundation operates
+            Every child deserves safety, dignity, and the chance to heal. Laya Foundation operates
             residential care facilities — "safe houses" — where survivors of trafficking, physical, sexual,
             and psychological abuse receive holistic care guided by Philippine social welfare standards.
             Our multidisciplinary team of social workers, psychologists, and case managers walks alongside
@@ -134,26 +198,72 @@ export default function Home() {
           </p>
           <div className="mission-values">
             {['Dignity', 'Safety', 'Healing', 'Empowerment', 'Community'].map((v) => (
-              <span key={v} className="value-chip">{v}</span>
+              <span key={v} className="value-chip"><Leaf size={13} /> {v}</span>
             ))}
           </div>
         </div>
       </section>
 
       {/* Programs */}
-      <section className="section section-alt">
+      <section className="section section-alt" style={{ paddingTop: '2rem' }}>
         <div className="container">
           <div className="section-label">What We Do</div>
           <h2 className="section-title">Comprehensive care at every step</h2>
           <div className="programs-grid">
             {programs.map((p) => (
               <div key={p.title} className={`program-card program-card-${p.color}`}>
+                <img src={p.image} alt={p.title} className="program-photo" loading="lazy" />
                 <div className={`program-icon program-icon-${p.color}`}>
                   <p.icon size={22} />
                 </div>
                 <h3>{p.title}</h3>
                 <p>{p.desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Stories of Hope */}
+      <section className="section" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
+        <div className="container">
+          <div className="section-label">Stories of Hope</div>
+          <h2 className="section-title">Lives transformed by freedom</h2>
+          <div className="stories-grid">
+            {stories.map((s) => (
+              <div key={s.name} className="story-card">
+                <div className="story-image-wrap">
+                  <img
+                    src={s.image}
+                    alt={s.alt}
+                    className="story-image"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <div className="story-image-placeholder">
+                    <Heart size={32} style={{ color: 'var(--primary-light)', opacity: 0.5 }} />
+                  </div>
+                </div>
+                <div className="story-body">
+                  <Quote size={20} className="story-quote-icon" />
+                  <p className="story-quote">"{s.quote}"</p>
+                  <div className="story-author">
+                    <strong>{s.name}</strong>
+                    <span className="value-chip" style={{ fontSize: '0.75rem' }}>{s.tag}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <div className="section-label">In the Field</div>
+          <h2 className="section-title">A closer look at daily impact</h2>
+          <div className="photo-grid">
+            {galleryImages.map((src, i) => (
+              <img key={i} src={src} alt="Laya Foundation outreach and care work" className="gallery-photo" loading="lazy" />
             ))}
           </div>
         </div>
@@ -196,6 +306,7 @@ export default function Home() {
           <div className="testimonials-grid">
             {testimonials.map((t, i) => (
               <div key={i} className="testimonial-card">
+                <img src={t.image} alt={t.name} className="testimonial-photo" loading="lazy" />
                 <div className="testimonial-stars">
                   {[...Array(5)].map((_, j) => <Star key={j} size={14} fill="currentColor" />)}
                 </div>
@@ -220,7 +331,7 @@ export default function Home() {
             100% of donations go directly to our programs.
           </p>
           <div className="donate-amounts">
-            {['₱500', '₱1,000', '₱5,000', '₱10,000', 'Custom'].map((amt) => (
+            {['$500', '$1,000', '$5,000', '$10,000', 'Custom'].map((amt) => (
               <button key={amt} className="btn btn-outline donate-amt-btn">{amt}</button>
             ))}
           </div>

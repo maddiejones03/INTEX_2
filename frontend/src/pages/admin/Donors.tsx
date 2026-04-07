@@ -34,7 +34,7 @@ function DonorModal({ donor, onClose }: { donor: Donor | null; onClose: () => vo
             <div className="detail-item"><span>Phone</span><strong>{donor.phone || '—'}</strong></div>
             <div className="detail-item"><span>Type</span><span className={`type-badge type-${typeColors[donor.donorType]}`}>{donor.donorType}</span></div>
             <div className="detail-item"><span>Status</span><span className={`status-badge status-${donor.status.toLowerCase()}`}>{donor.status}</span></div>
-            <div className="detail-item"><span>Total Contributions</span><strong>₱{donor.totalContributions.toLocaleString()}</strong></div>
+            <div className="detail-item"><span>Total Contributions</span><strong>${donor.totalContributions.toLocaleString()}</strong></div>
             <div className="detail-item"><span>Last Donation</span><strong>{donor.lastDonationDate ? new Date(donor.lastDonationDate).toLocaleDateString('en-PH') : '—'}</strong></div>
           </div>
           {donations.length > 0 && (
@@ -49,7 +49,7 @@ function DonorModal({ donor, onClose }: { donor: Donor | null; onClose: () => vo
                     <span>{new Date(d.date).toLocaleDateString('en-PH')}</span>
                     <span><span className={`type-badge type-${typeColors[d.type]}`}>{d.type}</span></span>
                     <span>{d.description}</span>
-                    <span>{d.amount ? `₱${d.amount.toLocaleString()}` : 'In-kind'}</span>
+                    <span>{d.amount ? `$${d.amount.toLocaleString()}` : 'In-kind'}</span>
                   </div>
                 ))}
               </div>
@@ -133,7 +133,7 @@ export default function Donors() {
       {/* Summary row */}
       <div className="metrics-grid metrics-grid-4">
         <div className="metric-card metric-card-green">
-          <div className="metric-value">₱{(totalDonations / 1000000).toFixed(2)}M</div>
+          <div className="metric-value">${(totalDonations / 1000000).toFixed(2)}M</div>
           <div className="metric-label">Total Contributions</div>
         </div>
         <div className="metric-card metric-card-blue">
@@ -236,7 +236,7 @@ export default function Donors() {
                 </td>
                 <td><span className={`type-badge type-${typeColors[d.donorType]}`}>{d.donorType}</span></td>
                 <td className="table-secondary">{d.email}</td>
-                <td><strong>₱{d.totalContributions.toLocaleString()}</strong></td>
+                <td><strong>${d.totalContributions.toLocaleString()}</strong></td>
                 <td className="table-secondary">{d.lastDonationDate ? new Date(d.lastDonationDate).toLocaleDateString('en-PH') : '—'}</td>
                 <td><span className={`status-badge status-${d.status.toLowerCase()}`}>{d.status}</span></td>
                 <td>

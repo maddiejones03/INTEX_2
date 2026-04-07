@@ -38,7 +38,7 @@ export default function Login() {
           <div className="login-logo">
             <Heart size={28} fill="currentColor" />
           </div>
-          <h1>Kanlungan Foundation</h1>
+          <h1>Laya Foundation</h1>
           <p>Staff &amp; Admin Portal</p>
         </div>
 

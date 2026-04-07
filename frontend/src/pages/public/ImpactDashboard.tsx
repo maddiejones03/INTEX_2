@@ -9,7 +9,7 @@ const impactHighlights = [
   { icon: Users, label: 'Total Residents Served (2024)', value: '147', sub: '+18% from 2023', color: 'blue' },
   { icon: Home, label: 'Currently in Safe Houses', value: '55', sub: 'Across 3 facilities', color: 'green' },
   { icon: Heart, label: 'Total Reintegrated (All Time)', value: '1,089', sub: '94% success rate', color: 'rose' },
-  { icon: TrendingUp, label: 'Donations This Year', value: '₱6.44M', sub: '+12% from last year', color: 'amber' },
+  { icon: TrendingUp, label: 'Donations This Year', value: '$6.44M', sub: '+12% from last year', color: 'amber' },
   { icon: BookOpen, label: 'In Education Programs', value: '82', sub: '56% enrolled in formal schooling', color: 'purple' },
   { icon: Activity, label: 'Counseling Sessions (YTD)', value: '1,340', sub: 'Avg. 9 sessions per resident', color: 'teal' },
 ];
@@ -23,12 +23,12 @@ const caseDistribution = [
   { name: 'Abandoned', value: 8 },
 ];
 
-const COLORS = ['#3b82f6', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#06b6d4'];
+const COLORS = ['#4f8a68', '#6aa17f', '#5a9b76', '#e99bb8', '#f0b6cc', '#f7d3e1'];
 
 const safeHouseData = [
   { name: 'Tahanan ng Pag-asa', capacity: 30, occupied: 22, reintegrated: 48 },
   { name: 'Bahay Kalinga', capacity: 25, occupied: 19, reintegrated: 39 },
-  { name: 'Kanlungan Center', capacity: 20, occupied: 14, reintegrated: 31 },
+  { name: 'Laya Center', capacity: 20, occupied: 14, reintegrated: 31 },
 ];
 
 const outcomeProgressData = [
@@ -40,9 +40,9 @@ const outcomeProgressData = [
 ];
 
 function formatCurrency(value: number) {
-  if (value >= 1000000) return `₱${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `₱${(value / 1000).toFixed(0)}K`;
-  return `₱${value}`;
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+  return `$${value}`;
 }
 
 export default function ImpactDashboard() {
@@ -85,12 +85,12 @@ export default function ImpactDashboard() {
               <AreaChart data={mockDonationTrends} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorMonetary" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#4f8a68" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#4f8a68" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorInKind" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#6aa17f" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#6aa17f" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -98,9 +98,9 @@ export default function ImpactDashboard() {
                 <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                 <Legend />
-                <Area type="monotone" dataKey="monetary" name="Monetary" stroke="#3b82f6" fill="url(#colorMonetary)" strokeWidth={2} />
-                <Area type="monotone" dataKey="inKind" name="In-Kind" stroke="#10b981" fill="url(#colorInKind)" strokeWidth={2} />
-                <Area type="monotone" dataKey="volunteer" name="Volunteer" stroke="#f59e0b" fill="none" strokeWidth={2} strokeDasharray="5 5" />
+                <Area type="monotone" dataKey="monetary" name="Monetary" stroke="#4f8a68" fill="url(#colorMonetary)" strokeWidth={2} />
+                <Area type="monotone" dataKey="inKind" name="In-Kind" stroke="#6aa17f" fill="url(#colorInKind)" strokeWidth={2} />
+                <Area type="monotone" dataKey="volunteer" name="Volunteer" stroke="#e99bb8" fill="none" strokeWidth={2} strokeDasharray="5 5" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -135,9 +135,9 @@ export default function ImpactDashboard() {
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="capacity" name="Capacity" fill="#e2e8f0" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="occupied" name="Occupied" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="reintegrated" name="Reintegrated (All Time)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="capacity" name="Capacity" fill="#e7f4eb" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="occupied" name="Occupied" fill="#4f8a68" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="reintegrated" name="Reintegrated (All Time)" fill="#6aa17f" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -157,9 +157,9 @@ export default function ImpactDashboard() {
                 <YAxis dataKey="category" type="category" tick={{ fontSize: 12 }} width={110} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="reintegrated" name="Reintegrated" fill="#10b981" stackId="a" />
-                <Bar dataKey="inProgress" name="In Progress" fill="#3b82f6" stackId="a" />
-                <Bar dataKey="transferred" name="Transferred" fill="#f59e0b" stackId="a" />
+                <Bar dataKey="reintegrated" name="Reintegrated" fill="#6aa17f" stackId="a" />
+                <Bar dataKey="inProgress" name="In Progress" fill="#4f8a68" stackId="a" />
+                <Bar dataKey="transferred" name="Transferred" fill="#e99bb8" stackId="a" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -179,9 +179,9 @@ export default function ImpactDashboard() {
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="reintegrated" name="Reintegrated" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="transferred" name="Transferred" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="independent" name="Independent Living" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="reintegrated" name="Reintegrated" fill="#6aa17f" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="transferred" name="Transferred" fill="#e99bb8" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="independent" name="Independent Living" fill="#f0b6cc" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
