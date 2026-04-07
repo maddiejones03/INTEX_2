@@ -13,7 +13,7 @@ Usage:
     python batch_predictions.py --sqlite cleaned/lighthouse.db
 
     # With a custom model path:
-    python batch_predictions.py --sqlite cleaned/lighthouse.db --model cleaned/early_warning_model.pkl
+    python batch_predictions.py --sqlite cleaned/lighthouse.db --model early_warning_model.pkl
 """
 
 import argparse
@@ -400,17 +400,27 @@ def compute_early_warning_scores(
     return pd.DataFrame(rows)
 
 
+def merge_resident_early_warning(
+    cooperation: pd.DataFrame, scores: pd.DataFrame
+) -> pd.DataFrame:
+    """Merge cooperation trajectories + ML scores into a single resident-level table."""
+    merged = cooperation.merge(
+        scores.drop(columns=["computed_at"], errors="ignore"),
+        on="resident_id",
+        how="outer",
+    )
+    return merged
+
+
 def write_tables(engine, cooperation: pd.DataFrame, alerts: pd.DataFrame,
                  scores: pd.DataFrame) -> None:
     """Write output tables to the database, replacing any existing data."""
-    cooperation.to_sql("cooperation_trajectories", engine, if_exists="replace", index=False)
-    print(f"  cooperation_trajectories: {len(cooperation)} rows written")
+    resident_ew = merge_resident_early_warning(cooperation, scores)
+    resident_ew.to_sql("resident_early_warning", engine, if_exists="replace", index=False)
+    print(f"  resident_early_warning: {len(resident_ew)} rows written")
 
     alerts.to_sql("risk_alerts", engine, if_exists="replace", index=False)
     print(f"  risk_alerts: {len(alerts)} rows written")
-
-    scores.to_sql("early_warning_scores", engine, if_exists="replace", index=False)
-    print(f"  early_warning_scores: {len(scores)} rows written")
 
 
 def run(args) -> None:
@@ -460,7 +470,7 @@ def run(args) -> None:
     cat_counts = scores["risk_category"].value_counts().to_dict()
     print(f"  {len(scores)} scores computed: {cat_counts}")
 
-    print("\nWriting results to database...")
+    print("\n[Writing] Merging trajectories + scores → resident_early_warning, writing alerts...")
     write_tables(engine, trajectories, alerts, scores)
 
     print("\nDone.")
@@ -473,7 +483,7 @@ if __name__ == "__main__":
         help="Path to SQLite database (for local testing instead of SQL Server)"
     )
     parser.add_argument(
-        "--model", type=str, default="cleaned/early_warning_model.pkl",
+        "--model", type=str, default="early_warning_model.pkl",
         help="Path to the trained model .pkl file"
     )
     args = parser.parse_args()

@@ -205,3 +205,31 @@ export interface OutcomeMetric {
   inProgress: number;
   transferred: number;
 }
+
+export interface ResidentEarlyWarning {
+  residentId: number;
+  trendDirection: 'Improving' | 'Stable' | 'Declining' | null;
+  cooperationSlope3m: number | null;
+  cooperationSlopeAll: number | null;
+  currentCooperationScore: number | null;
+  totalVisits: number | null;
+  pctFavorableOutcomes: number | null;
+  pctSafetyConcerns: number | null;
+  riskRegressionProbability: number | null;
+  riskCategory: 'Low' | 'Moderate' | 'High' | 'Critical' | null;
+  topRiskFactor1: string | null;
+  topRiskFactor2: string | null;
+  topRiskFactor3: string | null;
+  modelName: string | null;
+  computedAt: string | null;
+}
+
+export interface RiskAlert {
+  alertId: number;
+  residentId: number;
+  alertType: string;
+  severity: 'High' | 'Medium' | 'Low';
+  detail: string;
+  currentRiskLevel: string | null;
+  computedAt: string | null;
+}
