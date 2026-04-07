@@ -1,0 +1,149 @@
+{
+  "generated_at": "2026-04-07",
+  "model": "OLS with safehouse fixed effects (Model B)",
+  "observations": 187,
+  "safehouses": 9,
+  "date_range": {
+    "from": "2023-01",
+    "to": "2026-01"
+  },
+  "model_fit": {
+    "education_r_squared": 0.2013,
+    "education_adj_r_squared": 0.1363,
+    "health_r_squared": 0.5293,
+    "health_adj_r_squared": 0.491
+  },
+  "education_progress_coefficients": {
+    "Education": {
+      "coef": -4.6214,
+      "p_value": 0.0462,
+      "ci_lower": -9.1648,
+      "ci_upper": -0.078
+    },
+    "Maintenance": {
+      "coef": 0.8485,
+      "p_value": 0.7226,
+      "ci_lower": -3.8618,
+      "ci_upper": 5.5587
+    },
+    "Operations": {
+      "coef": -0.9349,
+      "p_value": 0.6858,
+      "ci_lower": -5.4888,
+      "ci_upper": 3.6189
+    },
+    "Outreach": {
+      "coef": -3.299,
+      "p_value": 0.4417,
+      "ci_lower": -11.7438,
+      "ci_upper": 5.1458
+    },
+    "Transport": {
+      "coef": -0.907,
+      "p_value": 0.8053,
+      "ci_lower": -8.1577,
+      "ci_upper": 6.3436
+    },
+    "Wellbeing": {
+      "coef": 3.6176,
+      "p_value": 0.1981,
+      "ci_lower": -1.9094,
+      "ci_upper": 9.1446
+    }
+  },
+  "health_score_coefficients": {
+    "Education": {
+      "coef": 0.0118,
+      "p_value": 0.6079,
+      "ci_lower": -0.0334,
+      "ci_upper": 0.057
+    },
+    "Maintenance": {
+      "coef": -0.0021,
+      "p_value": 0.9301,
+      "ci_lower": -0.0489,
+      "ci_upper": 0.0448
+    },
+    "Operations": {
+      "coef": 0.0006,
+      "p_value": 0.9803,
+      "ci_lower": -0.0447,
+      "ci_upper": 0.0459
+    },
+    "Outreach": {
+      "coef": -0.05,
+      "p_value": 0.2419,
+      "ci_lower": -0.134,
+      "ci_upper": 0.034
+    },
+    "Transport": {
+      "coef": -0.0055,
+      "p_value": 0.8797,
+      "ci_lower": -0.0777,
+      "ci_upper": 0.0666
+    },
+    "Wellbeing": {
+      "coef": -0.0259,
+      "p_value": 0.3534,
+      "ci_lower": -0.0809,
+      "ci_upper": 0.0291
+    }
+  },
+  "program_area_ranking": [
+    {
+      "rank": 1,
+      "program_area": "Wellbeing",
+      "edu_coef": 3.6176,
+      "health_coef": -0.0259,
+      "avg_impact": 1.7958,
+      "interpretation": "For every additional 1,000 PHP allocated to Wellbeing, education progress changes by +3.62 points the following month (controlling for safehouse differences)"
+    },
+    {
+      "rank": 2,
+      "program_area": "Maintenance",
+      "edu_coef": 0.8485,
+      "health_coef": -0.0021,
+      "avg_impact": 0.4232,
+      "interpretation": "For every additional 1,000 PHP allocated to Maintenance, education progress changes by +0.85 points the following month (controlling for safehouse differences)"
+    },
+    {
+      "rank": 3,
+      "program_area": "Transport",
+      "edu_coef": -0.907,
+      "health_coef": -0.0055,
+      "avg_impact": -0.4562,
+      "interpretation": "For every additional 1,000 PHP allocated to Transport, education progress changes by -0.91 points the following month (controlling for safehouse differences)"
+    },
+    {
+      "rank": 4,
+      "program_area": "Operations",
+      "edu_coef": -0.9349,
+      "health_coef": 0.0006,
+      "avg_impact": -0.4671,
+      "interpretation": "For every additional 1,000 PHP allocated to Operations, education progress changes by -0.93 points the following month (controlling for safehouse differences)"
+    },
+    {
+      "rank": 5,
+      "program_area": "Outreach",
+      "edu_coef": -3.299,
+      "health_coef": -0.05,
+      "avg_impact": -1.6745,
+      "interpretation": "For every additional 1,000 PHP allocated to Outreach, education progress changes by -3.30 points the following month (controlling for safehouse differences)"
+    },
+    {
+      "rank": 6,
+      "program_area": "Education",
+      "edu_coef": -4.6214,
+      "health_coef": 0.0118,
+      "avg_impact": -2.3048,
+      "interpretation": "For every additional 1,000 PHP allocated to Education, education progress changes by -4.62 points the following month (controlling for safehouse differences)"
+    }
+  ],
+  "key_finding": "Wellbeing funding shows the strongest positive association with education outcomes (+3.62 points per 1,000 PHP). Education funding shows a negative coefficient (-4.62) consistent with targeting bias \u2014 struggling safehouses receive more education resources because they need them.",
+  "limitations": [
+    "Correlation is not causation \u2014 targeting bias may persist within safehouses over time",
+    "187 observations across 9 safehouses is a small panel dataset",
+    "avg_health_score has low variance (std=0.24) limiting health coefficient precision",
+    "Results should be refreshed quarterly as new data accumulates"
+  ]
+}
