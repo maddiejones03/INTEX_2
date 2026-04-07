@@ -13,7 +13,7 @@ export default function PrivacyPolicy() {
 
       <div className="container container-narrow privacy-body">
         <div className="privacy-intro">
-          Kanlungan Foundation (<strong>"we," "us," or "our"</strong>) is committed to protecting your
+          Laya Foundation (<strong>"we," "us," or "our"</strong>) is committed to protecting your
           privacy in accordance with the Philippine Data Privacy Act of 2012 (R.A. 10173), its
           Implementing Rules and Regulations, and the General Data Protection Regulation (GDPR) where
           applicable. This Privacy Policy explains how we collect, use, disclose, and safeguard information

@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 
 const recentActivity = [
   { icon: Users, color: 'blue', text: 'New resident admitted: KF-2024-005', time: '2 hours ago' },
-  { icon: Heart, color: 'rose', text: 'Donation received: ₱50,000 from Roberto Tan', time: '4 hours ago' },
+  { icon: Heart, color: 'rose', text: 'Donation received: $50,000 from Roberto Tan', time: '4 hours ago' },
   { icon: FolderOpen, color: 'amber', text: 'Process recording added for Grace Flores', time: 'Yesterday' },
   { icon: Home, color: 'green', text: 'Home visit completed for Sofia Ramos', time: '2 days ago' },
   { icon: Calendar, color: 'purple', text: 'Case conference scheduled: Grace Flores, Apr 5', time: '3 days ago' },
@@ -29,7 +29,7 @@ export default function AdminDashboard() {
   const metrics = [
     { icon: Users, label: 'Active Residents', value: activeResidents, sub: `${totalOccupied}/${totalCapacity} capacity`, color: 'blue', to: '/admin/caseload' },
     { icon: CheckCircle, label: 'Reintegrated (2024)', value: reintegratedCount, sub: 'Successful exits', color: 'green', to: '/admin/caseload' },
-    { icon: Heart, label: 'Donations (YTD)', value: `₱${(recentDonationsTotal / 1000).toFixed(0)}K`, sub: `${mockDonations.length} contributions`, color: 'rose', to: '/admin/donors' },
+    { icon: Heart, label: 'Donations (YTD)', value: `$${(recentDonationsTotal / 1000).toFixed(0)}K`, sub: `${mockDonations.length} contributions`, color: 'rose', to: '/admin/donors' },
     { icon: Calendar, label: 'Upcoming Conferences', value: upcomingConferences, sub: 'Next 30 days', color: 'amber', to: '/admin/visitation' },
   ];
 
@@ -126,8 +126,8 @@ export default function AdminDashboard() {
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₱${(v / 1000).toFixed(0)}K`} />
-            <Tooltip formatter={(v) => [`₱${Number(v).toLocaleString()}`, '']} />
+            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
+            <Tooltip formatter={(v) => [`$${Number(v).toLocaleString()}`, '']} />
             <Area type="monotone" dataKey="monetary" name="Monetary" stroke="#3b82f6" fill="url(#gMon)" strokeWidth={2} />
           </AreaChart>
         </ResponsiveContainer>

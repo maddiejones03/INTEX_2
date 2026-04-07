@@ -9,10 +9,10 @@ export default function Footer() {
           <div className="footer-brand-col">
             <div className="footer-brand">
               <Heart size={20} fill="currentColor" />
-              <span>Kanlungan Foundation</span>
+              <span>Laya Foundation</span>
             </div>
             <p className="footer-tagline">
-              Providing shelter, healing, and hope to survivors of trafficking and abuse in the Philippines since 2008.
+              Restoring freedom, healing, and hope to survivors of trafficking and abuse in the Philippines since 2008.
             </p>
             <div className="footer-socials">
               <a href="#" aria-label="Facebook" className="social-icon"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a>
@@ -47,7 +47,7 @@ export default function Footer() {
             <ul className="footer-contact">
               <li>
                 <MapPin size={14} />
-                <span>123 Kanlungan Street, Quezon City, Philippines 1100</span>
+                <span>123 Laya Street, Quezon City, Philippines 1100</span>
               </li>
               <li>
                 <Phone size={14} />
@@ -62,7 +62,8 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} Kanlungan Foundation. All rights reserved.</p>
+          <p className="footer-closing">Every child deserves to be free.</p>
+          <p>© {new Date().getFullYear()} Laya Foundation. All rights reserved.</p>
           <p>Registered Non-Profit Organization · SEC Reg. No. CN200800123</p>
           <p>
             <button
