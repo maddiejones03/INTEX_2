@@ -136,7 +136,7 @@ export default function Home() {
             <Heart size={14} fill="currentColor" /> Non-Profit Organization since 2008
           </div>
           <h1 className="hero-title">
-            Free. Whole. <span className="text-accent">Home.</span>
+            <span className="text-accent">Laya Foundation</span>
           </h1>
           <p className="hero-subtitle">
             Laya Foundation provides safety, professional care, and a pathway to a better life

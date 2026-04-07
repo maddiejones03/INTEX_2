@@ -8,7 +8,8 @@ publish/
 
 .DS_Store
 appsettings.Development.json
-data/
+**/data/*.csv
+**/data/*.db
 .env
 
 # ML artifacts (binary model files)
