@@ -10,3 +10,6 @@ publish/
 appsettings.Development.json
 data/
 .env
+
+# ML artifacts (binary model files)
+ml-pipelines/artifacts/*.sav
