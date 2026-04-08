@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import { TrendingUp, Users, Heart, Home, BookOpen, Activity } from 'lucide-react';
 import { mockDonationTrends, mockOutcomeMetrics } from '../../services/mockData';
+import ImpactChart from '../../components/ui/ImpactChart';
 
 const impactHighlights = [
   { icon: Users, label: 'Total Residents Served (2024)', value: '147', sub: '+18% from 2023', color: 'blue' },
@@ -104,6 +105,15 @@ export default function ImpactDashboard() {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+        </div>
+
+        {/* Pipeline 2 — Funding Impact by Program Area */}
+        <div className="chart-section">
+          <div className="chart-header">
+            <h2>Where Your Money Has the Most Impact</h2>
+            <p>Based on 3 years of data across 9 safehouses</p>
+          </div>
+          <ImpactChart mode="public" />
         </div>
 
         {/* 2-col charts */}
