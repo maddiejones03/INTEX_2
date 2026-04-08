@@ -33,7 +33,7 @@ public class Resident
     public string Sex { get; set; } = "F";
 
     [Column("date_of_birth")]
-    public DateOnly DateOfBirth { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
 
     [MaxLength(20)]
     [Column("birth_status")]
@@ -53,66 +53,66 @@ public class Resident
     public string CaseCategory { get; set; } = string.Empty;
 
     [Column("sub_cat_orphaned")]
-    public bool SubCatOrphaned { get; set; } = false;
+    public int? SubCatOrphaned { get; set; } = 0;
 
     [Column("sub_cat_trafficked")]
-    public bool SubCatTrafficked { get; set; } = false;
+    public int? SubCatTrafficked { get; set; } = 0;
 
     [Column("sub_cat_child_labor")]
-    public bool SubCatChildLabor { get; set; } = false;
+    public int? SubCatChildLabor { get; set; } = 0;
 
     [Column("sub_cat_physical_abuse")]
-    public bool SubCatPhysicalAbuse { get; set; } = false;
+    public int? SubCatPhysicalAbuse { get; set; } = 0;
 
     [Column("sub_cat_sexual_abuse")]
-    public bool SubCatSexualAbuse { get; set; } = false;
+    public int? SubCatSexualAbuse { get; set; } = 0;
 
     [Column("sub_cat_osaec")]
-    public bool SubCatOsaec { get; set; } = false;
+    public int? SubCatOsaec { get; set; } = 0;
 
     [Column("sub_cat_cicl")]
-    public bool SubCatCicl { get; set; } = false;
+    public int? SubCatCicl { get; set; } = 0;
 
     [Column("sub_cat_at_risk")]
-    public bool SubCatAtRisk { get; set; } = false;
+    public int? SubCatAtRisk { get; set; } = 0;
 
     [Column("sub_cat_street_child")]
-    public bool SubCatStreetChild { get; set; } = false;
+    public int? SubCatStreetChild { get; set; } = 0;
 
     [Column("sub_cat_child_with_hiv")]
-    public bool SubCatChildWithHiv { get; set; } = false;
+    public int? SubCatChildWithHiv { get; set; } = 0;
 
     [Column("is_pwd")]
-    public bool IsPwd { get; set; } = false;
+    public int? IsPwd { get; set; } = 0;
 
     [MaxLength(200)]
     [Column("pwd_type")]
     public string? PwdType { get; set; }
 
     [Column("has_special_needs")]
-    public bool HasSpecialNeeds { get; set; } = false;
+    public int? HasSpecialNeeds { get; set; } = 0;
 
     [MaxLength(200)]
     [Column("special_needs_diagnosis")]
     public string? SpecialNeedsDiagnosis { get; set; }
 
     [Column("family_is_4ps")]
-    public bool FamilyIs4ps { get; set; } = false;
+    public int? FamilyIs4ps { get; set; } = 0;
 
     [Column("family_solo_parent")]
-    public bool FamilySoloParent { get; set; } = false;
+    public int? FamilySoloParent { get; set; } = 0;
 
     [Column("family_indigenous")]
-    public bool FamilyIndigenous { get; set; } = false;
+    public int? FamilyIndigenous { get; set; } = 0;
 
     [Column("family_parent_pwd")]
-    public bool FamilyParentPwd { get; set; } = false;
+    public int? FamilyParentPwd { get; set; } = 0;
 
     [Column("family_informal_settler")]
-    public bool FamilyInformalSettler { get; set; } = false;
+    public int? FamilyInformalSettler { get; set; } = 0;
 
     [Column("date_of_admission")]
-    public DateOnly DateOfAdmission { get; set; }
+    public DateOnly? DateOfAdmission { get; set; }
 
     [MaxLength(50)]
     [Column("age_upon_admission")]
@@ -176,10 +176,28 @@ public class Resident
     public DateOnly? DateClosed { get; set; }
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? CreatedAt { get; set; }
 
     [Column("notes_restricted")]
-    public string? NotesRestricted { get; set; }
+    public double? NotesRestricted { get; set; }
+
+        [Column("age_upon_admission_months")]
+    public int? AgeUponAdmissionMonths { get; set; }
+
+    [Column("present_age_months")]
+    public int? PresentAgeMonths { get; set; }
+
+    [Column("length_of_stay_days")]
+    public int? LengthOfStayDays { get; set; }
+
+    [Column("initial_risk_numeric")]
+    public int? InitialRiskNumeric { get; set; }
+
+    [Column("current_risk_numeric")]
+    public int? CurrentRiskNumeric { get; set; }
+
+    [Column("risk_delta")]
+    public int? RiskDelta { get; set; }
 
     // Navigation
     [ForeignKey(nameof(SafehouseId))]

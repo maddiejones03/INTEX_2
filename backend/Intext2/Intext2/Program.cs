@@ -81,6 +81,14 @@ builder.Services.AddSingleton(smtpSettings);
 builder.Services.AddSingleton<IEmailService, EmailService>();
 
 builder.Services.AddControllers();
+
+// Let action methods handle ModelState manually so normalization (e.g. Sex → "F")
+// runs before validation is checked.
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>(options =>
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

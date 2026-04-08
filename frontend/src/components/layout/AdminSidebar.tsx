@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FolderOpen, FileText,
-  Home, BarChart3, Heart, ChevronLeft, ChevronRight, AlertCircle,
+  Home, BarChart3, Heart, ChevronLeft, ChevronRight, AlertCircle, Calendar,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -14,6 +14,7 @@ const navItems = [
   { to: '/admin/reports', label: 'Reports & Analytics', icon: BarChart3 },
   { to: '/admin/staff', label: 'Staff Management', icon: Users },
   { to: '/admin/early-warning', label: 'Early Warning', icon: AlertCircle },
+  { to: '/admin/posting-schedule', label: 'Posting Schedule', icon: Calendar },
 ];
 
 export default function AdminSidebar() {

@@ -4,6 +4,7 @@ using Intext2.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Intext2.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260408210147_AddPostingScheduleTable")]
+    partial class AddPostingScheduleTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -113,8 +116,8 @@ namespace Intext2.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DonationId"));
 
-                    b.Property<double?>("Amount")
-                        .HasColumnType("float")
+                    b.Property<decimal?>("Amount")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("amount");
 
                     b.Property<string>("CampaignName")
@@ -199,8 +202,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("allocation_notes");
 
-                    b.Property<double>("AmountAllocated")
-                        .HasColumnType("float")
+                    b.Property<decimal>("AmountAllocated")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("amount_allocated");
 
                     b.Property<int>("DonationId")
@@ -1045,7 +1048,7 @@ namespace Intext2.Migrations
                         .HasColumnType("date")
                         .HasColumnName("date_of_admission");
 
-                    b.Property<DateOnly?>("DateOfBirth")
+                    b.Property<DateOnly>("DateOfBirth")
                         .HasColumnType("date")
                         .HasColumnName("date_of_birth");
 
@@ -1650,8 +1653,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("country");
 
-                    b.Property<string>("CreatedAt")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
                     b.Property<string>("DisplayName")

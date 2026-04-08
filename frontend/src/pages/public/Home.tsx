@@ -300,7 +300,7 @@ export default function Home() {
                 We believe in radical transparency. Our public impact dashboard shows real data on
                 resident outcomes, donation allocation, and program progress — updated regularly.
               </p>
-              <Link to="/impact" className="btn btn-accent btn-lg mt-2">
+              <Link to="/impact#top" className="btn btn-accent btn-lg mt-2">
                 View Impact Dashboard <ChevronRight size={18} />
               </Link>
             </div>
