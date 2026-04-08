@@ -137,10 +137,31 @@ public class ResidentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] Resident model)
     {
-        model.Sex = NormalizeSex(model.Sex);
+        // Apply all defaults BEFORE ModelState check.
+        // SuppressModelStateInvalidFilter = true ensures [ApiController] does NOT
+        // auto-reject before this code runs.
+        model.Sex                = NormalizeSex(model.Sex);
+        model.CaseStatus         = string.IsNullOrWhiteSpace(model.CaseStatus)         ? "Active"      : model.CaseStatus;
+        model.InitialRiskLevel   = string.IsNullOrWhiteSpace(model.InitialRiskLevel)   ? "Medium"      : model.InitialRiskLevel;
+        model.CurrentRiskLevel   = string.IsNullOrWhiteSpace(model.CurrentRiskLevel)   ? "Medium"      : model.CurrentRiskLevel;
+        model.ReintegrationStatus = string.IsNullOrWhiteSpace(model.ReintegrationStatus) ? "Not Started" : model.ReintegrationStatus;
         if (model.DateOfAdmission == default)
             model.DateOfAdmission = DateOnly.FromDateTime(DateTime.UtcNow);
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        // Remove every field we have already normalized so their original binding
+        // errors don't surface in the validation response.
+        foreach (var key in new[] { nameof(Resident.Sex), nameof(Resident.CaseStatus),
+                                    nameof(Resident.InitialRiskLevel), nameof(Resident.CurrentRiskLevel),
+                                    nameof(Resident.ReintegrationStatus), nameof(Resident.DateOfAdmission) })
+            ModelState.Remove(key);
+
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState
+                .Where(kv => kv.Value?.Errors.Count > 0)
+                .ToDictionary(kv => kv.Key, kv => kv.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+            return BadRequest(new { message = "Validation failed.", fields = errors });
+        }
         var invalid = InputSanitizer.SanitizeAndValidate(model);
         if (invalid.Count > 0) return BadRequest(new { message = "Required fields cannot be empty.", fields = invalid });
         try
@@ -164,8 +185,22 @@ public class ResidentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] Resident model)
     {
-        model.Sex = NormalizeSex(model.Sex);
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+        model.Sex              = NormalizeSex(model.Sex);
+        model.CaseStatus       = string.IsNullOrWhiteSpace(model.CaseStatus)       ? "Active"  : model.CaseStatus;
+        model.InitialRiskLevel = string.IsNullOrWhiteSpace(model.InitialRiskLevel) ? "Medium"  : model.InitialRiskLevel;
+        model.CurrentRiskLevel = string.IsNullOrWhiteSpace(model.CurrentRiskLevel) ? "Medium"  : model.CurrentRiskLevel;
+
+        foreach (var key in new[] { nameof(Resident.Sex), nameof(Resident.CaseStatus),
+                                    nameof(Resident.InitialRiskLevel), nameof(Resident.CurrentRiskLevel) })
+            ModelState.Remove(key);
+
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState
+                .Where(kv => kv.Value?.Errors.Count > 0)
+                .ToDictionary(kv => kv.Key, kv => kv.Value!.Errors.Select(e => e.ErrorMessage).ToArray());
+            return BadRequest(new { message = "Validation failed.", fields = errors });
+        }
         var invalid = InputSanitizer.SanitizeAndValidate(model);
         if (invalid.Count > 0) return BadRequest(new { message = "Required fields cannot be empty.", fields = invalid });
         try

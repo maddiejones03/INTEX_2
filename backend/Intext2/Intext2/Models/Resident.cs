@@ -33,7 +33,7 @@ public class Resident
     public string Sex { get; set; } = "F";
 
     [Column("date_of_birth")]
-    public DateOnly DateOfBirth { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
 
     [MaxLength(20)]
     [Column("birth_status")]

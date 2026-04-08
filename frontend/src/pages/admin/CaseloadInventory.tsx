@@ -148,7 +148,17 @@ export default function CaseloadInventory() {
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newResident, setNewResident] = useState({ caseControlNo: '', sex: 'Female', dateOfBirth: '', caseCategory: 'Neglect', safehouseId: '' });
+  const [newResident, setNewResident] = useState({
+    caseControlNo: '',
+    sex: 'F',
+    dateOfBirth: '',
+    caseCategory: 'Neglect',
+    safehouseId: '',
+    referralSource: '',
+    assignedSocialWorker: '',
+    initialRiskLevel: 'Medium',
+    currentRiskLevel: 'Medium',
+  });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Resident | null>(null);
@@ -201,15 +211,20 @@ export default function CaseloadInventory() {
         body: JSON.stringify({
           caseControlNo: newResident.caseControlNo,
           sex: newResident.sex,
-          dateOfBirth: newResident.dateOfBirth,
+          dateOfBirth: newResident.dateOfBirth || null,
           caseCategory: newResident.caseCategory,
           safehouseId: Number(newResident.safehouseId),
           caseStatus: 'Active',
+          referralSource: newResident.referralSource || '',
+          assignedSocialWorker: newResident.assignedSocialWorker || '',
+          initialRiskLevel: newResident.initialRiskLevel,
+          currentRiskLevel: newResident.currentRiskLevel,
+          dateOfAdmission: new Date().toISOString().split('T')[0],
         }),
       });
       if (res.ok) {
         setShowAddForm(false);
-        setNewResident({ caseControlNo: '', sex: 'Female', dateOfBirth: '', caseCategory: 'Neglect', safehouseId: '' });
+        setNewResident({ caseControlNo: '', sex: 'F', dateOfBirth: '', caseCategory: 'Neglect', safehouseId: '', referralSource: '', assignedSocialWorker: '', initialRiskLevel: 'Medium', currentRiskLevel: 'Medium' });
         fetchResidents();
       } else {
         let message = 'Failed to create resident.';
@@ -299,7 +314,7 @@ export default function CaseloadInventory() {
             <div className="form-group">
               <label className="form-label">Sex</label>
               <select className="form-select" value={newResident.sex} onChange={(e) => setNewResident({ ...newResident, sex: e.target.value })}>
-                <option>Female</option><option>Male</option><option>Other</option>
+                <option value="F">Female</option><option value="M">Male</option><option value="O">Other</option>
               </select>
             </div>
             <div className="form-group">
@@ -309,11 +324,31 @@ export default function CaseloadInventory() {
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Safe House</label>
+              <label className="form-label">Safe House *</label>
               <select className="form-select" value={newResident.safehouseId} onChange={(e) => setNewResident({ ...newResident, safehouseId: e.target.value })}>
                 <option value="">Select safehouse</option>
                 {safehouses.map((s) => <option key={s.safehouseId} value={s.safehouseId}>{s.name}</option>)}
               </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Initial Risk Level</label>
+              <select className="form-select" value={newResident.initialRiskLevel} onChange={(e) => setNewResident({ ...newResident, initialRiskLevel: e.target.value })}>
+                <option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Current Risk Level</label>
+              <select className="form-select" value={newResident.currentRiskLevel} onChange={(e) => setNewResident({ ...newResident, currentRiskLevel: e.target.value })}>
+                <option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Assigned Social Worker</label>
+              <input className="form-input" value={newResident.assignedSocialWorker} onChange={(e) => setNewResident({ ...newResident, assignedSocialWorker: e.target.value })} placeholder="Social worker name" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Referral Source</label>
+              <input className="form-input" value={newResident.referralSource} onChange={(e) => setNewResident({ ...newResident, referralSource: e.target.value })} placeholder="e.g. DSWD, Police, Hospital" />
             </div>
           </div>
           <div className="form-actions">
