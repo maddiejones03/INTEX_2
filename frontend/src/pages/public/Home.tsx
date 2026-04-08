@@ -121,27 +121,12 @@ export default function Home() {
     <div className="page-home">
       {/* Hero */}
       <section className="hero">
-        <div className="hero-botanical-overlay" />
-        <div
-          className="hero-image-overlay"
-          style={{
-            position: 'absolute', inset: 0, zIndex: 0,
-            backgroundImage: 'url(https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=2000&q=80)',
-            backgroundSize: 'cover', backgroundPosition: 'center',
-            opacity: 0.24,
-          }}
-        />
+        <div className="hero-image-overlay" aria-hidden="true" />
         <div className="hero-content">
-          <div className="hero-badge">
-            <Heart size={14} fill="currentColor" /> Non-Profit Organization since 2008
+          <div className="hero-lead">
+            <h1 className="hero-title hero-title--one-line">Laya{'\u00A0'}Foundation</h1>
+            <p className="hero-tagline">A refuge for those who need it most</p>
           </div>
-          <h1 className="hero-title">
-            <span className="text-accent">Laya Foundation</span>
-          </h1>
-          <p className="hero-subtitle">
-            Laya Foundation provides safety, professional care, and a pathway to a better life
-            for children and young women who have survived trafficking, abuse, and neglect in the Philippines.
-          </p>
           <div className="hero-actions">
             <a href="#donate" className="btn btn-accent btn-lg">
               Support Our Mission <ArrowRight size={18} />
@@ -168,23 +153,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="botanical-strip">
-        <div className="container">
-          <div className="botanical-grid">
-            {growthPillars.map((p) => (
-              <div key={p.title} className="botanical-item">
-                <Sprout size={18} className="botanical-icon" />
-                <div>
-                  <strong>{p.title}</strong>
-                  <p>{p.text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Mission */}
+      {/* Our Mission */}
       <section className="section">
         <div className="container container-narrow">
           <div className="section-label">Our Mission</div>
@@ -199,6 +168,22 @@ export default function Home() {
           <div className="mission-values">
             {['Dignity', 'Safety', 'Healing', 'Empowerment', 'Community'].map((v) => (
               <span key={v} className="value-chip"><Leaf size={13} /> {v}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="botanical-strip">
+        <div className="container">
+          <div className="botanical-grid">
+            {growthPillars.map((p) => (
+              <div key={p.title} className="botanical-item">
+                <Sprout size={18} className="botanical-icon" />
+                <div>
+                  <strong>{p.title}</strong>
+                  <p>{p.text}</p>
+                </div>
+              </div>
             ))}
           </div>
         </div>

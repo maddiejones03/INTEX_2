@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Heart, Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -7,10 +7,14 @@ export default function Footer() {
       <div className="footer-inner">
         <div className="footer-grid">
           <div className="footer-brand-col">
-            <div className="footer-brand">
-              <Heart size={20} fill="currentColor" />
-              <span>Laya Foundation</span>
-            </div>
+            <Link to="/" className="footer-brand" aria-label="Laya Foundation">
+              <img
+                src="/LayaLogo.png"
+                alt=""
+                className="footer-logo"
+                decoding="async"
+              />
+            </Link>
             <p className="footer-tagline">
               Restoring freedom, healing, and hope to survivors of trafficking and abuse in the Philippines since 2008.
             </p>
