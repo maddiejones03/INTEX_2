@@ -45,35 +45,29 @@ function barColor(value: number): string {
 }
 
 function CustomTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  const entry = payload[0].payload as ProgramAreaEntry;
-  return (
-    <div style={{
-      background: '#fff', border: '1px solid #e2e8f0',
-      borderRadius: '8px', padding: '10px 14px', fontSize: '13px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-    }}>
-      <div style={{ fontWeight: 600, marginBottom: '6px', color: '#1e293b' }}>
-        {label}
+    if (!active || !payload?.length) return null;
+    const entry = payload[0].payload as ProgramAreaEntry;
+    return (
+      <div style={{
+        background: '#fff', border: '1px solid #e2e8f0',
+        borderRadius: '8px', padding: '10px 14px', fontSize: '13px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+      }}>
+        <div style={{ fontWeight: 600, marginBottom: '6px', color: '#1e293b' }}>
+          {label}
+        </div>
+        <div style={{ color: '#475569' }}>
+          Education progress impact:{' '}
+          <strong style={{ color: entry.edu_coef >= 0 ? '#4f8a68' : '#ef4444' }}>
+            {entry.edu_coef >= 0 ? '+' : ''}{entry.edu_coef.toFixed(2)} points per $1,000
+          </strong>
+        </div>
+        <div style={{ color: '#64748b', marginTop: '4px', fontSize: '11px' }}>
+          Measured the month following allocation
+        </div>
       </div>
-      <div style={{ color: '#475569' }}>
-        Education impact:{' '}
-        <strong style={{ color: entry.edu_coef >= 0 ? '#4f8a68' : '#ef4444' }}>
-          {entry.edu_coef >= 0 ? '+' : ''}{entry.edu_coef.toFixed(2)} pts
-        </strong>
-      </div>
-      <div style={{ color: '#475569' }}>
-        Health impact:{' '}
-        <strong style={{ color: entry.health_coef >= 0 ? '#4f8a68' : '#ef4444' }}>
-          {entry.health_coef >= 0 ? '+' : ''}{entry.health_coef.toFixed(4)} pts
-        </strong>
-      </div>
-      <div style={{ color: '#64748b', marginTop: '4px', fontSize: '11px' }}>
-        Per $1,000 allocated (lagged 1 month)
-      </div>
-    </div>
-  );
-}
+    );
+  }
 
 export default function ImpactChart({ mode }: ImpactChartProps) {
   const [data, setData]       = useState<PublicImpactResponse | null>(null);
@@ -127,14 +121,14 @@ export default function ImpactChart({ mode }: ImpactChartProps) {
   return (
     <div className="chart-card">
       <div style={{ marginBottom: '1rem' }}>
-        <h2>
+      <h2>
           {mode === 'admin'
-            ? 'Funding Impact by Program Area (OLS Model)'
+            ? "Impact of Program Funding on Girls' Education Progress"
             : 'Where We Allocate Your Donations for Maximum Impact'}
         </h2>
         <p className="chart-sub">
           {mode === 'admin'
-            ? 'Change in resident education progress per $1,000 allocated, controlling for safehouse differences (lagged 1 month). Model B — OLS with safehouse fixed effects.'
+            ? "For every $1,000 allocated to each program area, how many additional points of education progress do girls gain the following month? Bars to the right mean girls improve more. Bars to the left mean that area received more funding in months when girls were already struggling."
             : 'Our allocation decisions are guided by 3 years of outcome data across 9 safehouses. Here is where your donations create the most measurable impact.'}
         </p>
       </div>
@@ -254,25 +248,66 @@ export default function ImpactChart({ mode }: ImpactChartProps) {
           )}
 
           {/* Admin model fit stats */}
-          {mode === 'admin' && (data as AdminImpactResponse).model_fit && (
-            <div style={{
-              marginTop: '1.25rem', padding: '12px 16px',
-              background: '#f8fafc', borderRadius: '8px',
-              border: '1px solid #e2e8f0', fontSize: '12px', color: '#64748b',
-            }}>
-              <strong style={{ color: '#475569' }}>Model fit (OLS with safehouse fixed effects):</strong>
-              <span style={{ marginLeft: '12px' }}>
-                Education R² = {(data as AdminImpactResponse).model_fit?.education?.r_squared?.toFixed(3)}
-              </span>
-              <span style={{ marginLeft: '12px' }}>
-                Health R² = {(data as AdminImpactResponse).model_fit?.health?.r_squared?.toFixed(3)}
-              </span>
-              <span style={{ marginLeft: '12px' }}>
-                n = {(data as AdminImpactResponse).model_fit?.education?.n_obs} safehouse-months
-              </span>
-              <div style={{ marginTop: '6px', color: '#94a3b8', fontStyle: 'italic' }}>
-                Note: Negative Education coefficient reflects targeting bias — struggling safehouses receive more education funding because they need it most, not because funding is harmful.
+          {mode === 'admin' && (
+            <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+              {/* Wellbeing insight */}
+              <div style={{
+                padding: '12px 16px', background: '#edf6f0',
+                borderRadius: '8px', border: '1px solid #c6e2d1',
+                fontSize: '13px', color: '#2f5f43',
+              }}>
+                <strong>💚 Key insight — Wellbeing is the strongest driver:</strong>{' '}
+                Months where we invested more in Wellbeing programs (therapy, mental health, nutrition) 
+                were followed by stronger academic gains for girls the next month. This suggests that 
+                a girl's emotional and physical health is a prerequisite for learning. Prioritizing 
+                Wellbeing funding is not a trade-off against education — it enables it.
               </div>
+
+              {/* Education paradox explanation */}
+              <div style={{
+                padding: '12px 16px', background: '#fefce8',
+                borderRadius: '8px', border: '1px solid #fde68a',
+                fontSize: '13px', color: '#78350f',
+              }}>
+                <strong>⚠️ Why does Education funding show a negative bar?</strong>{' '}
+                This is not evidence that education spending hurts girls. It reflects a pattern 
+                called <strong>targeting bias</strong>: our organization naturally directs more 
+                education funding to safehouses where girls are struggling most academically. 
+                As a result, higher education spending tends to coincide with lower scores — 
+                not because the funding caused the problem, but because we respond to the problem 
+                with more funding. Think of it like a hospital: sicker patients receive more 
+                treatment, but that does not mean treatment makes patients sicker.
+              </div>
+
+              {/* Maintenance insight */}
+              <div style={{
+                padding: '12px 16px', background: '#f0fdf4',
+                borderRadius: '8px', border: '1px solid #bbf7d0',
+                fontSize: '13px', color: '#166534',
+              }}>
+                <strong>🏠 Maintenance matters more than expected:</strong>{' '}
+                Months with higher facility maintenance spending were followed by modest but 
+                consistent improvements in girls' education scores. A safe, well-maintained 
+                environment appears to create stability that supports learning.
+              </div>
+
+              {/* Model stats — simplified */}
+              {(data as AdminImpactResponse).model_fit && (
+                <div style={{
+                  padding: '12px 16px', background: '#f8fafc',
+                  borderRadius: '8px', border: '1px solid #e2e8f0',
+                  fontSize: '12px', color: '#64748b',
+                }}>
+                  <strong style={{ color: '#475569' }}>About this analysis:</strong>{' '}
+                  Based on {(data as AdminImpactResponse).model_fit?.education?.n_obs} months of 
+                  data across 9 safehouses (Jan 2023 – Jan 2026). The model accounts for 
+                  differences between safehouses so results reflect within-safehouse funding 
+                  changes, not comparisons between locations. Funding effects are measured 
+                  with a 1-month lag since it takes time for spending to translate into 
+                  programme activities and for girls to respond.
+                </div>
+              )}
             </div>
           )}
 
