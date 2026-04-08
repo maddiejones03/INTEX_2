@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+git add -A && git commit -m "Revert bool and SafehouseId changes in Resident" && git push origin maddieusing System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Intext2.Models;
@@ -20,7 +20,7 @@ public class Resident
     public string? InternalCode { get; set; }
 
     [Column("safehouse_id")]
-    public int? SafehouseId { get; set; }
+    public int SafehouseId { get; set; }
 
     [Required]
     [MaxLength(20)]
@@ -53,63 +53,63 @@ public class Resident
     public string CaseCategory { get; set; } = string.Empty;
 
     [Column("sub_cat_orphaned")]
-    public bool? SubCatOrphaned { get; set; } = false;
+    public bool SubCatOrphaned { get; set; } = false;
 
     [Column("sub_cat_trafficked")]
-    public bool? SubCatTrafficked { get; set; } = false;
+    public bool SubCatTrafficked { get; set; } = false;
 
     [Column("sub_cat_child_labor")]
-    public bool? SubCatChildLabor { get; set; } = false;
+    public bool SubCatChildLabor { get; set; } = false;
 
     [Column("sub_cat_physical_abuse")]
-    public bool? SubCatPhysicalAbuse { get; set; } = false;
+    public bool SubCatPhysicalAbuse { get; set; } = false;
 
     [Column("sub_cat_sexual_abuse")]
-    public bool? SubCatSexualAbuse { get; set; } = false;
+    public bool SubCatSexualAbuse { get; set; } = false;
 
     [Column("sub_cat_osaec")]
-    public bool? SubCatOsaec { get; set; } = false;
+    public bool SubCatOsaec { get; set; } = false;
 
     [Column("sub_cat_cicl")]
-    public bool? SubCatCicl { get; set; } = false;
+    public bool SubCatCicl { get; set; } = false;
 
     [Column("sub_cat_at_risk")]
-    public bool? SubCatAtRisk { get; set; } = false;
+    public bool SubCatAtRisk { get; set; } = false;
 
     [Column("sub_cat_street_child")]
-    public bool? SubCatStreetChild { get; set; } = false;
+    public bool SubCatStreetChild { get; set; } = false;
 
     [Column("sub_cat_child_with_hiv")]
-    public bool? SubCatChildWithHiv { get; set; } = false;
+    public bool SubCatChildWithHiv { get; set; } = false;
 
     [Column("is_pwd")]
-    public bool? IsPwd { get; set; } = false;
+    public bool IsPwd { get; set; } = false;
 
     [MaxLength(200)]
     [Column("pwd_type")]
     public string? PwdType { get; set; }
 
     [Column("has_special_needs")]
-    public bool? HasSpecialNeeds { get; set; } = false;
+    public bool HasSpecialNeeds { get; set; } = false;
 
     [MaxLength(200)]
     [Column("special_needs_diagnosis")]
     public string? SpecialNeedsDiagnosis { get; set; }
 
     [Column("family_is_4ps")]
-    public bool? FamilyIs4ps { get; set; } = false;
+    public bool FamilyIs4ps { get; set; } = false;
 
     [Column("family_solo_parent")]
-    public bool? FamilySoloParent { get; set; } = false;
+    public bool FamilySoloParent { get; set; } = false;
 
     [Column("family_indigenous")]
-    public bool? FamilyIndigenous { get; set; } = false;
+    public bool FamilyIndigenous { get; set; } = false;
 
     [Column("family_parent_pwd")]
-    public bool? FamilyParentPwd { get; set; } = false;
+    public bool FamilyParentPwd { get; set; } = false;
 
     [Column("family_informal_settler")]
-    public bool? FamilyInformalSettler { get; set; } = false;
+    public bool FamilyInformalSettler { get; set; } = false;
 
     [Column("date_of_admission")]
     public DateOnly? DateOfAdmission { get; set; }
