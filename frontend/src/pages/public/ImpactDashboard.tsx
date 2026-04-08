@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -46,8 +48,16 @@ function formatCurrency(value: number) {
 }
 
 export default function ImpactDashboard() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash === '#top') {
+      window.scrollTo(0, 0);
+    }
+  }, [location.hash]);
+
   return (
-    <div className="page-impact">
+    <div className="page-impact" id="top">
       <div className="impact-hero">
         <div className="container">
           <div className="section-label light">Transparent Impact</div>
