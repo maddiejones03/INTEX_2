@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { logoutUser } from '../../services/authApi';
-import { Menu, X, Heart, ChevronDown, LogOut, User } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut, User } from 'lucide-react';
 
 export default function Navbar() {
   const { isAuthenticated, authSession, refreshAuthSession } = useAuth();
@@ -29,9 +29,18 @@ export default function Navbar() {
   return (
     <nav className="navbar">
       <div className="navbar-inner">
-        <Link to="/" className="navbar-brand" onClick={() => setMobileOpen(false)}>
-          <Heart size={22} fill="currentColor" />
-          <span>Laya Foundation</span>
+        <Link
+          to="/"
+          className="navbar-brand"
+          aria-label="Laya Foundation"
+          onClick={() => setMobileOpen(false)}
+        >
+          <img
+            src="/LayaLogo.png"
+            alt=""
+            className="navbar-logo"
+            decoding="async"
+          />
         </Link>
 
         {!isAdmin && (
