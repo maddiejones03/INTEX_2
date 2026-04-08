@@ -47,6 +47,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .HasIndex(r => r.CaseControlNo)
             .IsUnique();
 
+        builder.Entity<Resident>()
+            .HasIndex(r => r.CaseManagerId);
+
         builder.Entity<Safehouse>()
             .HasIndex(s => s.SafehouseCode)
             .IsUnique();
@@ -61,7 +64,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(u => u.SupporterId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        builder.Entity<Resident>()
-            .HasIndex(r => r.CaseManagerId);
+
     }
 }
