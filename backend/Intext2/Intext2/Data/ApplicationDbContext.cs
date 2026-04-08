@@ -44,28 +44,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         var nullableDateOnlyConverter = new ValueConverter<DateOnly?, string?>(
             d => d.HasValue ? d.Value.ToString("yyyy-MM-dd") : null,
             s => s != null ? DateOnly.Parse(s) : null);
-
-        // Value converters for bool <-> int
-        var boolToIntConverter = new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<bool, int>(
-            b => b ? 1 : 0,
-            i => i != 0);
-
-        var nullableBoolToIntConverter = new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<bool?, int?>(
-            b => b.HasValue ? (b.Value ? 1 : 0) : (int?)null,
-            i => i.HasValue ? i.Value != 0 : (bool?)null);
-
-        foreach (var entityType in builder.Model.GetEntityTypes())
-        {
-            foreach (var property in entityType.GetProperties())
-            {
-                if (property.ClrType == typeof(DateOnly))
-                    property.SetValueConverter(dateOnlyConverter);
-                else if (property.ClrType == typeof(DateOnly?))
-                    property.SetValueConverter(nullableDateOnlyConverter);
-                else if (property.ClrType == typeof(bool) && !entityType.ClrType.FullName!.StartsWith("Microsoft.AspNetCore.Identity"))
-                    property.SetValueConverter(boolToIntConverter);
-                else if (property.ClrType == typeof(bool?) && !entityType.ClrType.FullName!.StartsWith("Microsoft.AspNetCore.Identity"))
-                    property.SetValueConverter(nullableBoolToIntConverter);
             }
         }
 
