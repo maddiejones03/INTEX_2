@@ -53,63 +53,63 @@ public class Resident
     public string CaseCategory { get; set; } = string.Empty;
 
     [Column("sub_cat_orphaned")]
-    public int? SubCatOrphaned { get; set; } = 0;
+    public bool SubCatOrphaned { get; set; } = false;
 
     [Column("sub_cat_trafficked")]
-    public int? SubCatTrafficked { get; set; } = 0;
+    public bool SubCatTrafficked { get; set; } = false;
 
     [Column("sub_cat_child_labor")]
-    public int? SubCatChildLabor { get; set; } = 0;
+    public bool SubCatChildLabor { get; set; } = false;
 
     [Column("sub_cat_physical_abuse")]
-    public int? SubCatPhysicalAbuse { get; set; } = 0;
+    public bool SubCatPhysicalAbuse { get; set; } = false;
 
     [Column("sub_cat_sexual_abuse")]
-    public int? SubCatSexualAbuse { get; set; } = 0;
+    public bool SubCatSexualAbuse { get; set; } = false;
 
     [Column("sub_cat_osaec")]
-    public int? SubCatOsaec { get; set; } = 0;
+    public bool SubCatOsaec { get; set; } = false;
 
     [Column("sub_cat_cicl")]
-    public int? SubCatCicl { get; set; } = 0;
+    public bool SubCatCicl { get; set; } = false;
 
     [Column("sub_cat_at_risk")]
-    public int? SubCatAtRisk { get; set; } = 0;
+    public bool SubCatAtRisk { get; set; } = false;
 
     [Column("sub_cat_street_child")]
-    public int? SubCatStreetChild { get; set; } = 0;
+    public bool SubCatStreetChild { get; set; } = false;
 
     [Column("sub_cat_child_with_hiv")]
-    public int? SubCatChildWithHiv { get; set; } = 0;
+    public bool SubCatChildWithHiv { get; set; } = false;
 
     [Column("is_pwd")]
-    public int? IsPwd { get; set; } = 0;
+    public bool IsPwd { get; set; } = false;
 
     [MaxLength(200)]
     [Column("pwd_type")]
     public string? PwdType { get; set; }
 
     [Column("has_special_needs")]
-    public int? HasSpecialNeeds { get; set; } = 0;
+    public bool HasSpecialNeeds { get; set; } = false;
 
     [MaxLength(200)]
     [Column("special_needs_diagnosis")]
     public string? SpecialNeedsDiagnosis { get; set; }
 
     [Column("family_is_4ps")]
-    public int? FamilyIs4ps { get; set; } = 0;
+    public bool FamilyIs4ps { get; set; } = false;
 
     [Column("family_solo_parent")]
-    public int? FamilySoloParent { get; set; } = 0;
+    public bool FamilySoloParent { get; set; } = false;
 
     [Column("family_indigenous")]
-    public int? FamilyIndigenous { get; set; } = 0;
+    public bool FamilyIndigenous { get; set; } = false;
 
     [Column("family_parent_pwd")]
-    public int? FamilyParentPwd { get; set; } = 0;
+    public bool FamilyParentPwd { get; set; } = false;
 
     [Column("family_informal_settler")]
-    public int? FamilyInformalSettler { get; set; } = 0;
+    public bool FamilyInformalSettler { get; set; } = false;
 
     [Column("date_of_admission")]
     public DateOnly? DateOfAdmission { get; set; }
@@ -179,7 +179,7 @@ public class Resident
     public DateTime? CreatedAt { get; set; }
 
     [Column("notes_restricted")]
-    public double? NotesRestricted { get; set; }
+    public string? NotesRestricted { get; set; }
 
         [Column("age_upon_admission_months")]
     public int? AgeUponAdmissionMonths { get; set; }
