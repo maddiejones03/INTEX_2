@@ -144,6 +144,11 @@ public class Resident
     [Column("assigned_social_worker")]
     public string? AssignedSocialWorker { get; set; }
 
+    /// <summary>ASP.NET Identity user id of the case manager assigned to this resident.</summary>
+    [MaxLength(450)]
+    [Column("case_manager_id")]
+    public string? CaseManagerId { get; set; }
+
     [MaxLength(255)]
     [Column("initial_case_assessment")]
     public string? InitialCaseAssessment { get; set; }

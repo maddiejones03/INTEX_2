@@ -74,5 +74,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         // The DB has no PartnerId column on donations — ignore the shadow FK
         builder.Entity<Donation>()
             .Ignore("PartnerId");
+
+        builder.Entity<ApplicationUser>()
+            .HasOne(u => u.Supporter)
+            .WithMany()
+            .HasForeignKey(u => u.SupporterId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<Resident>()
+            .HasIndex(r => r.CaseManagerId);
     }
 }

@@ -3,6 +3,7 @@ using Intext2.Dtos;
 using Intext2.Infrastructure;
 using Intext2.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +14,13 @@ namespace Intext2.Controllers;
 public class ResidentsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
-    public ResidentsController(ApplicationDbContext db) => _db = db;
+    private readonly UserManager<ApplicationUser> _userManager;
+
+    public ResidentsController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+    {
+        _db          = db;
+        _userManager = userManager;
+    }
     private const string SchemaMismatchMessage = "Database schema mismatch detected for residents data. Ensure Azure SQL column types match EF migrations.";
 
     private static string NormalizeSex(string? sex)
@@ -46,11 +53,25 @@ public class ResidentsController : ControllerBase
     {
         try
         {
+            if (User.IsInRole(AuthRoles.Donor))
+                return Forbid();
+
+            if (!User.IsInRole(AuthRoles.Admin) && !User.IsInRole(AuthRoles.CaseManager))
+                return Forbid();
+
             if (page < 1)     page     = 1;
             if (pageSize < 1) pageSize = 20;
             if (pageSize > 100) pageSize = 100;
 
             var query = _db.Residents.AsQueryable();
+
+            if (User.IsInRole(AuthRoles.CaseManager))
+            {
+                var cm = await _userManager.GetUserAsync(User);
+                if (cm is null)
+                    return Unauthorized();
+                query = query.Where(r => r.CaseManagerId == cm.Id);
+            }
 
             if (safehouseId.HasValue)
                 query = query.Where(r => r.SafehouseId == safehouseId.Value);
@@ -115,6 +136,9 @@ public class ResidentsController : ControllerBase
     {
         try
         {
+            if (User.IsInRole(AuthRoles.Donor))
+                return Forbid();
+
             var resident = await _db.Residents
                 .Include(r => r.Safehouse)
                 .FirstOrDefaultAsync(r => r.ResidentId == id);
@@ -122,7 +146,21 @@ public class ResidentsController : ControllerBase
             if (resident is null)
                 return NotFound(new { message = $"Resident {id} not found." });
 
-            return Ok(resident);
+            if (User.IsInRole(AuthRoles.Admin))
+                return Ok(resident);
+
+            if (User.IsInRole(AuthRoles.CaseManager))
+            {
+                var cm = await _userManager.GetUserAsync(User);
+                if (cm is null)
+                    return Unauthorized();
+                if (resident.CaseManagerId != cm.Id)
+                    return NotFound(new { message = $"Resident {id} not found." });
+
+                return Ok(ToCaseManagerResidentDetail(resident));
+            }
+
+            return Forbid();
         }
         catch (Exception ex)
         {
@@ -145,7 +183,7 @@ public class ResidentsController : ControllerBase
         model.InitialRiskLevel   = string.IsNullOrWhiteSpace(model.InitialRiskLevel)   ? "Medium"      : model.InitialRiskLevel;
         model.CurrentRiskLevel   = string.IsNullOrWhiteSpace(model.CurrentRiskLevel)   ? "Medium"      : model.CurrentRiskLevel;
         model.ReintegrationStatus = string.IsNullOrWhiteSpace(model.ReintegrationStatus) ? "Not Started" : model.ReintegrationStatus;
-        if (model.DateOfAdmission == default)
+        if (!model.DateOfAdmission.HasValue)
             model.DateOfAdmission = DateOnly.FromDateTime(DateTime.UtcNow);
 
         // Remove every field we have already normalized so their original binding
@@ -249,5 +287,28 @@ public class ResidentsController : ControllerBase
                 return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to delete resident.", detail = ex.Message });
         }
+    }
+
+    private static object ToCaseManagerResidentDetail(Resident r)
+    {
+        return new
+        {
+            r.ResidentId,
+            r.CaseControlNo,
+            r.InternalCode,
+            r.SafehouseId,
+            r.CaseStatus,
+            r.Sex,
+            r.DateOfBirth,
+            r.CaseCategory,
+            r.CurrentRiskLevel,
+            r.InitialRiskLevel,
+            r.DateOfAdmission,
+            r.ReintegrationStatus,
+            r.AssignedSocialWorker,
+            safehouseName = r.Safehouse?.Name,
+            safehouseCity = r.Safehouse?.City,
+            caseManagerView = true,
+        };
     }
 }
