@@ -30,6 +30,11 @@ jobs:
         run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
         working-directory: backend/Intext2/Intext2
 
+      - name: Copy ML artifacts
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{env.DOTNET_ROOT}}/myapp/artifacts"
+          Copy-Item "ml-pipelines/artifacts/impact_per_1000.json" -Destination "${{env.DOTNET_ROOT}}/myapp/artifacts/impact_per_1000.json"
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
