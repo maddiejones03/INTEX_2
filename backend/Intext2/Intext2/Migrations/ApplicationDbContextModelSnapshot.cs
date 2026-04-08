@@ -185,7 +185,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("SupporterId");
 
-                    b.ToTable("donations");
+                    b.ToTable("donations", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.DonationAllocation", b =>
@@ -229,7 +229,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("SafehouseId");
 
-                    b.ToTable("donation_allocations");
+                    b.ToTable("donation_allocations", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.DonorRiskScore", b =>
@@ -283,7 +283,7 @@ namespace Intext2.Migrations
 
                     b.HasKey("SupporterId");
 
-                    b.ToTable("donor_risk_scores");
+                    b.ToTable("donor_risk_scores", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.EducationRecord", b =>
@@ -341,7 +341,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("ResidentId");
 
-                    b.ToTable("education_records");
+                    b.ToTable("education_records", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.HealthWellbeingRecord", b =>
@@ -409,7 +409,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("ResidentId");
 
-                    b.ToTable("health_wellbeing_records");
+                    b.ToTable("health_wellbeing_records", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.HomeVisitation", b =>
@@ -483,7 +483,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("ResidentId");
 
-                    b.ToTable("home_visitations");
+                    b.ToTable("home_visitations", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.InKindDonationItem", b =>
@@ -538,7 +538,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("DonationId");
 
-                    b.ToTable("in_kind_donation_items");
+                    b.ToTable("in_kind_donation_items", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.IncidentReport", b =>
@@ -605,7 +605,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("SafehouseId");
 
-                    b.ToTable("incident_reports");
+                    b.ToTable("incident_reports", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.InterventionPlan", b =>
@@ -666,7 +666,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("ResidentId");
 
-                    b.ToTable("intervention_plans");
+                    b.ToTable("intervention_plans", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.Partner", b =>
@@ -736,7 +736,7 @@ namespace Intext2.Migrations
 
                     b.HasKey("PartnerId");
 
-                    b.ToTable("partners");
+                    b.ToTable("partners", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.PartnerAssignment", b =>
@@ -790,7 +790,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("SafehouseId");
 
-                    b.ToTable("partner_assignments");
+                    b.ToTable("partner_assignments", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.PostingSchedule", b =>
@@ -853,7 +853,7 @@ namespace Intext2.Migrations
 
                     b.HasKey("ScheduleDate");
 
-                    b.ToTable("posting_schedule");
+                    b.ToTable("posting_schedule", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.ProcessRecording", b =>
@@ -930,7 +930,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("ResidentId");
 
-                    b.ToTable("process_recordings");
+                    b.ToTable("process_recordings", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.PublicImpactSnapshot", b =>
@@ -973,7 +973,7 @@ namespace Intext2.Migrations
                         .IsUnique()
                         .HasFilter("[snapshot_date] IS NOT NULL");
 
-                    b.ToTable("public_impact_snapshots");
+                    b.ToTable("public_impact_snapshots", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.Resident", b =>
@@ -1057,8 +1057,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("date_of_admission");
 
-                    b.Property<DateOnly?>("DateOfBirth")
-                        .HasColumnType("date")
+                    b.Property<string>("DateOfBirth")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("date_of_birth");
 
                     b.Property<bool>("FamilyIndigenous")
@@ -1218,7 +1218,7 @@ namespace Intext2.Migrations
 
                     b.HasIndex("SafehouseId");
 
-                    b.ToTable("residents");
+                    b.ToTable("residents", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.ResidentEarlyWarning", b =>
@@ -1288,7 +1288,7 @@ namespace Intext2.Migrations
 
                     b.HasKey("ResidentId");
 
-                    b.ToTable("resident_early_warning");
+                    b.ToTable("resident_early_warning", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.RiskAlert", b =>
@@ -1326,7 +1326,7 @@ namespace Intext2.Migrations
 
                     b.HasKey("AlertId");
 
-                    b.ToTable("risk_alerts");
+                    b.ToTable("risk_alerts", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.Safehouse", b =>
@@ -1405,7 +1405,7 @@ namespace Intext2.Migrations
                     b.HasIndex("SafehouseCode")
                         .IsUnique();
 
-                    b.ToTable("safehouses");
+                    b.ToTable("safehouses", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.SafehouseMonthlyMetric", b =>
@@ -1463,7 +1463,7 @@ namespace Intext2.Migrations
                         .IsUnique()
                         .HasFilter("[month_start] IS NOT NULL");
 
-                    b.ToTable("safehouse_monthly_metrics");
+                    b.ToTable("safehouse_monthly_metrics", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.SocialMediaPost", b =>
@@ -1643,7 +1643,7 @@ namespace Intext2.Migrations
 
                     b.HasKey("PostId");
 
-                    b.ToTable("social_media_posts");
+                    b.ToTable("social_media_posts", (string)null);
                 });
 
             modelBuilder.Entity("Intext2.Models.Supporter", b =>
@@ -1729,7 +1729,7 @@ namespace Intext2.Migrations
 
                     b.HasKey("SupporterId");
 
-                    b.ToTable("supporters");
+                    b.ToTable("supporters", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
