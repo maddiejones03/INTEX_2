@@ -22,10 +22,10 @@ public class PartnerAssignment
     public string ProgramArea { get; set; } = string.Empty;
 
     [Column("assignment_start")]
-    public DateOnly AssignmentStart { get; set; }
+    public string? AssignmentStart { get; set; }
 
     [Column("assignment_end")]
-    public DateOnly? AssignmentEnd { get; set; }
+    public string? AssignmentEnd { get; set; }
 
     [Column("responsibility_notes")]
     public string? ResponsibilityNotes { get; set; }

@@ -14,10 +14,10 @@ public class SafehouseMonthlyMetric
     public int SafehouseId { get; set; }
 
     [Column("month_start")]
-    public DateOnly MonthStart { get; set; }
+    public string? MonthStart { get; set; }
 
     [Column("month_end")]
-    public DateOnly MonthEnd { get; set; }
+    public string? MonthEnd { get; set; }
 
     [Column("active_residents")]
     public int ActiveResidents { get; set; } = 0;

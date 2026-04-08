@@ -29,7 +29,7 @@ public class InterventionPlan
     public decimal? TargetValue { get; set; }
 
     [Column("target_date")]
-    public DateOnly? TargetDate { get; set; }
+    public string? TargetDate { get; set; }
 
     [Required]
     [MaxLength(20)]
@@ -37,13 +37,13 @@ public class InterventionPlan
     public string Status { get; set; } = "Open";
 
     [Column("case_conference_date")]
-    public DateOnly? CaseConferenceDate { get; set; }
+    public string? CaseConferenceDate { get; set; }
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedAt { get; set; }
 
     [Column("updated_at")]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public string? UpdatedAt { get; set; }
 
     // Navigation
     [ForeignKey(nameof(ResidentId))]

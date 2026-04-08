@@ -19,7 +19,7 @@ public class Donation
     public string DonationType { get; set; } = string.Empty;
 
     [Column("donation_date")]
-    public DateOnly DonationDate { get; set; }
+    public string? DonationDate { get; set; }
 
     [Column("is_recurring")]
     public bool IsRecurring { get; set; } = false;

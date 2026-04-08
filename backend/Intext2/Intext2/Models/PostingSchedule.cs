@@ -8,7 +8,7 @@ public class PostingSchedule
 {
     [Key]
     [Column("schedule_date")]
-    public DateOnly ScheduleDate { get; set; }
+    public string? ScheduleDate { get; set; }
 
     [Column("platform")]
     public string? Platform { get; set; }
@@ -47,5 +47,5 @@ public class PostingSchedule
     public double? PredictedReferrals { get; set; }
 
     [Column("computed_at")]
-    public DateTime? ComputedAt { get; set; }
+    public string? ComputedAt { get; set; }
 }

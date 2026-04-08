@@ -47,10 +47,10 @@ public class Partner
     public string Status { get; set; } = "Active";
 
     [Column("start_date")]
-    public DateOnly? StartDate { get; set; }
+    public string? StartDate { get; set; }
 
     [Column("end_date")]
-    public DateOnly? EndDate { get; set; }
+    public string? EndDate { get; set; }
 
     [Column("notes")]
     public string? Notes { get; set; }

@@ -52,5 +52,5 @@ public class ResidentEarlyWarning
     public string? ModelName { get; set; }
 
     [Column("computed_at")]
-    public DateTime? ComputedAt { get; set; }
+    public string? ComputedAt { get; set; }
 }

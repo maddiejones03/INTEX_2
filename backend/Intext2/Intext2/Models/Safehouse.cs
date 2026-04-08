@@ -41,7 +41,7 @@ public class Safehouse
     public string Country { get; set; } = "Philippines";
 
     [Column("open_date")]
-    public DateOnly? OpenDate { get; set; }
+    public string? OpenDate { get; set; }
 
     [Required]
     [MaxLength(20)]

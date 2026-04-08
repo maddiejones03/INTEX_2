@@ -17,7 +17,7 @@ public class IncidentReport
     public int SafehouseId { get; set; }
 
     [Column("incident_date")]
-    public DateOnly IncidentDate { get; set; }
+    public string? IncidentDate { get; set; }
 
     [Required]
     [MaxLength(25)]
@@ -39,7 +39,7 @@ public class IncidentReport
     public bool Resolved { get; set; } = false;
 
     [Column("resolution_date")]
-    public DateOnly? ResolutionDate { get; set; }
+    public string? ResolutionDate { get; set; }
 
     [MaxLength(255)]
     [Column("reported_by")]

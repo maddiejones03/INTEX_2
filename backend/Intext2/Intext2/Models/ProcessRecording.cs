@@ -14,7 +14,7 @@ public class ProcessRecording
     public int ResidentId { get; set; }
 
     [Column("session_date")]
-    public DateOnly SessionDate { get; set; }
+    public string? SessionDate { get; set; }
 
     [MaxLength(255)]
     [Column("social_worker")]

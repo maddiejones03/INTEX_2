@@ -62,7 +62,7 @@ public class Supporter
     public string? CreatedAt { get; set; }
 
     [Column("first_donation_date")]
-    public DateOnly? FirstDonationDate { get; set; }
+    public string? FirstDonationDate { get; set; }
 
     [MaxLength(30)]
     [Column("acquisition_channel")]
