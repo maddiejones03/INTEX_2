@@ -97,7 +97,7 @@ public class SupportersController : ControllerBase
         try
         {
             model.SupporterId = 0;
-            model.CreatedAt   = DateTime.UtcNow;
+            model.CreatedAt   = DateTime.UtcNow.ToString("o");
             _db.Supporters.Add(model);
             await _db.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = model.SupporterId }, model);
