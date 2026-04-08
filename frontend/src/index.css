@@ -421,6 +421,20 @@ input.form-input { padding-left: 2.25rem; }
 .login-header h1 { font-size: 1.25rem; font-weight: 700; color: var(--gray-900); font-family: var(--font-display); }
 .login-header p { font-size: 0.875rem; color: var(--gray-500); margin-top: 0.25rem; }
 .login-form { display: flex; flex-direction: column; gap: 1.25rem; }
+.portal-segment { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.35rem; }
+.portal-segment-btn {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 0.125rem;
+  width: 100%; padding: 0.65rem 0.85rem; border-radius: var(--radius);
+  border: 1px solid var(--gray-200); background: #fff; color: var(--gray-800);
+  font-size: 0.875rem; text-align: left; cursor: pointer; transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.portal-segment-btn:hover:not(:disabled) { border-color: var(--gray-300); background: var(--gray-50); }
+.portal-segment-btn:disabled { opacity: 0.65; cursor: not-allowed; }
+.portal-segment-btn--active {
+  border-color: var(--primary); background: rgba(91, 33, 182, 0.06); box-shadow: 0 0 0 1px var(--primary);
+}
+.portal-segment-btn-label { font-weight: 600; color: var(--gray-900); }
+.portal-segment-btn-hint { font-size: 0.75rem; color: var(--gray-500); font-weight: 400; }
 .login-footer { text-align: center; margin-top: 1.5rem; font-size: 0.825rem; color: var(--gray-500); display: flex; flex-direction: column; gap: 0.5rem; }
 .login-hint { font-size: 0.775rem; color: var(--gray-400); }
 .login-hint code { background: var(--gray-100); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.75rem; }

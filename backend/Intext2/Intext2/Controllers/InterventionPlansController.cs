@@ -86,9 +86,10 @@ public class InterventionPlansController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
         try
         {
+            var stamp       = DateTime.UtcNow;
             model.PlanId    = 0;
-            model.CreatedAt = DateTime.UtcNow;
-            model.UpdatedAt = DateTime.UtcNow;
+            model.CreatedAt = stamp;
+            model.UpdatedAt = stamp;
             _db.InterventionPlans.Add(model);
             await _db.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = model.PlanId }, model);

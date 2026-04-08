@@ -1,0 +1,101 @@
+# INTEX2 — Laya Foundation Project Context
+
+## Project Overview
+This is a full-stack nonprofit case management and 
+donor management platform for Laya Foundation, 
+an anti-trafficking nonprofit serving girls in 
+the Philippines. Modeled after Lighthouse Sanctuary.
+
+## Tech Stack
+- Frontend: React + TypeScript (Vite) in /frontend
+- Backend: .NET 10 / C# in /backend/Intext2/Intext2
+- Database: Azure SQL Database
+- Deployment: Azure Static Web Apps (frontend) + 
+  Azure App Service (backend)
+- Auth: ASP.NET Identity with cookie-based auth
+- CI/CD: GitHub Actions
+
+## Key URLs
+- Frontend: https://jolly-moss-00018721e.5.azurestaticapps.net
+- Backend: https://intex-backend-maddie-ashaarbue3gkcagu.westus2-01.azurewebsites.net
+
+## Database
+- Server: intex-server-maddie.database.windows.net
+- Database: intex-db
+- Credentials stored in .NET User Secrets (never in code)
+
+## Authentication
+- Cookie-based auth (NOT JWT)
+- Password policy: 14 chars minimum only
+- Roles: Admin, Donor, Public
+- Admin email: admin@intex.local
+- Donor email: donor@lighthousesanctuary.org
+
+## Security Already Implemented
+- HTTPS/TLS via Azure
+- HTTP → HTTPS redirect
+- Cookie hardening (HttpOnly, SecurePolicy, SameSite)
+- CSP header via Infrastructure/SecurityHeaders.cs
+- HSTS in production
+- RBAC on all CUD endpoints
+- .NET User Secrets for credentials
+- CORS configured for frontend domains
+
+## File Structure
+frontend/src/
+  pages/
+    public/ — Home, Login, ImpactDashboard, PrivacyPolicy
+    admin/ — AdminDashboard, CaseloadInventory, Donors, 
+              ProcessRecording, HomeVisitation, Reports,
+              StaffManagement
+  components/
+    layout/ — Navbar, Footer, AdminSidebar
+    ui/ — CookieConsent, ProtectedRoute
+  context/ — AuthContext.tsx
+  services/ — authApi.ts, mockData.ts
+  types/ — AuthSession.ts
+
+backend/Intext2/Intext2/
+  Controllers/ — Auth, Residents, Supporters, Donations,
+                 ProcessRecordings, HomeVisitations,
+                 InterventionPlans, IncidentReports, Reports
+  Models/ — 18 model files matching Azure SQL schema
+  Data/ — ApplicationDbContext.cs
+  Auth/ — AuthRoles.cs, AuthPolicies.cs
+  Infrastructure/ — SecurityHeaders.cs
+  Dtos/ — LoginDto, RegisterDto, AuthResponseDto, 
+          DeleteConfirmDto
+  Migrations/ — InitialCreate (Identity tables only)
+
+## Domain Tables (already exist in Azure, populated with CSV data)
+safehouses, partners, partner_assignments, supporters,
+donations, in_kind_donation_items, donation_allocations,
+residents, process_recordings, home_visitations,
+education_records, health_wellbeing_records,
+intervention_plans, incident_reports, social_media_posts,
+safehouse_monthly_metrics, public_impact_snapshots
+
+## Known Issues Fixed Today
+- Resident creation 400 error fixed:
+  SuppressModelStateInvalidFilter = true
+  DateOfBirth changed to DateOnly? (nullable)
+  Field defaults added for required fields
+- Reports 500 error — null-safe LINQ queries needed
+
+## Still To Do
+- Delete confirmation dialogs on all admin pages
+- GDPR cookie consent fully functional
+- MFA implementation
+- Google third-party login
+- Connect remaining frontend pages to real API
+- Lighthouse accessibility 90%+ on every page
+- Mobile responsiveness on all pages
+- ML pipelines integrated into web app
+
+## Class Requirements
+This is for BYU INTEX week — 4 day sprint
+IS 401: Project management
+IS 413: Enterprise app development  
+IS 414: Security
+IS 455: Machine learning
+Presentation Friday April 10 at 12pm

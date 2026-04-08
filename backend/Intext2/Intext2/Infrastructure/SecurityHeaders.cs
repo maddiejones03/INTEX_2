@@ -18,6 +18,9 @@ public static class SecurityHeaders
                 "font-src 'self'; " +
                 "connect-src 'self' " +
                     "https://jolly-moss-00018721e.5.azurestaticapps.net " +
+                    "http://localhost:5030 " +
+                    "https://localhost:7051 " +
+                    "https://intex-backend-maddie-ashaarbue3gkcagu.westus2-01.azurewebsites.net " +
                     "http://localhost:5173 " +
                     "http://localhost:3000; " +
                 "frame-ancestors 'none';";

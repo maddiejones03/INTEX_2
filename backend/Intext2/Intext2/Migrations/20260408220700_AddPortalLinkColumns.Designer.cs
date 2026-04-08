@@ -4,6 +4,7 @@ using Intext2.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Intext2.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260408220700_AddPortalLinkColumns")]
+    partial class AddPortalLinkColumns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1057,8 +1060,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("date_of_admission");
 
-                    b.Property<DateOnly?>("DateOfBirth")
-                        .HasColumnType("date")
+                    b.Property<string>("DateOfBirth")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("date_of_birth");
 
                     b.Property<bool>("FamilyIndigenous")

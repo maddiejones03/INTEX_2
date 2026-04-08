@@ -3,6 +3,7 @@ using Intext2.Dtos;
 using Intext2.Models;
 using Intext2.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +15,17 @@ public class DonationsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
     private readonly IEmailService _email;
-    public DonationsController(ApplicationDbContext db, IEmailService email) { _db = db; _email = email; }
+    private readonly UserManager<ApplicationUser> _userManager;
+
+    public DonationsController(
+        ApplicationDbContext db,
+        IEmailService email,
+        UserManager<ApplicationUser> userManager)
+    {
+        _db = db;
+        _email = email;
+        _userManager = userManager;
+    }
     private const string SchemaMismatchMessage = "Database schema mismatch detected for donations data. Ensure Azure SQL column types match EF migrations.";
 
     private static bool IsSchemaTypeMismatch(Exception ex)
@@ -39,10 +50,40 @@ public class DonationsController : ControllerBase
             if (pageSize < 1) pageSize = 20;
             if (pageSize > 100) pageSize = 100;
 
+            if (User.IsInRole(AuthRoles.CaseManager))
+                return Forbid();
+
+            var appUser = await _userManager.GetUserAsync(User);
+            if (appUser is null)
+                return Unauthorized();
+
             var query = _db.Donations.AsQueryable();
 
-            if (supporterId.HasValue)
-                query = query.Where(d => d.SupporterId == supporterId.Value);
+            if (User.IsInRole(AuthRoles.Donor))
+            {
+                if (appUser.SupporterId is null)
+                {
+                    return Ok(new
+                    {
+                        total = 0,
+                        page,
+                        pageSize,
+                        items = Array.Empty<Donation>(),
+                        message = "No supporter profile is linked to this account yet.",
+                    });
+                }
+
+                query = query.Where(d => d.SupporterId == appUser.SupporterId);
+            }
+            else if (User.IsInRole(AuthRoles.Admin))
+            {
+                if (supporterId.HasValue)
+                    query = query.Where(d => d.SupporterId == supporterId.Value);
+            }
+            else
+            {
+                return Forbid();
+            }
 
             if (!string.IsNullOrWhiteSpace(donationType))
                 query = query.Where(d => d.DonationType == donationType);
@@ -82,6 +123,9 @@ public class DonationsController : ControllerBase
     {
         try
         {
+            if (User.IsInRole(AuthRoles.CaseManager))
+                return Forbid();
+
             var donation = await _db.Donations
                 .Include(d => d.Supporter)
                 .Include(d => d.InKindItems)
@@ -90,6 +134,18 @@ public class DonationsController : ControllerBase
 
             if (donation is null)
                 return NotFound(new { message = $"Donation {id} not found." });
+
+            var appUser = await _userManager.GetUserAsync(User);
+            if (appUser is null)
+                return Unauthorized();
+
+            if (User.IsInRole(AuthRoles.Donor))
+            {
+                if (appUser.SupporterId is null || donation.SupporterId != appUser.SupporterId)
+                    return NotFound(new { message = $"Donation {id} not found." });
+            }
+            else if (!User.IsInRole(AuthRoles.Admin))
+                return Forbid();
 
             return Ok(donation);
         }
