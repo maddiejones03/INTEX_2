@@ -1,5 +1,6 @@
 using Intext2.Data;
 using Intext2.Dtos;
+using Intext2.Infrastructure;
 using Intext2.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -116,6 +117,8 @@ public class ResidentsController : ControllerBase
     public async Task<IActionResult> Create([FromBody] Resident model)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
+        var invalid = InputSanitizer.SanitizeAndValidate(model);
+        if (invalid.Count > 0) return BadRequest(new { message = "Required fields cannot be empty.", fields = invalid });
         try
         {
             model.ResidentId = 0;
@@ -136,6 +139,8 @@ public class ResidentsController : ControllerBase
     public async Task<IActionResult> Update(int id, [FromBody] Resident model)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
+        var invalid = InputSanitizer.SanitizeAndValidate(model);
+        if (invalid.Count > 0) return BadRequest(new { message = "Required fields cannot be empty.", fields = invalid });
         try
         {
             var existing = await _db.Residents.FindAsync(id);

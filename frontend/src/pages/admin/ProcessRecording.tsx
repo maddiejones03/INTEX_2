@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Plus, Eye, X, Check, AlertCircle, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Plus, Eye, Trash2, X, Check, AlertCircle, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 
@@ -90,6 +91,7 @@ export default function ProcessRecordingPage() {
   const [expandedResident, setExpandedResident] = useState<number | null>(null);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ProcessRecording | null>(null);
   const [newRec, setNewRec] = useState({
     residentId: '',
     socialWorker: '',
@@ -121,6 +123,22 @@ export default function ProcessRecordingPage() {
   }, [filterResident]);
 
   useEffect(() => { fetchRecordings(); }, [fetchRecordings]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`${API_BASE}/api/processrecordings/${deleteTarget.recordingId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ confirmed: true }),
+      });
+      setDeleteTarget(null);
+      fetchRecordings();
+    } catch (err) {
+      console.error('Failed to delete recording', err);
+    }
+  };
 
   useEffect(() => {
     fetch(`${API_BASE}/api/residents?pageSize=100`, { credentials: 'include' })
@@ -327,6 +345,7 @@ export default function ProcessRecordingPage() {
                               <span>{r.socialWorker}</span>
                               <span className="session-emotional">{r.emotionalStateObserved}</span>
                               <button className="btn-icon" onClick={() => setSelected(r)}><Eye size={15} /></button>
+                              <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
                             </div>
                           </div>
                           <p className="session-preview">{r.sessionNarrative?.slice(0, 150)}{(r.sessionNarrative?.length ?? 0) > 150 ? '…' : ''}</p>
@@ -344,6 +363,12 @@ export default function ProcessRecordingPage() {
       )}
 
       {selected && <RecordingModal rec={selected} onClose={() => setSelected(null)} />}
+      <ConfirmDeleteModal
+        isOpen={deleteTarget !== null}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        itemName={deleteTarget ? `recording on ${new Date(deleteTarget.sessionDate).toLocaleDateString()}` : ''}
+      />
     </div>
   );
 }

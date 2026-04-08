@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Search, Plus, Filter, AlertCircle, Eye, Edit2,
+  Search, Plus, Filter, AlertCircle, Eye, Edit2, Trash2,
   ChevronLeft, ChevronRight, X, Check,
 } from 'lucide-react';
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 
@@ -150,6 +151,7 @@ export default function CaseloadInventory() {
   const [newResident, setNewResident] = useState({ caseControlNo: '', sex: 'Female', dateOfBirth: '', caseCategory: 'Neglect', safehouseId: '' });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Resident | null>(null);
 
   const fetchResidents = useCallback(async () => {
     setLoading(true);
@@ -216,6 +218,22 @@ export default function CaseloadInventory() {
       setFormError('Failed to create resident.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`${API_BASE}/api/residents/${deleteTarget.residentId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ confirmed: true }),
+      });
+      setDeleteTarget(null);
+      fetchResidents();
+    } catch (err) {
+      console.error('Failed to delete resident', err);
     }
   };
 
@@ -358,6 +376,7 @@ export default function CaseloadInventory() {
                     <div className="action-btns">
                       <button className="btn-icon" title="View" onClick={() => setSelectedId(r.residentId)}><Eye size={15} /></button>
                       <button className="btn-icon" title="Edit"><Edit2 size={15} /></button>
+                      <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
                     </div>
                   </td>
                 </tr>
@@ -379,6 +398,12 @@ export default function CaseloadInventory() {
       </div>
 
       {selectedId !== null && <ResidentModal residentId={selectedId} onClose={() => setSelectedId(null)} />}
+      <ConfirmDeleteModal
+        isOpen={deleteTarget !== null}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        itemName={deleteTarget?.caseControlNo ?? ''}
+      />
     </div>
   );
 }
