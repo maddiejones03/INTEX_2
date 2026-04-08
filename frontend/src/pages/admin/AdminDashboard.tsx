@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
+import DonorWatchlist from '../../components/ui/DonorWatchlist';
+
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 
@@ -250,6 +252,8 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
+           {/* Donor Risk Watchlist — ML Pipeline 1 */}
+           <DonorWatchlist topN={10} />
         </>
       )}
     </div>
