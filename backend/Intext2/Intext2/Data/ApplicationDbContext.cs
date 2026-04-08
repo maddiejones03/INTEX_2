@@ -70,5 +70,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Safehouse>()
             .HasIndex(s => s.SafehouseCode)
             .IsUnique();
+
+        // The DB has no PartnerId column on donations — ignore the shadow FK
+        builder.Entity<Donation>()
+            .Ignore("PartnerId");
     }
 }

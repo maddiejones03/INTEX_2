@@ -57,5 +57,4 @@ public class Partner
 
     // Navigation
     public ICollection<PartnerAssignment> Assignments { get; set; } = [];
-    public ICollection<Donation>          Donations   { get; set; } = [];
 }

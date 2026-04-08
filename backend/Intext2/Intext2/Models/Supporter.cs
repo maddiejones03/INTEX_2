@@ -8,6 +8,7 @@ public class Supporter
 {
     [Key]
     [Column("supporter_id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int SupporterId { get; set; }
 
     [Required]
@@ -59,10 +60,10 @@ public class Supporter
     public string Status { get; set; } = "Active";
 
     [Column("created_at")]
-    public DateTime? CreatedAt { get; set; }
+    public string CreatedAt { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
     [Column("first_donation_date")]
-    public DateOnly? FirstDonationDate { get; set; }
+    public string? FirstDonationDate { get; set; }
 
     [MaxLength(30)]
     [Column("acquisition_channel")]

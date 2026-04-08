@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { Download, TrendingUp, Users, Heart, BookOpen, Share2 } from 'lucide-react';
+import ImpactChart from '../../components/ui/ImpactChart';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
@@ -328,6 +329,8 @@ export default function Reports() {
               })}
             </div>
           </div>
+           {/* Pipeline 2 — Funding Impact by Program Area */}
+           <ImpactChart mode="admin" />
         </>
       )}
     </div>

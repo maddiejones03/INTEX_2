@@ -227,7 +227,7 @@ public class ReportsController : ControllerBase
 
             var totalDonations   = await _db.Donations
                 .Where(d => d.Amount.HasValue)
-                .SumAsync(d => (decimal?)d.Amount ?? 0);
+                .SumAsync(d => (double?)d.Amount ?? 0);
 
             var caseByCategory = await _db.Residents
                 .GroupBy(r => r.CaseCategory)
