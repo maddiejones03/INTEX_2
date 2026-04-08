@@ -22,7 +22,7 @@ public class DonationAllocation
     public string ProgramArea { get; set; } = string.Empty;
 
     [Column("amount_allocated")]
-    public decimal AmountAllocated { get; set; }
+    public double AmountAllocated { get; set; }
 
     [Column("allocation_date")]
     public DateOnly AllocationDate { get; set; }

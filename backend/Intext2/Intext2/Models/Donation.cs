@@ -38,7 +38,7 @@ public class Donation
     public string? CurrencyCode { get; set; }
 
     [Column("amount")]
-    public decimal? Amount { get; set; }
+    public double? Amount { get; set; }
 
     [Column("estimated_value")]
     public decimal? EstimatedValue { get; set; }
