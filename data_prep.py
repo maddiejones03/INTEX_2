@@ -402,6 +402,111 @@ def forward_fill_education(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 # ---------------------------------------------------------------------------
+# Derived analytical tables
+# ---------------------------------------------------------------------------
+
+def build_resident_timeline(tables: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """
+    Build a monthly resident panel from cleaned source tables.
+
+    One row per (resident_id, record_month). Aggregates health scores, session
+    metrics, home visit outcomes, education attendance, and incident counts into
+    a single panel used by q2c_early_warning_model.ipynb and batch_predictions.py.
+    """
+    residents = tables["residents"][
+        ["resident_id", "safehouse_id", "case_status", "case_category",
+         "sex", "initial_risk_numeric", "current_risk_numeric", "risk_delta"]
+    ].drop_duplicates("resident_id")
+
+    # Health: one row per resident per month
+    health = tables["health_wellbeing_records"].copy()
+    health["record_month"] = health["record_date"].dt.to_period("M")
+    health_monthly = health.groupby(["resident_id", "record_month"]).agg(
+        general_health_score=("general_health_score", "mean"),
+        record_date=("record_date", "min"),
+    ).reset_index()
+
+    # Education: join to health by resident + month
+    edu = tables["education_records"].copy()
+    edu["record_month"] = edu["record_date"].dt.to_period("M")
+    edu_monthly = edu.groupby(["resident_id", "record_month"]).agg(
+        attendance_rate=("attendance_rate", "mean"),
+        progress_percent=("progress_percent", "mean"),
+    ).reset_index()
+
+    # Base panel: health × education (outer so we keep rows with only one)
+    base = health_monthly.merge(edu_monthly, on=["resident_id", "record_month"], how="outer")
+
+    # Sessions (process_recordings)
+    sess = tables["process_recordings"].copy()
+    sess["session_month"] = sess["session_date"].dt.to_period("M")
+    sess["concerns_flag"] = sess["concerns_flagged"].astype("boolean").fillna(False).astype(int)
+    sess["emotional_improvement"] = (
+        sess["emotional_state_observed"].isin(NEGATIVE_STATES) &
+        sess["emotional_state_end"].isin(POSITIVE_STATES)
+    ).astype(int)
+    sess["progress_flag"] = sess["progress_noted"].astype("boolean").fillna(False).astype(int)
+    sess_monthly = sess.groupby(["resident_id", "session_month"]).agg(
+        session_count=("recording_id", "count"),
+        avg_duration_min=("session_duration_minutes", "mean"),
+        pct_concerns_flagged=("concerns_flag", "mean"),
+        pct_emotional_improvement=("emotional_improvement", "mean"),
+        pct_progress_noted=("progress_flag", "mean"),
+    ).reset_index().rename(columns={"session_month": "record_month"})
+    base = base.merge(sess_monthly, on=["resident_id", "record_month"], how="left")
+
+    # Home visitations
+    vis = tables["home_visitations"].copy()
+    vis["visit_month"] = vis["visit_date"].dt.to_period("M")
+    vis["cooperation_numeric"] = vis["family_cooperation_level"].map(COOPERATION_MAP)
+    vis["outcome_numeric"] = vis["visit_outcome"].map(VISIT_OUTCOME_MAP)
+    vis["safety_flag"] = vis["safety_concerns_noted"].astype("boolean").fillna(False).astype(int)
+    vis_monthly = vis.groupby(["resident_id", "visit_month"]).agg(
+        visit_count=("visitation_id", "count"),
+        avg_cooperation_score=("cooperation_numeric", "mean"),
+        pct_favorable=("outcome_numeric", lambda x: (x == 3).mean()),
+        pct_safety_concerns=("safety_flag", "mean"),
+    ).reset_index().rename(columns={"visit_month": "record_month"})
+    base = base.merge(vis_monthly, on=["resident_id", "record_month"], how="left")
+
+    # Incidents
+    inc = tables["incident_reports"].copy()
+    inc["incident_month"] = inc["incident_date"].dt.to_period("M")
+    inc["severity_numeric"] = inc["severity"].map(SEVERITY_MAP)
+    inc_monthly = inc.groupby(["resident_id", "incident_month"]).agg(
+        incident_count=("incident_id", "count"),
+        max_severity_numeric=("severity_numeric", "max"),
+    ).reset_index().rename(columns={"incident_month": "record_month"})
+    base = base.merge(inc_monthly, on=["resident_id", "record_month"], how="left")
+
+    # Fill zero for count/rate columns where no events occurred that month
+    fill_zero = [
+        "session_count", "visit_count", "incident_count",
+        "pct_concerns_flagged", "pct_emotional_improvement", "pct_progress_noted",
+        "pct_favorable", "pct_safety_concerns",
+    ]
+    for col in fill_zero:
+        if col in base.columns:
+            base[col] = base[col].fillna(0)
+
+    # Merge resident-level demographics
+    base = base.merge(residents, on="resident_id", how="left")
+
+    # Encode case_category for modelling
+    base["case_category_enc"] = base["case_category"].astype("category").cat.codes
+
+    # Ensure record_date is populated (use period start where missing from edu merge)
+    if "record_date" in base.columns:
+        base["record_date"] = base["record_date"].fillna(
+            base["record_month"].apply(lambda p: p.to_timestamp() if pd.notna(p) else pd.NaT)
+        )
+
+    base = base.sort_values(["resident_id", "record_month"]).reset_index(drop=True)
+    log(f"resident_timeline: {len(base)} rows, {base['resident_id'].nunique()} residents")
+    return base
+
+
+# ---------------------------------------------------------------------------
 # SQLite export
 # ---------------------------------------------------------------------------
 
@@ -515,6 +620,11 @@ def run(source_dir: Path, clean_dir: Path) -> None:
 
     print("\n[5/6] Writing cleaned CSVs...")
     save_csvs(tables, clean_dir)
+
+    print("\n[5b] Building derived analytical tables...")
+    resident_timeline = build_resident_timeline(tables)
+    resident_timeline.to_csv(clean_dir / "resident_timeline.csv", index=False)
+    print(f"  resident_timeline written ({len(resident_timeline)} rows)")
 
     print("\n[6/6] Exporting to SQLite...")
     export_to_sqlite(tables, clean_dir / "lighthouse.db")

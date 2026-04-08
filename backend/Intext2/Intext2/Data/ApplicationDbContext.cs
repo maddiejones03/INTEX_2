@@ -29,6 +29,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ResidentEarlyWarning>   ResidentEarlyWarnings   { get; set; }
     public DbSet<RiskAlert>              RiskAlerts              { get; set; }
     public DbSet<DonorRiskScore>         DonorRiskScores         { get; set; }
+    public DbSet<PostingSchedule>        PostingSchedules        { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

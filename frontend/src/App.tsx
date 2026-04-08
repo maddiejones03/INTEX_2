@@ -19,6 +19,7 @@ import HomeVisitation from './pages/admin/HomeVisitation';
 import Reports from './pages/admin/Reports';
 import StaffManagement from './pages/admin/StaffManagement';
 import EarlyWarning from './pages/admin/EarlyWarning';
+import PostingSchedule from './pages/admin/PostingSchedule';
 
 function PublicLayout() {
   return (
@@ -69,6 +70,7 @@ export default function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="staff" element={<StaffManagement />} />
             <Route path="early-warning" element={<EarlyWarning />} />
+            <Route path="posting-schedule" element={<PostingSchedule />} />
           </Route>
         </Routes>
       </AuthProvider>

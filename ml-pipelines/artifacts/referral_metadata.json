@@ -1,0 +1,30 @@
+{
+  "selected_features": [
+    "platform",
+    "day_of_week",
+    "post_hour",
+    "post_type",
+    "media_type",
+    "num_hashtags",
+    "mentions_count",
+    "has_call_to_action",
+    "call_to_action_type",
+    "sentiment_tone",
+    "caption_length",
+    "features_resident_story",
+    "is_boosted",
+    "post_month",
+    "post_year"
+  ],
+  "best_classifier": "hist_gb",
+  "cv_roc_auc_mean": 0.91751610458507,
+  "cv_roc_auc_std": 0.012967710017960855,
+  "best_regressor": "grad_boost",
+  "cv_neg_mae_log_mean": -0.5717906058549407,
+  "cv_neg_mae_log_std": 0.02251742149521425,
+  "holdout_roc_auc": 1.0,
+  "holdout_mae_count_raw": 7.622527490371848,
+  "n_train_rows": 812,
+  "rolling_months": null,
+  "data_path": "/Users/nickreeves/Downloads/INTEX2/cleaned/post_performance.csv"
+}
