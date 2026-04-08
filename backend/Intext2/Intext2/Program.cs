@@ -56,17 +56,27 @@ builder.Services.AddAuthorization(options =>
 });
 
 // ----------------------------------------------------------------
-// CORS
+// CORS (credentials + cookies require explicit origins; see Cors:AllowedOrigins for extras)
 // ----------------------------------------------------------------
+var defaultCorsOrigins = new[]
+{
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://jolly-moss-00018721e.1.azurestaticapps.net",
+    "https://jolly-moss-00018721e.5.azurestaticapps.net",
+};
+var extraCorsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var corsOrigins = defaultCorsOrigins
+    .Concat(extraCorsOrigins)
+    .Where(static o => !string.IsNullOrWhiteSpace(o))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "https://jolly-moss-00018721e.1.azurestaticapps.net"
-              )
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -117,12 +127,17 @@ app.UseSecurityHeaders();
 // Avoid redirecting http://localhost:5030 → https (breaks CORS preflight for SPA on :5173)
 if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
+
+// CORS must run after UseRouting and before auth for endpoint routing + preflight OPTIONS.
+app.UseRouting();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Map Identity API endpoints (register, login, etc.)
-app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>();
+app.MapGroup("/api/auth")
+    .RequireCors("AllowFrontend")
+    .MapIdentityApi<ApplicationUser>();
 
 app.MapControllers();
 app.Run();
