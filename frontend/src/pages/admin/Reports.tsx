@@ -4,6 +4,7 @@ import {
 } from 'recharts';
 import { Download, TrendingUp, Users, Heart, BookOpen } from 'lucide-react';
 import { mockDonationTrends, mockOutcomeMetrics, mockResidents, mockSafeHouses } from '../../services/mockData';
+import ImpactChart from '../../components/ui/ImpactChart';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
 
@@ -252,6 +253,8 @@ export default function Reports() {
           </div>
         </div>
       </div>
+      {/* Pipeline 2 — Funding Impact by Program Area */}
+      <ImpactChart mode="admin" />
     </div>
   );
 }

@@ -276,5 +276,68 @@ public class ReportsController : ControllerBase
         {
             return StatusCode(500, new { message = "Failed to generate public impact data.", detail = ex.Message });
         }
+    }  // ← PublicImpact closes here
+
+    // GET /api/reports/program-impact
+    [HttpGet("program-impact")]
+    [Authorize]
+    public IActionResult ProgramImpact()
+    {
+        try
+        {
+            var artifactsPath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "..", "..", "..", "ml-pipelines", "artifacts", "impact_per_1000.json"
+            );
+            if (!System.IO.File.Exists(artifactsPath))
+                artifactsPath = Path.Combine(AppContext.BaseDirectory, "artifacts", "impact_per_1000.json");
+
+            if (!System.IO.File.Exists(artifactsPath))
+                return NotFound(new { message = "impact_per_1000.json not found. Run train_pipeline2.py first." });
+
+            var json = System.IO.File.ReadAllText(artifactsPath);
+            var data = System.Text.Json.JsonSerializer.Deserialize<object>(json);
+            return Ok(data);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Failed to load program impact data.", detail = ex.Message });
+        }
     }
-}
+
+    // GET /api/reports/public-program-impact
+    [HttpGet("public-program-impact")]
+    [AllowAnonymous]
+    public IActionResult PublicProgramImpact()
+    {
+        try
+        {
+            var artifactsPath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "..", "..", "..", "ml-pipelines", "artifacts", "impact_per_1000.json"
+            );
+            if (!System.IO.File.Exists(artifactsPath))
+                artifactsPath = Path.Combine(AppContext.BaseDirectory, "artifacts", "impact_per_1000.json");
+
+            if (!System.IO.File.Exists(artifactsPath))
+                return NotFound(new { message = "Impact data not yet available." });
+
+            var json = System.IO.File.ReadAllText(artifactsPath);
+            var full = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(json);
+
+            return Ok(new
+            {
+                generatedAt        = full.GetProperty("generated_at").GetString(),
+                unit               = full.GetProperty("unit").GetString(),
+                topProgramArea     = full.GetProperty("top_program_area").GetString(),
+                topEduImpact       = full.GetProperty("top_edu_impact").GetDouble(),
+                programAreaRanking = full.GetProperty("program_area_ranking"),
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Failed to load public impact data.", detail = ex.Message });
+        }
+    }
+
+} 

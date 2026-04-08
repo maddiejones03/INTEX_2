@@ -1,7 +1,21 @@
 {
-  "generated_at": "2026-04-06",
-  "model": "OLS with safehouse fixed effects",
-  "unit": "points per 1000 PHP allocated (lagged 1 month)",
+  "generated_at": "2026-04-08T17:44:23.493417",
+  "model": "OLS with safehouse fixed effects (Model B)",
+  "unit": "points per $1,000 allocated (lagged 1 month)",
+  "model_fit": {
+    "education": {
+      "r_squared": 0.2013,
+      "adj_r_squared": 0.1363,
+      "n_obs": 187,
+      "f_pvalue": 0.0003
+    },
+    "health": {
+      "r_squared": 0.5293,
+      "adj_r_squared": 0.491,
+      "n_obs": 187,
+      "f_pvalue": 0.0
+    }
+  },
   "education_progress_coefficients": {
     "Wellbeing": 3.6176,
     "Maintenance": 0.8485,
@@ -22,32 +36,46 @@
     {
       "rank": 1,
       "program_area": "Wellbeing",
+      "edu_coef": 3.6176,
+      "health_coef": -0.0259,
       "avg_impact": 1.7958
     },
     {
       "rank": 2,
       "program_area": "Maintenance",
+      "edu_coef": 0.8485,
+      "health_coef": -0.0021,
       "avg_impact": 0.4232
     },
     {
       "rank": 3,
       "program_area": "Transport",
+      "edu_coef": -0.907,
+      "health_coef": -0.0055,
       "avg_impact": -0.4563
     },
     {
       "rank": 4,
       "program_area": "Operations",
+      "edu_coef": -0.9349,
+      "health_coef": 0.0006,
       "avg_impact": -0.4672
     },
     {
       "rank": 5,
       "program_area": "Outreach",
+      "edu_coef": -3.299,
+      "health_coef": -0.05,
       "avg_impact": -1.6745
     },
     {
       "rank": 6,
       "program_area": "Education",
+      "edu_coef": -4.6214,
+      "health_coef": 0.0118,
       "avg_impact": -2.3048
     }
-  ]
+  ],
+  "top_program_area": "Wellbeing",
+  "top_edu_impact": 3.6176
 }
