@@ -12,28 +12,6 @@ namespace Intext2.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "donor_risk_scores",
-                columns: table => new
-                {
-                    supporter_id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    display_name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    risk_score = table.Column<double>(type: "float", nullable: false),
-                    risk_tier = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    priority_score = table.Column<double>(type: "float", nullable: false),
-                    lifetime_value_php = table.Column<double>(type: "float", nullable: false),
-                    days_since_last_donation = table.Column<double>(type: "float", nullable: false),
-                    gap_ratio = table.Column<double>(type: "float", nullable: false),
-                    risk_reasons_json = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    last_scored_at = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    snooze_until = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_donor_risk_scores", x => x.supporter_id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "posting_schedule",
                 columns: table => new
                 {
@@ -61,9 +39,6 @@ namespace Intext2.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "donor_risk_scores");
-
             migrationBuilder.DropTable(
                 name: "posting_schedule");
         }
