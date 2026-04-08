@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Eye, X, Check, AlertCircle, Home, Search } from 'lucide-react';
+import { Plus, Eye, Trash2, X, Check, AlertCircle, Home, Search } from 'lucide-react';
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 
@@ -88,6 +89,7 @@ export default function HomeVisitation() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<HomeVisit | null>(null);
   const [newVisit, setNewVisit] = useState({
     residentId: '',
     socialWorker: '',
@@ -119,6 +121,22 @@ export default function HomeVisitation() {
   }, [filterType]);
 
   useEffect(() => { fetchVisits(); }, [fetchVisits]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`${API_BASE}/api/homevisitations/${deleteTarget.visitationId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ confirmed: true }),
+      });
+      setDeleteTarget(null);
+      fetchVisits();
+    } catch (err) {
+      console.error('Failed to delete visit', err);
+    }
+  };
 
   useEffect(() => {
     fetch(`${API_BASE}/api/residents?pageSize=100`, { credentials: 'include' })
@@ -306,7 +324,12 @@ export default function HomeVisitation() {
                   <td className="table-secondary">{v.socialWorker || '—'}</td>
                   <td><span className={`cooperation-badge coop-${v.familyCooperationLevel?.toLowerCase()}`}>{v.familyCooperationLevel}</span></td>
                   <td className="table-secondary">{v.followUpNeeded ? <span className="safety-flag">⚠ Needed</span> : <span className="safety-none">None</span>}</td>
-                  <td><button className="btn-icon" onClick={() => setSelectedVisit(v)}><Eye size={15} /></button></td>
+                  <td>
+                    <div className="action-btns">
+                      <button className="btn-icon" onClick={() => setSelectedVisit(v)}><Eye size={15} /></button>
+                      <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(v)}><Trash2 size={15} /></button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {filteredVisits.length === 0 && (
@@ -318,6 +341,12 @@ export default function HomeVisitation() {
       </div>
 
       {selectedVisit && <VisitModal visit={selectedVisit} onClose={() => setSelectedVisit(null)} />}
+      <ConfirmDeleteModal
+        isOpen={deleteTarget !== null}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        itemName={deleteTarget ? `visit on ${new Date(deleteTarget.visitDate).toLocaleDateString()}` : ''}
+      />
     </div>
   );
 }
