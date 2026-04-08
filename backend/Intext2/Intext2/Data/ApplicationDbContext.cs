@@ -62,9 +62,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                     property.SetValueConverter(dateOnlyConverter);
                 else if (property.ClrType == typeof(DateOnly?))
                     property.SetValueConverter(nullableDateOnlyConverter);
-                else if (property.ClrType == typeof(bool))
+                else if (property.ClrType == typeof(bool) && !entityType.ClrType.FullName!.StartsWith("Microsoft.AspNetCore.Identity"))
                     property.SetValueConverter(boolToIntConverter);
-                else if (property.ClrType == typeof(bool?))
+                else if (property.ClrType == typeof(bool?) && !entityType.ClrType.FullName!.StartsWith("Microsoft.AspNetCore.Identity"))
                     property.SetValueConverter(nullableBoolToIntConverter);
             }
         }
