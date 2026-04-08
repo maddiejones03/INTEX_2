@@ -2,6 +2,22 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Cookie, X, Check } from 'lucide-react';
 
+// ── Cookie helpers ────────────────────────────────────────────────
+function setCookie(name: string, value: string, days: number) {
+  const expires = new Date();
+  expires.setDate(expires.getDate() + days);
+  document.cookie =
+    `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+}
+
+function getCookie(name: string): string | null {
+  const match = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.split('=')[1]) : null;
+}
+
+// ─────────────────────────────────────────────────────────────────
 export default function CookieConsent() {
   const [visible, setVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -12,13 +28,14 @@ export default function CookieConsent() {
   });
 
   useEffect(() => {
-    const consent = localStorage.getItem('kanlungan_cookie_consent');
+    // Show banner only if no browser cookie exists yet
+    const consent = getCookie('cookie_consent');
     if (!consent) {
       setTimeout(() => setVisible(true), 1000);
     }
 
     const handleOpen = () => {
-      // Load current saved preferences into the panel when re-opened
+      // Pre-populate toggles from the saved localStorage detail blob
       const saved = localStorage.getItem('kanlungan_cookie_consent');
       if (saved) {
         try {
@@ -38,29 +55,28 @@ export default function CookieConsent() {
     return () => window.removeEventListener('open-cookie-settings', handleOpen);
   }, []);
 
-  const acceptAll = () => {
+  const save = (value: 'accepted' | 'declined', prefs: typeof preferences) => {
+    // Browser cookie — readable by JS, used by React to gate behaviour
+    setCookie('cookie_consent', value, 365);
+    // localStorage blob — keeps granular preference details
     localStorage.setItem(
       'kanlungan_cookie_consent',
-      JSON.stringify({ necessary: true, analytics: true, functional: true, timestamp: new Date().toISOString() })
+      JSON.stringify({ ...prefs, timestamp: new Date().toISOString() })
     );
     setVisible(false);
   };
 
-  const acceptSelected = () => {
-    localStorage.setItem(
-      'kanlungan_cookie_consent',
-      JSON.stringify({ ...preferences, timestamp: new Date().toISOString() })
-    );
-    setVisible(false);
-  };
+  const acceptAll = () =>
+    save('accepted', { necessary: true, analytics: true, functional: true });
 
-  const rejectAll = () => {
-    localStorage.setItem(
-      'kanlungan_cookie_consent',
-      JSON.stringify({ necessary: true, analytics: false, functional: false, timestamp: new Date().toISOString() })
+  const acceptSelected = () =>
+    save(
+      preferences.analytics || preferences.functional ? 'accepted' : 'declined',
+      preferences
     );
-    setVisible(false);
-  };
+
+  const rejectAll = () =>
+    save('declined', { necessary: true, analytics: false, functional: false });
 
   if (!visible) return null;
 
@@ -122,7 +138,7 @@ export default function CookieConsent() {
           </button>
           <div className="cookie-btn-group">
             <button className="btn btn-outline btn-sm" onClick={rejectAll}>
-              Reject All
+              Decline
             </button>
             {showDetails ? (
               <button className="btn btn-primary btn-sm" onClick={acceptSelected}>
@@ -130,7 +146,7 @@ export default function CookieConsent() {
               </button>
             ) : (
               <button className="btn btn-primary btn-sm" onClick={acceptAll}>
-                <Check size={14} /> Accept All
+                <Check size={14} /> Accept
               </button>
             )}
           </div>
