@@ -11,20 +11,29 @@ const stats = [
   { value: '$8.2M', label: 'Annual Budget', desc: 'Fully donor-funded' },
 ];
 
-const programs = [
+const programs: Array<{
+  icon: typeof Shield;
+  title: string;
+  desc: string;
+  color: string;
+  image: string;
+  objectPosition?: string;
+}> = [
   {
     icon: Shield,
     title: 'Crisis Shelter',
     desc: 'Immediate, safe, confidential shelter for survivors of trafficking, abuse, and neglect.',
     color: 'blue',
     image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=1200&q=80',
+    objectPosition: 'center 38%',
   },
   {
     icon: Heart,
     title: 'Healing & Therapy',
     desc: 'Trauma-informed counseling, individual and group therapy, and psychiatric support.',
     color: 'rose',
-    image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1200&q=80',
+    image: '/therapy.webp',
+    objectPosition: 'center center',
   },
   {
     icon: BookOpen,
@@ -32,13 +41,15 @@ const programs = [
     desc: 'Alternative learning, formal schooling, and vocational training for lasting independence.',
     color: 'amber',
     image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1200&q=80',
+    objectPosition: 'center center',
   },
   {
     icon: HomeIcon,
     title: 'Reintegration',
     desc: 'Family reunification, community placement, and post-placement monitoring for every resident.',
     color: 'green',
-    image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1200&q=80',
+    image: '/reintegration.jpg',
+    objectPosition: 'center center',
   },
   {
     icon: Users,
@@ -46,6 +57,7 @@ const programs = [
     desc: 'Parent support groups, livelihood training, and community case conferences.',
     color: 'purple',
     image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1200&q=80',
+    objectPosition: 'center center',
   },
   {
     icon: TrendingUp,
@@ -53,6 +65,7 @@ const programs = [
     desc: 'Practical skills and micro-enterprise support to help survivors and families thrive.',
     color: 'teal',
     image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80',
+    objectPosition: 'center center',
   },
 ];
 
@@ -77,13 +90,21 @@ const testimonials = [
   },
 ];
 
-const stories = [
+const stories: Array<{
+  image: string;
+  alt: string;
+  quote: string;
+  name: string;
+  tag: string;
+  objectPosition?: string;
+}> = [
   {
-    image: 'https://images.unsplash.com/photo-1542204625-de293a0f5d16?auto=format&fit=crop&w=1200&q=80',
-    alt: 'A young woman smiling at her graduation',
+    image: '/community-image.jpg',
+    alt: 'Diverse community members in a circle with hands together in unity',
     quote: "I used to think freedom was just a word. Now I live it every day.",
     name: 'Maria, Age 22',
     tag: 'Education Graduate',
+    objectPosition: 'center center',
   },
   {
     image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1200&q=80',
@@ -91,13 +112,14 @@ const stories = [
     quote: "The Laya team helped us become a family again. We are healing together.",
     name: 'Elena & Family',
     tag: 'Family Reintegration',
+    objectPosition: 'center 52%',
   },
 ];
 
 const galleryImages = [
   'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1200&q=80',
   'https://images.unsplash.com/photo-1459183885421-5cc683b8dbba?auto=format&fit=crop&w=1200&q=80',
-  'https://images.unsplash.com/photo-1469571486292-b53601020fbb?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=1200&q=80',
   'https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=1200&q=80',
 ];
 
@@ -197,7 +219,17 @@ export default function Home() {
           <div className="programs-grid">
             {programs.map((p) => (
               <div key={p.title} className={`program-card program-card-${p.color}`}>
-                <img src={p.image} alt={p.title} className="program-photo" loading="lazy" />
+                <div className="program-photo-wrap">
+                  <img
+                    src={p.image}
+                    alt=""
+                    className="program-photo"
+                    loading="lazy"
+                    style={
+                      p.objectPosition ? { objectPosition: p.objectPosition } : undefined
+                    }
+                  />
+                </div>
                 <div className={`program-icon program-icon-${p.color}`}>
                   <p.icon size={22} />
                 </div>
@@ -222,6 +254,9 @@ export default function Home() {
                     src={s.image}
                     alt={s.alt}
                     className="story-image"
+                    style={
+                      s.objectPosition ? { objectPosition: s.objectPosition } : undefined
+                    }
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
                   <div className="story-image-placeholder">
