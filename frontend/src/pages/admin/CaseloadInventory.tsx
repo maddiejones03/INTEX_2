@@ -187,8 +187,8 @@ export default function CaseloadInventory() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const handleAdd = async () => {
-    if (!newResident.caseControlNo.trim() || !newResident.dateOfBirth) {
-      setFormError('Case control number and date of birth are required.');
+    if (!newResident.caseControlNo.trim() || !newResident.dateOfBirth || !newResident.safehouseId) {
+      setFormError('Case control number, date of birth, and safe house are required.');
       return;
     }
     setSaving(true);
@@ -212,7 +212,14 @@ export default function CaseloadInventory() {
         setNewResident({ caseControlNo: '', sex: 'Female', dateOfBirth: '', caseCategory: 'Neglect', safehouseId: '' });
         fetchResidents();
       } else {
-        setFormError('Failed to create resident.');
+        let message = 'Failed to create resident.';
+        try {
+          const err = await res.json();
+          message = err?.message || err?.detail || message;
+        } catch {
+          // keep fallback message
+        }
+        setFormError(message);
       }
     } catch {
       setFormError('Failed to create resident.');
