@@ -1,4 +1,4 @@
-git add -A && git commit -m "Revert bool and SafehouseId changes in Resident" && git push origin maddieusing System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Intext2.Models;
