@@ -233,3 +233,20 @@ export interface RiskAlert {
   currentRiskLevel: string | null;
   computedAt: string | null;
 }
+
+export interface PostingSchedule {
+  scheduleDate: string;
+  platform: string | null;
+  dayOfWeek: string | null;
+  postHour: number | null;
+  postType: string | null;
+  mediaType: string | null;
+  sentimentTone: string | null;
+  hasCallToAction: boolean | null;
+  callToActionType: string | null;
+  isBoosted: boolean | null;
+  featuresResidentStory: boolean | null;
+  pAnyReferral: number | null;
+  predictedReferrals: number | null;
+  computedAt: string | null;
+}

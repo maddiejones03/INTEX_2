@@ -36,7 +36,7 @@ PIPELINE2_METADATA_PATH = ARTIFACTS_DIR / "pipeline2_metadata.json"
 PIPELINE2_METRICS_PATH  = ARTIFACTS_DIR / "pipeline2_metrics.json"
 
 # Pipeline 3: Early Warning Model (q2c_early_warning_model)
-EARLY_WARNING_MODEL_PATH    = ARTIFACTS_DIR / "early_warning_model.sav"
+EARLY_WARNING_MODEL_PATH    = ARTIFACTS_DIR / "early_warning_model.pkl"
 EARLY_WARNING_METADATA_PATH = ARTIFACTS_DIR / "early_warning_metadata.json"
 EARLY_WARNING_METRICS_PATH  = ARTIFACTS_DIR / "early_warning_metrics.json"
 
@@ -44,6 +44,11 @@ EARLY_WARNING_METRICS_PATH  = ARTIFACTS_DIR / "early_warning_metrics.json"
 SOCIAL_MEDIA_MODEL_PATH    = ARTIFACTS_DIR / "social_media_model.sav"
 SOCIAL_MEDIA_METADATA_PATH = ARTIFACTS_DIR / "social_media_metadata.json"
 SOCIAL_MEDIA_METRICS_PATH  = ARTIFACTS_DIR / "social_media_metrics.json"
+
+# Pipeline 5: Referral Prediction (post recommendation)
+REFERRAL_CLASSIFIER_PATH = ARTIFACTS_DIR / "referral_classifier.joblib"
+REFERRAL_REGRESSOR_PATH  = ARTIFACTS_DIR / "referral_count_regressor.joblib"
+REFERRAL_METADATA_PATH   = ARTIFACTS_DIR / "referral_metadata.json"
 
 
 # ── Azure SQL connection string (pyodbc) ──────────────────────────────────────
