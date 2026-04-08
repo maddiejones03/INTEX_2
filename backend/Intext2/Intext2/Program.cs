@@ -1,3 +1,4 @@
+using Intext2.Infrastructure;
 using Intext2.Data;
 using Intext2.Models;
 using Microsoft.AspNetCore.Identity;
@@ -91,6 +92,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
+app.UseSecurityHeaders();
 app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();

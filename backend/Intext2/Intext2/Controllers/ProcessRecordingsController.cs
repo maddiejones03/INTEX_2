@@ -13,6 +13,11 @@ public class ProcessRecordingsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
     public ProcessRecordingsController(ApplicationDbContext db) => _db = db;
+    private const string SchemaMismatchMessage = "Database schema mismatch detected for process recordings data. Ensure Azure SQL column types match EF migrations.";
+
+    private static bool IsSchemaTypeMismatch(Exception ex)
+        => ex is InvalidCastException
+           || ex.Message.Contains("Unable to cast object of type", StringComparison.OrdinalIgnoreCase);
 
     // GET /api/processrecordings
     [HttpGet]
@@ -48,6 +53,8 @@ public class ProcessRecordingsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to retrieve process recordings.", detail = ex.Message });
         }
     }
@@ -70,6 +77,8 @@ public class ProcessRecordingsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to retrieve process recording.", detail = ex.Message });
         }
     }
@@ -89,6 +98,8 @@ public class ProcessRecordingsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to create process recording.", detail = ex.Message });
         }
     }
@@ -112,6 +123,8 @@ public class ProcessRecordingsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to update process recording.", detail = ex.Message });
         }
     }
@@ -135,6 +148,8 @@ public class ProcessRecordingsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to delete process recording.", detail = ex.Message });
         }
     }

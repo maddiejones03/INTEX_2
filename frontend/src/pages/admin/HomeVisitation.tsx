@@ -1,10 +1,36 @@
-import { useState } from 'react';
-import { Plus, Eye, X, Check, AlertCircle, Home, Calendar, Search } from 'lucide-react';
-import { mockHomeVisits, mockCaseConferences, mockResidents, mockSocialWorkers } from '../../services/mockData';
-import type { HomeVisit, CaseConference, VisitType } from '../../types';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Eye, Trash2, X, Check, AlertCircle, Home, Search } from 'lucide-react';
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 
-const VISIT_TYPES: VisitType[] = ['Initial Assessment', 'Routine Follow-Up', 'Reintegration Assessment', 'Post-Placement Monitoring', 'Emergency'];
-const COOPERATION_LEVELS = ['High', 'Moderate', 'Low', 'Uncooperative'] as const;
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
+
+const VISIT_TYPES = ['Initial Assessment', 'Routine Follow-Up', 'Reintegration Assessment', 'Post-Placement Monitoring', 'Emergency'];
+const COOPERATION_LEVELS = ['High', 'Moderate', 'Low', 'Uncooperative'];
+const PAGE_SIZE = 50;
+
+interface HomeVisit {
+  visitationId: number;
+  residentId: number;
+  visitDate: string;
+  socialWorker: string;
+  visitType: string;
+  locationVisited: string;
+  familyMembersPresent: string;
+  purpose: string;
+  observations: string;
+  familyCooperationLevel: string;
+  safetyConcerosNoted: boolean;
+  followUpNeeded: boolean;
+  followUpNotes: string;
+  visitOutcome: string;
+  cooperationNumeric: number;
+  outcomeNumeric: number;
+}
+
+interface Resident {
+  residentId: number;
+  caseControlNo: string;
+}
 
 function VisitModal({ visit, onClose }: { visit: HomeVisit; onClose: () => void }) {
   return (
@@ -13,70 +39,37 @@ function VisitModal({ visit, onClose }: { visit: HomeVisit; onClose: () => void 
         <div className="modal-header">
           <div>
             <h2>Home Visit Record</h2>
-            <p className="modal-subtitle">{visit.residentName} · {new Date(visit.visitDate).toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="modal-subtitle">Resident #{visit.residentId} · {new Date(visit.visitDate).toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modal-body">
           <div className="detail-grid">
             <div className="detail-item"><span>Visit Type</span><span className="category-chip">{visit.visitType}</span></div>
-            <div className="detail-item"><span>Social Worker</span><strong>{visit.socialWorkerName}</strong></div>
-            <div className="detail-item"><span>Family Cooperation</span>
-              <span className={`cooperation-badge coop-${visit.familyCooperationLevel.toLowerCase()}`}>{visit.familyCooperationLevel}</span>
+            <div className="detail-item"><span>Social Worker</span><strong>{visit.socialWorker || '—'}</strong></div>
+            <div className="detail-item"><span>Location</span><strong>{visit.locationVisited || '—'}</strong></div>
+            <div className="detail-item"><span>Family Members Present</span><strong>{visit.familyMembersPresent || '—'}</strong></div>
+            <div className="detail-item"><span>Family Cooperation</span><span className={`cooperation-badge coop-${visit.familyCooperationLevel?.toLowerCase()}`}>{visit.familyCooperationLevel}</span></div>
+            <div className="detail-item"><span>Safety Concerns</span><strong>{visit.safetyConcerosNoted ? 'Yes' : 'None'}</strong></div>
+            <div className="detail-item"><span>Follow-Up Needed</span><strong>{visit.followUpNeeded ? 'Yes' : 'No'}</strong></div>
+            <div className="detail-item"><span>Visit Outcome</span><strong>{visit.visitOutcome || '—'}</strong></div>
+          </div>
+          {visit.purpose && (
+            <div className="narrative-section">
+              <h3>Purpose</h3>
+              <p>{visit.purpose}</p>
             </div>
-          </div>
-          <div className="narrative-section">
-            <h3>Home Environment Observations</h3>
-            <p>{visit.homeEnvironmentObservations}</p>
-          </div>
-          <div className="narrative-section">
-            <h3>Safety Concerns</h3>
-            <p>{visit.safetyConcerns || 'None noted.'}</p>
-          </div>
-          <div className="narrative-section">
-            <h3>Follow-Up Actions</h3>
-            <p>{visit.followUpActions}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ConferenceModal({ conf, onClose }: { conf: CaseConference; onClose: () => void }) {
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div>
-            <h2>Case Conference</h2>
-            <p className="modal-subtitle">{conf.residentName} · {new Date(conf.conferenceDate).toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          </div>
-          <button className="modal-close" onClick={onClose}><X size={18} /></button>
-        </div>
-        <div className="modal-body">
-          <div className="narrative-section">
-            <h3>Participants</h3>
-            <ul className="participant-list">
-              {conf.participants.map((p, i) => <li key={i}>{p}</li>)}
-            </ul>
-          </div>
-          <div className="narrative-section">
-            <h3>Agenda</h3>
-            <p>{conf.agenda}</p>
-          </div>
-          <div className="narrative-section">
-            <h3>Decisions Made</h3>
-            <p>{conf.decisions}</p>
-          </div>
-          <div className="narrative-section">
-            <h3>Follow-Up Actions</h3>
-            <p>{conf.followUpActions}</p>
-          </div>
-          {conf.nextConferenceDate && (
-            <div className="detail-item">
-              <span>Next Conference</span>
-              <strong>{new Date(conf.nextConferenceDate).toLocaleDateString('en-PH')}</strong>
+          )}
+          {visit.observations && (
+            <div className="narrative-section">
+              <h3>Observations</h3>
+              <p>{visit.observations}</p>
+            </div>
+          )}
+          {visit.followUpNotes && (
+            <div className="narrative-section">
+              <h3>Follow-Up Notes</h3>
+              <p>{visit.followUpNotes}</p>
             </div>
           )}
         </div>
@@ -86,105 +79,154 @@ function ConferenceModal({ conf, onClose }: { conf: CaseConference; onClose: () 
 }
 
 export default function HomeVisitation() {
-  const [visits, setVisits] = useState(mockHomeVisits);
-  const [conferences] = useState(mockCaseConferences);
-  const [tab, setTab] = useState<'visits' | 'conferences'>('visits');
+  const [visits, setVisits] = useState<HomeVisit[]>([]);
+  const [residents, setResidents] = useState<Resident[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterType, setFilterType] = useState('All');
   const [selectedVisit, setSelectedVisit] = useState<HomeVisit | null>(null);
-  const [selectedConf, setSelectedConf] = useState<CaseConference | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formError, setFormError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<HomeVisit | null>(null);
   const [newVisit, setNewVisit] = useState({
-    residentId: mockResidents[0]?.id || 1,
-    socialWorkerId: mockSocialWorkers[0]?.id || 1,
+    residentId: '',
+    socialWorker: '',
     visitDate: new Date().toISOString().split('T')[0],
-    visitType: 'Routine Follow-Up' as VisitType,
-    homeEnvironmentObservations: '',
-    familyCooperationLevel: 'Moderate' as typeof COOPERATION_LEVELS[number],
-    safetyConcerns: '',
-    followUpActions: '',
+    visitType: 'Routine Follow-Up',
+    observations: '',
+    familyCooperationLevel: 'Moderate',
+    followUpNotes: '',
+    purpose: '',
   });
 
-  const filteredVisits = visits.filter((v) =>
-    v.residentName.toLowerCase().includes(search.toLowerCase()) ||
-    v.socialWorkerName.toLowerCase().includes(search.toLowerCase())
-  );
+  const fetchVisits = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: '1', pageSize: String(PAGE_SIZE) });
+      if (filterType !== 'All') params.set('visitType', filterType);
 
-  const filteredConfs = conferences.filter((c) =>
-    c.residentName.toLowerCase().includes(search.toLowerCase())
-  );
+      const res = await fetch(`${API_BASE}/api/homevisitations?${params}`, { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        setVisits(data.items);
+        setTotal(data.total);
+      }
+    } catch (err) {
+      console.error('Failed to fetch visits', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterType]);
 
-  const handleAddVisit = () => {
-    if (!newVisit.homeEnvironmentObservations.trim() || !newVisit.followUpActions.trim()) {
-      setFormError('Observations and follow-up actions are required.');
+  useEffect(() => { fetchVisits(); }, [fetchVisits]);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`${API_BASE}/api/homevisitations/${deleteTarget.visitationId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ confirmed: true }),
+      });
+      setDeleteTarget(null);
+      fetchVisits();
+    } catch (err) {
+      console.error('Failed to delete visit', err);
+    }
+  };
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/residents?pageSize=100`, { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => setResidents(data.items))
+      .catch(() => {});
+  }, []);
+
+  const filteredVisits = visits.filter((v) => {
+    const q = search.toLowerCase();
+    return (v.socialWorker?.toLowerCase().includes(q) || String(v.residentId).includes(q));
+  });
+
+  const handleAddVisit = async () => {
+    if (!newVisit.observations.trim()) {
+      setFormError('Observations are required.');
       return;
     }
-    const resident = mockResidents.find((r) => r.id === newVisit.residentId);
-    const sw = mockSocialWorkers.find((s) => s.id === newVisit.socialWorkerId);
-    const id = Math.max(...visits.map((v) => v.id)) + 1;
-    setVisits([{
-      id,
-      residentId: newVisit.residentId,
-      residentName: resident ? `${resident.firstName} ${resident.lastName}` : '',
-      socialWorkerId: newVisit.socialWorkerId,
-      socialWorkerName: sw ? `${sw.firstName} ${sw.lastName}` : '',
-      visitDate: newVisit.visitDate,
-      visitType: newVisit.visitType,
-      homeEnvironmentObservations: newVisit.homeEnvironmentObservations,
-      familyCooperationLevel: newVisit.familyCooperationLevel,
-      safetyConcerns: newVisit.safetyConcerns,
-      followUpActions: newVisit.followUpActions,
-      createdAt: new Date().toISOString(),
-    }, ...visits]);
+    if (!newVisit.residentId) {
+      setFormError('Please select a resident.');
+      return;
+    }
+    setSaving(true);
     setFormError('');
-    setShowAddForm(false);
+    try {
+      const res = await fetch(`${API_BASE}/api/homevisitations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          residentId: Number(newVisit.residentId),
+          socialWorker: newVisit.socialWorker,
+          visitDate: newVisit.visitDate,
+          visitType: newVisit.visitType,
+          observations: newVisit.observations,
+          familyCooperationLevel: newVisit.familyCooperationLevel,
+          followUpNotes: newVisit.followUpNotes,
+          purpose: newVisit.purpose,
+          followUpNeeded: !!newVisit.followUpNotes,
+        }),
+      });
+      if (res.ok) {
+        setShowAddForm(false);
+        setNewVisit({ residentId: '', socialWorker: '', visitDate: new Date().toISOString().split('T')[0], visitType: 'Routine Follow-Up', observations: '', familyCooperationLevel: 'Moderate', followUpNotes: '', purpose: '' });
+        fetchVisits();
+      } else {
+        setFormError('Failed to save visit.');
+      }
+    } catch {
+      setFormError('Failed to save visit.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const emergencyCount = visits.filter(v => v.visitType === 'Emergency').length;
 
   return (
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>Home Visitation &amp; Case Conferences</h1>
-          <p>Log field visits and track case conference history and upcoming meetings.</p>
+          <h1>Home Visitation</h1>
+          <p>Log field visits and track home visitation history.</p>
         </div>
-        {tab === 'visits' && (
-          <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>
-            <Plus size={16} /> Log Visit
-          </button>
-        )}
+        <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>
+          <Plus size={16} /> Log Visit
+        </button>
       </div>
 
       <div className="metrics-grid metrics-grid-4">
         <div className="metric-card metric-card-blue">
-          <div className="metric-value">{visits.length}</div>
+          <div className="metric-value">{total}</div>
           <div className="metric-label">Total Home Visits</div>
         </div>
         <div className="metric-card metric-card-amber">
-          <div className="metric-value">{visits.filter((v) => v.visitType === 'Emergency').length}</div>
+          <div className="metric-value">{emergencyCount}</div>
           <div className="metric-label">Emergency Visits</div>
         </div>
         <div className="metric-card metric-card-green">
-          <div className="metric-value">{conferences.length}</div>
-          <div className="metric-label">Case Conferences</div>
+          <div className="metric-value">{new Set(visits.map(v => v.residentId)).size}</div>
+          <div className="metric-label">Residents Visited</div>
         </div>
         <div className="metric-card metric-card-purple">
-          <div className="metric-value">{conferences.filter((c) => c.nextConferenceDate).length}</div>
-          <div className="metric-label">Upcoming Conferences</div>
+          <div className="metric-value">{visits.filter(v => v.followUpNeeded).length}</div>
+          <div className="metric-label">Follow-Ups Needed</div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="tab-bar">
-        <button className={`tab-btn ${tab === 'visits' ? 'active' : ''}`} onClick={() => setTab('visits')}>
-          <Home size={15} /> Home Visits ({visits.length})
-        </button>
-        <button className={`tab-btn ${tab === 'conferences' ? 'active' : ''}`} onClick={() => setTab('conferences')}>
-          <Calendar size={15} /> Case Conferences ({conferences.length})
-        </button>
-      </div>
-
-      {/* Add visit form */}
-      {showAddForm && tab === 'visits' && (
+      {/* Add form */}
+      {showAddForm && (
         <div className="inline-form-card">
           <div className="inline-form-header">
             <h3><Home size={16} /> Log Home Visit</h3>
@@ -194,15 +236,14 @@ export default function HomeVisitation() {
           <div className="form-row">
             <div className="form-group">
               <label className="form-label">Resident *</label>
-              <select className="form-select" value={newVisit.residentId} onChange={(e) => setNewVisit({ ...newVisit, residentId: +e.target.value })}>
-                {mockResidents.map((r) => <option key={r.id} value={r.id}>{r.firstName} {r.lastName}</option>)}
+              <select className="form-select" value={newVisit.residentId} onChange={(e) => setNewVisit({ ...newVisit, residentId: e.target.value })}>
+                <option value="">Select resident</option>
+                {residents.map((r) => <option key={r.residentId} value={r.residentId}>{r.caseControlNo}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">Social Worker *</label>
-              <select className="form-select" value={newVisit.socialWorkerId} onChange={(e) => setNewVisit({ ...newVisit, socialWorkerId: +e.target.value })}>
-                {mockSocialWorkers.map((sw) => <option key={sw.id} value={sw.id}>{sw.firstName} {sw.lastName}</option>)}
-              </select>
+              <label className="form-label">Social Worker</label>
+              <input className="form-input" value={newVisit.socialWorker} onChange={(e) => setNewVisit({ ...newVisit, socialWorker: e.target.value })} placeholder="Social worker name" />
             </div>
             <div className="form-group">
               <label className="form-label">Visit Date *</label>
@@ -210,47 +251,54 @@ export default function HomeVisitation() {
             </div>
             <div className="form-group">
               <label className="form-label">Visit Type *</label>
-              <select className="form-select" value={newVisit.visitType} onChange={(e) => setNewVisit({ ...newVisit, visitType: e.target.value as VisitType })}>
+              <select className="form-select" value={newVisit.visitType} onChange={(e) => setNewVisit({ ...newVisit, visitType: e.target.value })}>
                 {VISIT_TYPES.map((t) => <option key={t}>{t}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label className="form-label">Family Cooperation Level</label>
-              <select className="form-select" value={newVisit.familyCooperationLevel} onChange={(e) => setNewVisit({ ...newVisit, familyCooperationLevel: e.target.value as typeof COOPERATION_LEVELS[number] })}>
+              <select className="form-select" value={newVisit.familyCooperationLevel} onChange={(e) => setNewVisit({ ...newVisit, familyCooperationLevel: e.target.value })}>
                 {COOPERATION_LEVELS.map((l) => <option key={l}>{l}</option>)}
               </select>
             </div>
+            <div className="form-group">
+              <label className="form-label">Purpose</label>
+              <input className="form-input" value={newVisit.purpose} onChange={(e) => setNewVisit({ ...newVisit, purpose: e.target.value })} placeholder="Purpose of visit" />
+            </div>
           </div>
           <div className="form-group">
-            <label className="form-label">Home Environment Observations *</label>
-            <textarea className="form-textarea" rows={3} value={newVisit.homeEnvironmentObservations} onChange={(e) => setNewVisit({ ...newVisit, homeEnvironmentObservations: e.target.value })} placeholder="Describe the home environment…" />
+            <label className="form-label">Observations *</label>
+            <textarea className="form-textarea" rows={3} value={newVisit.observations} onChange={(e) => setNewVisit({ ...newVisit, observations: e.target.value })} placeholder="Describe the home environment…" />
           </div>
           <div className="form-group">
-            <label className="form-label">Safety Concerns</label>
-            <textarea className="form-textarea" rows={2} value={newVisit.safetyConcerns} onChange={(e) => setNewVisit({ ...newVisit, safetyConcerns: e.target.value })} placeholder="Note any safety concerns observed…" />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Follow-Up Actions *</label>
-            <textarea className="form-textarea" rows={3} value={newVisit.followUpActions} onChange={(e) => setNewVisit({ ...newVisit, followUpActions: e.target.value })} placeholder="Actions to take after this visit…" />
+            <label className="form-label">Follow-Up Notes</label>
+            <textarea className="form-textarea" rows={2} value={newVisit.followUpNotes} onChange={(e) => setNewVisit({ ...newVisit, followUpNotes: e.target.value })} placeholder="Actions to take after this visit…" />
           </div>
           <div className="form-actions">
             <button className="btn btn-ghost" onClick={() => setShowAddForm(false)}>Cancel</button>
-            <button className="btn btn-primary" onClick={handleAddVisit}><Check size={14} /> Save Visit</button>
+            <button className="btn btn-primary" onClick={handleAddVisit} disabled={saving}><Check size={14} /> {saving ? 'Saving...' : 'Save Visit'}</button>
           </div>
         </div>
       )}
 
-      {/* Search */}
+      {/* Search and filter */}
       <div className="filter-bar">
         <div className="search-wrapper">
           <Search size={16} className="search-icon" />
-          <input className="search-input" placeholder="Search by resident name…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input className="search-input" placeholder="Search by social worker…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
+        <select className="form-select" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+          <option value="All">All Visit Types</option>
+          {VISIT_TYPES.map((t) => <option key={t}>{t}</option>)}
+        </select>
+        <span className="results-count">{filteredVisits.length} visit{filteredVisits.length !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* Visits tab */}
-      {tab === 'visits' && (
-        <div className="table-card">
+      {/* Visits table */}
+      <div className="table-card">
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>Loading visits...</div>
+        ) : (
           <table className="data-table">
             <thead>
               <tr>
@@ -259,20 +307,29 @@ export default function HomeVisitation() {
                 <th>Visit Type</th>
                 <th>Social Worker</th>
                 <th>Family Cooperation</th>
-                <th>Safety Concerns</th>
+                <th>Follow-Up</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredVisits.map((v) => (
-                <tr key={v.id}>
-                  <td className="table-secondary">{new Date(v.visitDate).toLocaleDateString('en-PH')}</td>
-                  <td><div className="table-name">{v.residentName}</div></td>
+                <tr key={v.visitationId}>
+                  <td className="table-secondary">{new Date(v.visitDate).toLocaleDateString()}</td>
+                  <td>
+                    <div className="table-name">
+                      {residents.find(r => r.residentId === v.residentId)?.caseControlNo ?? `#${v.residentId}`}
+                    </div>
+                  </td>
                   <td><span className="category-chip">{v.visitType}</span></td>
-                  <td className="table-secondary">{v.socialWorkerName}</td>
-                  <td><span className={`cooperation-badge coop-${v.familyCooperationLevel.toLowerCase()}`}>{v.familyCooperationLevel}</span></td>
-                  <td className="table-secondary">{v.safetyConcerns ? <span className="safety-flag">⚠ {v.safetyConcerns.slice(0, 40)}…</span> : <span className="safety-none">None</span>}</td>
-                  <td><button className="btn-icon" onClick={() => setSelectedVisit(v)}><Eye size={15} /></button></td>
+                  <td className="table-secondary">{v.socialWorker || '—'}</td>
+                  <td><span className={`cooperation-badge coop-${v.familyCooperationLevel?.toLowerCase()}`}>{v.familyCooperationLevel}</span></td>
+                  <td className="table-secondary">{v.followUpNeeded ? <span className="safety-flag">⚠ Needed</span> : <span className="safety-none">None</span>}</td>
+                  <td>
+                    <div className="action-btns">
+                      <button className="btn-icon" onClick={() => setSelectedVisit(v)}><Eye size={15} /></button>
+                      <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(v)}><Trash2 size={15} /></button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {filteredVisits.length === 0 && (
@@ -280,43 +337,16 @@ export default function HomeVisitation() {
               )}
             </tbody>
           </table>
-        </div>
-      )}
-
-      {/* Conferences tab */}
-      {tab === 'conferences' && (
-        <div className="conference-cards">
-          {filteredConfs.map((c) => (
-            <div key={c.id} className="conference-card-item">
-              <div className="conference-card-date">
-                <div className="conf-month">{new Date(c.conferenceDate).toLocaleString('en-PH', { month: 'short' })}</div>
-                <div className="conf-day">{new Date(c.conferenceDate).getDate()}</div>
-                <div className="conf-year">{new Date(c.conferenceDate).getFullYear()}</div>
-              </div>
-              <div className="conference-card-body">
-                <h3>{c.residentName}</h3>
-                <p className="conference-agenda">{c.agenda}</p>
-                <div className="conference-participants">
-                  {c.participants.slice(0, 2).map((p, i) => <span key={i} className="participant-chip">{p}</span>)}
-                  {c.participants.length > 2 && <span className="participant-chip more">+{c.participants.length - 2} more</span>}
-                </div>
-                {c.nextConferenceDate && (
-                  <div className="next-conf">
-                    <Calendar size={12} /> Next: {new Date(c.nextConferenceDate).toLocaleDateString('en-PH')}
-                  </div>
-                )}
-              </div>
-              <button className="btn-icon" onClick={() => setSelectedConf(c)}><Eye size={15} /></button>
-            </div>
-          ))}
-          {filteredConfs.length === 0 && (
-            <div className="empty-state-full"><AlertCircle size={24} /><p>No case conferences found.</p></div>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       {selectedVisit && <VisitModal visit={selectedVisit} onClose={() => setSelectedVisit(null)} />}
-      {selectedConf && <ConferenceModal conf={selectedConf} onClose={() => setSelectedConf(null)} />}
+      <ConfirmDeleteModal
+        isOpen={deleteTarget !== null}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        itemName={deleteTarget ? `visit on ${new Date(deleteTarget.visitDate).toLocaleDateString()}` : ''}
+      />
     </div>
   );
 }

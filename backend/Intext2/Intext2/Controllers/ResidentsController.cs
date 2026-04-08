@@ -1,5 +1,6 @@
 using Intext2.Data;
 using Intext2.Dtos;
+using Intext2.Infrastructure;
 using Intext2.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,23 @@ public class ResidentsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
     public ResidentsController(ApplicationDbContext db) => _db = db;
+    private const string SchemaMismatchMessage = "Database schema mismatch detected for residents data. Ensure Azure SQL column types match EF migrations.";
+
+    private static string NormalizeSex(string? sex)
+    {
+        if (string.IsNullOrWhiteSpace(sex)) return "F";
+        var value = sex.Trim().ToLowerInvariant();
+        return value switch
+        {
+            "female" or "f" => "F",
+            "male" or "m" => "M",
+            _ => "O"
+        };
+    }
+
+    private static bool IsSchemaTypeMismatch(Exception ex)
+        => ex is InvalidCastException
+           || ex.Message.Contains("Unable to cast object of type", StringComparison.OrdinalIgnoreCase);
 
     // GET /api/residents
     [HttpGet]
@@ -84,6 +102,8 @@ public class ResidentsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to retrieve residents.", detail = ex.Message });
         }
     }
@@ -106,6 +126,8 @@ public class ResidentsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to retrieve resident.", detail = ex.Message });
         }
     }
@@ -115,7 +137,12 @@ public class ResidentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] Resident model)
     {
+        model.Sex = NormalizeSex(model.Sex);
+        if (model.DateOfAdmission == default)
+            model.DateOfAdmission = DateOnly.FromDateTime(DateTime.UtcNow);
         if (!ModelState.IsValid) return BadRequest(ModelState);
+        var invalid = InputSanitizer.SanitizeAndValidate(model);
+        if (invalid.Count > 0) return BadRequest(new { message = "Required fields cannot be empty.", fields = invalid });
         try
         {
             model.ResidentId = 0;
@@ -126,6 +153,8 @@ public class ResidentsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to create resident.", detail = ex.Message });
         }
     }
@@ -135,7 +164,10 @@ public class ResidentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] Resident model)
     {
+        model.Sex = NormalizeSex(model.Sex);
         if (!ModelState.IsValid) return BadRequest(ModelState);
+        var invalid = InputSanitizer.SanitizeAndValidate(model);
+        if (invalid.Count > 0) return BadRequest(new { message = "Required fields cannot be empty.", fields = invalid });
         try
         {
             var existing = await _db.Residents.FindAsync(id);
@@ -145,12 +177,16 @@ public class ResidentsController : ControllerBase
             // Preserve immutable fields
             model.ResidentId = id;
             model.CreatedAt  = existing.CreatedAt;
+            if (model.DateOfAdmission == default)
+                model.DateOfAdmission = existing.DateOfAdmission;
             _db.Entry(existing).CurrentValues.SetValues(model);
             await _db.SaveChangesAsync();
             return Ok(existing);
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to update resident.", detail = ex.Message });
         }
     }
@@ -174,6 +210,8 @@ public class ResidentsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to delete resident.", detail = ex.Message });
         }
     }

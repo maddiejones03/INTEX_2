@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Search, Plus, Filter, AlertCircle, Eye, Edit2,
+  Search, Plus, Filter, AlertCircle, Eye, Edit2, Trash2,
   ChevronLeft, ChevronRight, X, Check,
 } from 'lucide-react';
+import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 
@@ -150,6 +151,7 @@ export default function CaseloadInventory() {
   const [newResident, setNewResident] = useState({ caseControlNo: '', sex: 'Female', dateOfBirth: '', caseCategory: 'Neglect', safehouseId: '' });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Resident | null>(null);
 
   const fetchResidents = useCallback(async () => {
     setLoading(true);
@@ -185,8 +187,8 @@ export default function CaseloadInventory() {
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const handleAdd = async () => {
-    if (!newResident.caseControlNo.trim() || !newResident.dateOfBirth) {
-      setFormError('Case control number and date of birth are required.');
+    if (!newResident.caseControlNo.trim() || !newResident.dateOfBirth || !newResident.safehouseId) {
+      setFormError('Case control number, date of birth, and safe house are required.');
       return;
     }
     setSaving(true);
@@ -210,12 +212,35 @@ export default function CaseloadInventory() {
         setNewResident({ caseControlNo: '', sex: 'Female', dateOfBirth: '', caseCategory: 'Neglect', safehouseId: '' });
         fetchResidents();
       } else {
-        setFormError('Failed to create resident.');
+        let message = 'Failed to create resident.';
+        try {
+          const err = await res.json();
+          message = err?.message || err?.detail || message;
+        } catch {
+          // keep fallback message
+        }
+        setFormError(message);
       }
     } catch {
       setFormError('Failed to create resident.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await fetch(`${API_BASE}/api/residents/${deleteTarget.residentId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ confirmed: true }),
+      });
+      setDeleteTarget(null);
+      fetchResidents();
+    } catch (err) {
+      console.error('Failed to delete resident', err);
     }
   };
 
@@ -358,6 +383,7 @@ export default function CaseloadInventory() {
                     <div className="action-btns">
                       <button className="btn-icon" title="View" onClick={() => setSelectedId(r.residentId)}><Eye size={15} /></button>
                       <button className="btn-icon" title="Edit"><Edit2 size={15} /></button>
+                      <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
                     </div>
                   </td>
                 </tr>
@@ -379,6 +405,12 @@ export default function CaseloadInventory() {
       </div>
 
       {selectedId !== null && <ResidentModal residentId={selectedId} onClose={() => setSelectedId(null)} />}
+      <ConfirmDeleteModal
+        isOpen={deleteTarget !== null}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        itemName={deleteTarget?.caseControlNo ?? ''}
+      />
     </div>
   );
 }
