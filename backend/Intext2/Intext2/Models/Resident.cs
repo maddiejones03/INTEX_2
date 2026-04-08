@@ -20,7 +20,7 @@ public class Resident
     public string? InternalCode { get; set; }
 
     [Column("safehouse_id")]
-    public int SafehouseId { get; set; }
+    public int? SafehouseId { get; set; }
 
     [Required]
     [MaxLength(20)]
