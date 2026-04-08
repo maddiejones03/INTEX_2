@@ -136,14 +136,14 @@ public class ResidentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] Resident model)
     {
+        model.Sex = NormalizeSex(model.Sex);
+        if (model.DateOfAdmission == default)
+            model.DateOfAdmission = DateOnly.FromDateTime(DateTime.UtcNow);
         if (!ModelState.IsValid) return BadRequest(ModelState);
         try
         {
             model.ResidentId = 0;
             model.CreatedAt  = DateTime.UtcNow;
-            model.Sex = NormalizeSex(model.Sex);
-            if (model.DateOfAdmission == default)
-                model.DateOfAdmission = DateOnly.FromDateTime(DateTime.UtcNow);
             _db.Residents.Add(model);
             await _db.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = model.ResidentId }, model);
@@ -161,6 +161,7 @@ public class ResidentsController : ControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] Resident model)
     {
+        model.Sex = NormalizeSex(model.Sex);
         if (!ModelState.IsValid) return BadRequest(ModelState);
         try
         {
@@ -171,7 +172,6 @@ public class ResidentsController : ControllerBase
             // Preserve immutable fields
             model.ResidentId = id;
             model.CreatedAt  = existing.CreatedAt;
-            model.Sex = NormalizeSex(model.Sex);
             if (model.DateOfAdmission == default)
                 model.DateOfAdmission = existing.DateOfAdmission;
             _db.Entry(existing).CurrentValues.SetValues(model);
