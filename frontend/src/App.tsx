@@ -7,6 +7,7 @@ import CookieConsent from './components/ui/CookieConsent';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 
 import Home from './pages/public/Home';
+import DonatePage from './pages/public/DonatePage';
 import ImpactDashboard from './pages/public/ImpactDashboard';
 import Login from './pages/public/Login';
 import PrivacyPolicy from './pages/public/PrivacyPolicy';
@@ -54,6 +55,7 @@ export default function App() {
         <Routes>
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
+            <Route path="/donate" element={<DonatePage />} />
             <Route path="/impact" element={<ImpactDashboard />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
           </Route>

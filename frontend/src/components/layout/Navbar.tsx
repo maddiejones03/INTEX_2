@@ -22,6 +22,7 @@ export default function Navbar() {
 
   const publicLinks = [
     { to: '/', label: 'Home' },
+    { to: '/donate', label: 'Donate' },
     { to: '/impact', label: 'Our Impact' },
     { to: '/privacy', label: 'Privacy Policy' },
   ];

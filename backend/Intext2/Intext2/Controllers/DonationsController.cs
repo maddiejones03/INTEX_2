@@ -1,6 +1,7 @@
 using Intext2.Data;
 using Intext2.Dtos;
 using Intext2.Models;
+using Intext2.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,8 @@ namespace Intext2.Controllers;
 public class DonationsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
-    public DonationsController(ApplicationDbContext db) => _db = db;
+    private readonly IEmailService _email;
+    public DonationsController(ApplicationDbContext db, IEmailService email) { _db = db; _email = email; }
     private const string SchemaMismatchMessage = "Database schema mismatch detected for donations data. Ensure Azure SQL column types match EF migrations.";
 
     private static bool IsSchemaTypeMismatch(Exception ex)
@@ -99,6 +101,131 @@ public class DonationsController : ControllerBase
         }
     }
 
+    // POST /api/donations/public  (unauthenticated — Time & InKind only)
+    [HttpPost("public")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CreatePublic([FromBody] PublicDonationDto dto)
+    {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        if (dto.DonationType == "Time" && (!dto.EstimatedHours.HasValue || dto.EstimatedHours <= 0))
+            return BadRequest(new { message = "EstimatedHours is required for Time donations." });
+
+        if (dto.DonationType == "InKind" && (dto.InKindItems is null || dto.InKindItems.Count == 0))
+            return BadRequest(new { message = "At least one InKindItem is required for InKind donations." });
+
+        using var tx = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            var supporter = await _db.Supporters.FirstOrDefaultAsync(s => s.Email == dto.DonorEmail);
+            if (supporter is null)
+            {
+                var maxSupporterId = await _db.Supporters.AnyAsync()
+                    ? await _db.Supporters.MaxAsync(s => s.SupporterId)
+                    : 0;
+
+                supporter = new Supporter
+                {
+                    SupporterId    = maxSupporterId + 1,
+                    SupporterType  = "Individual",
+                    DisplayName    = dto.DonorName,
+                    FirstName      = dto.DonorName.Split(' ').FirstOrDefault(),
+                    LastName       = dto.DonorName.Split(' ').Length > 1
+                                     ? string.Join(' ', dto.DonorName.Split(' ').Skip(1))
+                                     : null,
+                    RelationshipType = "Donor",
+                    Email            = dto.DonorEmail,
+                    Status           = "Active",
+                    CreatedAt        = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                    FirstDonationDate = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                    AcquisitionChannel = "Direct",
+                };
+                _db.Supporters.Add(supporter);
+                await _db.SaveChangesAsync();
+            }
+
+            var maxDonationId = await _db.Donations.AnyAsync()
+                ? await _db.Donations.MaxAsync(d => d.DonationId)
+                : 0;
+
+            var donation = new Donation
+            {
+                DonationId   = maxDonationId + 1,
+                SupporterId  = supporter.SupporterId,
+                DonationType = dto.DonationType,
+                DonationDate = DateOnly.FromDateTime(DateTime.UtcNow),
+                IsRecurring  = false,
+                ChannelSource = "Direct",
+                Notes         = dto.Notes,
+            };
+
+            if (dto.DonationType == "Time")
+            {
+                donation.Amount      = dto.EstimatedHours;
+                donation.ImpactUnit  = "hours";
+            }
+
+            _db.Donations.Add(donation);
+            await _db.SaveChangesAsync();
+
+            if (dto.DonationType == "InKind" && dto.InKindItems is not null)
+            {
+                var maxItemId = await _db.InKindDonationItems.AnyAsync()
+                    ? await _db.InKindDonationItems.MaxAsync(i => i.ItemId)
+                    : 0;
+
+                foreach (var item in dto.InKindItems)
+                {
+                    maxItemId++;
+                    _db.InKindDonationItems.Add(new InKindDonationItem
+                    {
+                        ItemId             = maxItemId,
+                        DonationId         = donation.DonationId,
+                        ItemName           = item.ItemName,
+                        ItemCategory       = item.ItemCategory,
+                        Quantity           = item.Quantity,
+                        UnitOfMeasure      = item.UnitOfMeasure,
+                        EstimatedUnitValue = item.EstimatedUnitValue,
+                        IntendedUse        = item.IntendedUse,
+                        ReceivedCondition  = item.ReceivedCondition,
+                    });
+                }
+                await _db.SaveChangesAsync();
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.ProgramArea))
+            {
+                donation.Notes = string.IsNullOrWhiteSpace(donation.Notes)
+                    ? $"Preferred program area: {dto.ProgramArea}"
+                    : $"{donation.Notes} | Preferred program area: {dto.ProgramArea}";
+                await _db.SaveChangesAsync();
+            }
+
+            await tx.CommitAsync();
+
+            var emailDetails = dto.DonationType == "Time"
+                ? $"Type: Volunteer Time<br/>Hours pledged: {dto.EstimatedHours}<br/>Program area: {dto.ProgramArea ?? "Any"}"
+                : $"Type: In-Kind Goods<br/>Items: {dto.InKindItems?.Count ?? 0} item(s)";
+
+            _ = _email.SendDonationConfirmationAsync(
+                dto.DonorEmail, dto.DonorName, dto.DonationType, emailDetails);
+
+            return CreatedAtAction(nameof(GetById), new { id = donation.DonationId }, new
+            {
+                donationId   = donation.DonationId,
+                donationType = donation.DonationType,
+                message      = "Thank you for your donation!",
+            });
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync();
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
+            return StatusCode(500, new { message = "Failed to submit donation.", detail = ex.Message });
+        }
+    }
+
     // POST /api/donations
     [HttpPost]
     [Authorize(Roles = "Admin")]
@@ -107,7 +234,10 @@ public class DonationsController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
         try
         {
-            model.DonationId = 0;
+            var maxId = await _db.Donations.AnyAsync()
+                ? await _db.Donations.MaxAsync(d => d.DonationId)
+                : 0;
+            model.DonationId = maxId + 1;
             _db.Donations.Add(model);
             await _db.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = model.DonationId }, model);

@@ -8,6 +8,7 @@ public class Donation
 {
     [Key]
     [Column("donation_id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int DonationId { get; set; }
 
     [Column("supporter_id")]
@@ -38,10 +39,10 @@ public class Donation
     public string? CurrencyCode { get; set; }
 
     [Column("amount")]
-    public decimal? Amount { get; set; }
+    public double? Amount { get; set; }
 
     [Column("estimated_value")]
-    public decimal? EstimatedValue { get; set; }
+    public double? EstimatedValue { get; set; }
 
     [MaxLength(20)]
     [Column("impact_unit")]

@@ -12,3 +12,19 @@ export async function apiFetch<T>(path: string): Promise<T> {
 
   return response.json() as Promise<T>;
 }
+
+export async function apiPost<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(text || `Request failed: ${response.status}`);
+  }
+
+  return response.json() as Promise<T>;
+}

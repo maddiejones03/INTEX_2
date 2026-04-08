@@ -1,6 +1,7 @@
 using Intext2.Infrastructure;
 using Intext2.Data;
 using Intext2.Models;
+using Intext2.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -71,6 +72,13 @@ builder.Services.AddCors(options =>
               .AllowCredentials();
     });
 });
+
+// ----------------------------------------------------------------
+// Email service (gracefully skips if SMTP not configured)
+// ----------------------------------------------------------------
+var smtpSettings = builder.Configuration.GetSection("Smtp").Get<SmtpSettings>() ?? new SmtpSettings();
+builder.Services.AddSingleton(smtpSettings);
+builder.Services.AddSingleton<IEmailService, EmailService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
