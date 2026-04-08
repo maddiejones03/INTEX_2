@@ -26,5 +26,5 @@ public class RiskAlert
     public string? CurrentRiskLevel { get; set; }
 
     [Column("computed_at")]
-    public string? ComputedAt { get; set; }
+    public DateTime? ComputedAt { get; set; }
 }

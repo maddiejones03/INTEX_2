@@ -11,7 +11,7 @@ public class PublicImpactSnapshot
     public int SnapshotId { get; set; }
 
     [Column("snapshot_date")]
-    public string? SnapshotDate { get; set; }
+    public DateOnly SnapshotDate { get; set; }
 
     [MaxLength(500)]
     [Column("headline")]
@@ -27,5 +27,5 @@ public class PublicImpactSnapshot
     public bool IsPublished { get; set; } = false;
 
     [Column("published_at")]
-    public string? PublishedAt { get; set; }
+    public DateOnly? PublishedAt { get; set; }
 }

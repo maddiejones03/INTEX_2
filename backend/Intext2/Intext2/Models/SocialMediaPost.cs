@@ -23,7 +23,7 @@ public class SocialMediaPost
     public string? PostUrl { get; set; }
 
     [Column("created_at")]
-    public string? CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
     [MaxLength(10)]
     [Column("day_of_week")]

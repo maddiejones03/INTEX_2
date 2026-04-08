@@ -14,7 +14,7 @@ public class HealthWellbeingRecord
     public int ResidentId { get; set; }
 
     [Column("record_date")]
-    public string? RecordDate { get; set; }
+    public DateOnly RecordDate { get; set; }
 
     [Column("general_health_score")]
     public decimal? GeneralHealthScore { get; set; }

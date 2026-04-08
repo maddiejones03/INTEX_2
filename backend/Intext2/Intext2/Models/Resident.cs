@@ -33,7 +33,7 @@ public class Resident
     public string Sex { get; set; } = "F";
 
     [Column("date_of_birth")]
-    public string? DateOfBirth { get; set; }
+    public DateOnly? DateOfBirth { get; set; }
 
     [MaxLength(20)]
     [Column("birth_status")]
@@ -112,7 +112,7 @@ public class Resident
     public bool FamilyInformalSettler { get; set; } = false;
 
     [Column("date_of_admission")]
-    public string? DateOfAdmission { get; set; }
+    public DateOnly DateOfAdmission { get; set; }
 
     [MaxLength(50)]
     [Column("age_upon_admission")]
@@ -135,10 +135,10 @@ public class Resident
     public string? ReferringAgencyPerson { get; set; }
 
     [Column("date_colb_registered")]
-    public string? DateColbRegistered { get; set; }
+    public DateOnly? DateColbRegistered { get; set; }
 
     [Column("date_colb_obtained")]
-    public string? DateColbObtained { get; set; }
+    public DateOnly? DateColbObtained { get; set; }
 
     [MaxLength(255)]
     [Column("assigned_social_worker")]
@@ -149,7 +149,7 @@ public class Resident
     public string? InitialCaseAssessment { get; set; }
 
     [Column("date_case_study_prepared")]
-    public string? DateCaseStudyPrepared { get; set; }
+    public DateOnly? DateCaseStudyPrepared { get; set; }
 
     [MaxLength(50)]
     [Column("reintegration_type")]
@@ -170,13 +170,13 @@ public class Resident
     public string CurrentRiskLevel { get; set; } = "Medium";
 
     [Column("date_enrolled")]
-    public string? DateEnrolled { get; set; }
+    public DateOnly? DateEnrolled { get; set; }
 
     [Column("date_closed")]
-    public string? DateClosed { get; set; }
+    public DateOnly? DateClosed { get; set; }
 
     [Column("created_at")]
-    public string? CreatedAt { get; set; }
+    public DateTime? CreatedAt { get; set; }
 
     [Column("notes_restricted")]
     public string? NotesRestricted { get; set; }

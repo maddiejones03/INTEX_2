@@ -25,7 +25,7 @@ public class DonationAllocation
     public double AmountAllocated { get; set; }
 
     [Column("allocation_date")]
-    public string? AllocationDate { get; set; }
+    public DateOnly AllocationDate { get; set; }
 
     [Column("allocation_notes")]
     public string? AllocationNotes { get; set; }

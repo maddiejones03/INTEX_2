@@ -14,7 +14,7 @@ public class EducationRecord
     public int ResidentId { get; set; }
 
     [Column("record_date")]
-    public string? RecordDate { get; set; }
+    public DateOnly RecordDate { get; set; }
 
     [Required]
     [MaxLength(20)]

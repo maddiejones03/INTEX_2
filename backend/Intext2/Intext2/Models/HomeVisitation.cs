@@ -14,7 +14,7 @@ public class HomeVisitation
     public int ResidentId { get; set; }
 
     [Column("visit_date")]
-    public string? VisitDate { get; set; }
+    public DateOnly VisitDate { get; set; }
 
     [MaxLength(255)]
     [Column("social_worker")]
