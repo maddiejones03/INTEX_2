@@ -17,6 +17,7 @@ public static class SecurityHeaders
                 "img-src 'self' data: blob:; " +
                 "font-src 'self'; " +
                 "connect-src 'self' " +
+                    "https://jolly-moss-00018721e.1.azurestaticapps.net " +
                     "https://jolly-moss-00018721e.5.azurestaticapps.net " +
                     "http://localhost:5030 " +
                     "https://localhost:7051 " +

@@ -94,6 +94,17 @@ Local `npm run dev` uses the Vite proxy to `/api` by default (see `frontend/vite
 
 Root `.gitignore` includes `.env` so local overrides stay out of Git.
 
+## CORS (deployed frontend URL)
+
+The API allows cookie-based auth only from listed origins. Defaults include both common Static Web App hostnames (`…1.azurestaticapps.net` and `…5.azurestaticapps.net`). To add another preview or production URL without redeploying code, set **Configuration** entries:
+
+- `Cors__AllowedOrigins__0` = `https://your-app.azurestaticapps.net`
+- `Cors__AllowedOrigins__1` = … (increment index for more)
+
+Or add the origin in `appsettings.json` under `Cors:AllowedOrigins` for local overrides only (do not commit real production-only URLs if your team prefers env-only).
+
+If login fails in the browser with **No 'Access-Control-Allow-Origin'** on the preflight `OPTIONS` request, the backend is usually missing **`UseRouting()` before `UseCors`** (fixed in current `Program.cs`) or the deployed site’s exact origin (scheme + host, no trailing slash) is not in the allow list.
+
 ## Azure App Service (deployed API)
 
 In **Configuration → Application settings**, add the same keys using **double underscores** for nesting, for example:
