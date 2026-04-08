@@ -13,6 +13,11 @@ public class DonationsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
     public DonationsController(ApplicationDbContext db) => _db = db;
+    private const string SchemaMismatchMessage = "Database schema mismatch detected for donations data. Ensure Azure SQL column types match EF migrations.";
+
+    private static bool IsSchemaTypeMismatch(Exception ex)
+        => ex is InvalidCastException
+           || ex.Message.Contains("Unable to cast object of type", StringComparison.OrdinalIgnoreCase);
 
     // GET /api/donations
     [HttpGet]
@@ -62,6 +67,8 @@ public class DonationsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to retrieve donations.", detail = ex.Message });
         }
     }
@@ -86,6 +93,8 @@ public class DonationsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to retrieve donation.", detail = ex.Message });
         }
     }
@@ -105,6 +114,8 @@ public class DonationsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to create donation.", detail = ex.Message });
         }
     }
@@ -128,6 +139,8 @@ public class DonationsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to update donation.", detail = ex.Message });
         }
     }
@@ -151,6 +164,8 @@ public class DonationsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to delete donation.", detail = ex.Message });
         }
     }

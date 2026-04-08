@@ -13,6 +13,23 @@ public class ResidentsController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
     public ResidentsController(ApplicationDbContext db) => _db = db;
+    private const string SchemaMismatchMessage = "Database schema mismatch detected for residents data. Ensure Azure SQL column types match EF migrations.";
+
+    private static string NormalizeSex(string? sex)
+    {
+        if (string.IsNullOrWhiteSpace(sex)) return "F";
+        var value = sex.Trim().ToLowerInvariant();
+        return value switch
+        {
+            "female" or "f" => "F",
+            "male" or "m" => "M",
+            _ => "O"
+        };
+    }
+
+    private static bool IsSchemaTypeMismatch(Exception ex)
+        => ex is InvalidCastException
+           || ex.Message.Contains("Unable to cast object of type", StringComparison.OrdinalIgnoreCase);
 
     // GET /api/residents
     [HttpGet]
@@ -84,6 +101,8 @@ public class ResidentsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to retrieve residents.", detail = ex.Message });
         }
     }
@@ -106,6 +125,8 @@ public class ResidentsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to retrieve resident.", detail = ex.Message });
         }
     }
@@ -120,12 +141,17 @@ public class ResidentsController : ControllerBase
         {
             model.ResidentId = 0;
             model.CreatedAt  = DateTime.UtcNow;
+            model.Sex = NormalizeSex(model.Sex);
+            if (model.DateOfAdmission == default)
+                model.DateOfAdmission = DateOnly.FromDateTime(DateTime.UtcNow);
             _db.Residents.Add(model);
             await _db.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = model.ResidentId }, model);
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to create resident.", detail = ex.Message });
         }
     }
@@ -145,12 +171,17 @@ public class ResidentsController : ControllerBase
             // Preserve immutable fields
             model.ResidentId = id;
             model.CreatedAt  = existing.CreatedAt;
+            model.Sex = NormalizeSex(model.Sex);
+            if (model.DateOfAdmission == default)
+                model.DateOfAdmission = existing.DateOfAdmission;
             _db.Entry(existing).CurrentValues.SetValues(model);
             await _db.SaveChangesAsync();
             return Ok(existing);
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to update resident.", detail = ex.Message });
         }
     }
@@ -174,6 +205,8 @@ public class ResidentsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to delete resident.", detail = ex.Message });
         }
     }
