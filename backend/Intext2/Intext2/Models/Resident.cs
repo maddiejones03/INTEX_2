@@ -112,7 +112,7 @@ public class Resident
     public bool FamilyInformalSettler { get; set; } = false;
 
     [Column("date_of_admission")]
-    public DateOnly DateOfAdmission { get; set; }
+    public DateOnly? DateOfAdmission { get; set; }
 
     [MaxLength(50)]
     [Column("age_upon_admission")]
