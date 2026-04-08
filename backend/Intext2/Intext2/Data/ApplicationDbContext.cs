@@ -36,7 +36,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(builder);
 
-        // Value converters for DateOnly <-> string
         var dateOnlyConverter = new ValueConverter<DateOnly, string>(
             d => d.ToString("yyyy-MM-dd"),
             s => DateOnly.Parse(s));
@@ -44,25 +43,30 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         var nullableDateOnlyConverter = new ValueConverter<DateOnly?, string?>(
             d => d.HasValue ? d.Value.ToString("yyyy-MM-dd") : null,
             s => s != null ? DateOnly.Parse(s) : null);
+
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateOnly))
+                    property.SetValueConverter(dateOnlyConverter);
+                else if (property.ClrType == typeof(DateOnly?))
+                    property.SetValueConverter(nullableDateOnlyConverter);
             }
         }
 
-        // Unique index: safehouse_monthly_metrics (safehouse_id, month_start)
         builder.Entity<SafehouseMonthlyMetric>()
             .HasIndex(m => new { m.SafehouseId, m.MonthStart })
             .IsUnique();
 
-        // Unique index: public_impact_snapshots (snapshot_date)
         builder.Entity<PublicImpactSnapshot>()
             .HasIndex(s => s.SnapshotDate)
             .IsUnique();
 
-        // Unique index: residents (case_control_no)
         builder.Entity<Resident>()
             .HasIndex(r => r.CaseControlNo)
             .IsUnique();
 
-        // Unique index: safehouses (safehouse_code)
         builder.Entity<Safehouse>()
             .HasIndex(s => s.SafehouseCode)
             .IsUnique();
