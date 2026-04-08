@@ -222,6 +222,9 @@ ul { list-style: none; }
 .status-runaway { background: #fef2f2; color: #991b1b; }
 .status-deceased { background: var(--gray-200); color: var(--gray-600); }
 .status-inactive { background: var(--gray-100); color: var(--gray-500); }
+.risk-high   { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+.risk-medium { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.risk-low    { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
 .type-badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: var(--radius); font-size: 0.75rem; font-weight: 500; }
 .type-green { background: var(--green-light); color: #065f46; }
 .type-blue { background: var(--blue-light); color: #1e40af; }

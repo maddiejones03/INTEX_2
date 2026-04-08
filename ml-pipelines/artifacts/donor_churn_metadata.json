@@ -1,0 +1,26 @@
+{
+  "model_name": "donor_lapse_risk",
+  "model_version": "1.0.0",
+  "trained_at_utc": "2026-04-07T23:43:33.179533",
+  "modeling_table": "donor_lapse_modeling",
+  "label": "is_lapsed",
+  "numeric_features": [
+    "days_since_last_donation",
+    "personal_avg_gap",
+    "gap_ratio",
+    "gap_cv",
+    "momentum",
+    "distinct_campaigns_count",
+    "amount_trend",
+    "lifetime_value_php",
+    "total_donation_count"
+  ],
+  "cat_features": [
+    "acquisition_channel",
+    "supporter_type",
+    "relationship_type"
+  ],
+  "train_rows": 47,
+  "test_rows": 12,
+  "deployed_model": "Gradient Boosting"
+}
