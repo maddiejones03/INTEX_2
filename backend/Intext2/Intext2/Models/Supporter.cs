@@ -59,7 +59,7 @@ public class Supporter
     public string Status { get; set; } = "Active";
 
     [Column("created_at")]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string? CreatedAt { get; set; }
 
     [Column("first_donation_date")]
     public DateOnly? FirstDonationDate { get; set; }
