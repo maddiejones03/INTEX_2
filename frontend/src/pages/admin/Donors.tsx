@@ -40,6 +40,60 @@ interface Donation {
   campaignName: string;
 }
 
+interface ContributionBreakdownResponse {
+  totals: {
+    donationCount: number;
+    monetaryTotal: number;
+    estimatedValueTotal: number;
+    inKindItemCount: number;
+    allocatedTotal: number;
+  };
+  byType: {
+    donationType: string;
+    donationCount: number;
+    monetaryTotal: number;
+    estimatedValueTotal: number;
+    inKindItemCount: number;
+    allocatedTotal: number;
+  }[];
+}
+
+interface AllocationItem {
+  allocationId: number;
+  donationId: number;
+  donationType: string | null;
+  supporterName: string | null;
+  safehouseId: number;
+  safehouseName: string | null;
+  programArea: string;
+  amountAllocated: number;
+  allocationDate: string;
+  allocationNotes: string | null;
+}
+
+interface AllocationBreakdownResponse {
+  total: number;
+  page: number;
+  pageSize: number;
+  items: AllocationItem[];
+  byProgramArea: {
+    programArea: string;
+    allocationCount: number;
+    totalAllocated: number;
+  }[];
+  bySafehouse: {
+    safehouseId: number;
+    safehouseName: string | null;
+    allocationCount: number;
+    totalAllocated: number;
+  }[];
+}
+
+interface SafehouseOption {
+  safehouseId: number;
+  name: string;
+}
+
 function SupporterModal({ supporterId, onClose }: { supporterId: number; onClose: () => void }) {
   const [supporter, setSupporter] = useState<Supporter | null>(null);
   const [loading, setLoading] = useState(true);
@@ -242,6 +296,14 @@ export default function Donors() {
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Supporter | null>(null);
+  const [breakdown, setBreakdown] = useState<ContributionBreakdownResponse | null>(null);
+  const [breakdownLoading, setBreakdownLoading] = useState(true);
+  const [allocationData, setAllocationData] = useState<AllocationBreakdownResponse | null>(null);
+  const [allocationLoading, setAllocationLoading] = useState(true);
+  const [safehouseOptions, setSafehouseOptions] = useState<SafehouseOption[]>([]);
+  const [allocationProgramArea, setAllocationProgramArea] = useState('All');
+  const [allocationSafehouseId, setAllocationSafehouseId] = useState('All');
+  const [allocationPage, setAllocationPage] = useState(1);
 
   const fetchSupporters = useCallback(async () => {
     setLoading(true);
@@ -264,6 +326,58 @@ export default function Donors() {
   }, [page, search, filterType, filterStatus]);
 
   useEffect(() => { fetchSupporters(); }, [fetchSupporters]);
+
+  const fetchBreakdown = useCallback(async () => {
+    setBreakdownLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/donations/contribution-breakdown`, { credentials: 'include' });
+      if (!res.ok) return;
+      const data: ContributionBreakdownResponse = await res.json();
+      setBreakdown(data);
+    } catch (err) {
+      console.error('Failed to fetch contribution breakdown', err);
+    } finally {
+      setBreakdownLoading(false);
+    }
+  }, []);
+
+  const fetchAllocations = useCallback(async () => {
+    setAllocationLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(allocationPage), pageSize: '10' });
+      if (allocationProgramArea !== 'All') params.set('programArea', allocationProgramArea);
+      if (allocationSafehouseId !== 'All') params.set('safehouseId', allocationSafehouseId);
+      const res = await fetch(`${API_BASE}/api/donations/allocation-breakdown?${params.toString()}`, { credentials: 'include' });
+      if (!res.ok) return;
+      const data: AllocationBreakdownResponse = await res.json();
+      setAllocationData(data);
+    } catch (err) {
+      console.error('Failed to fetch allocation breakdown', err);
+    } finally {
+      setAllocationLoading(false);
+    }
+  }, [allocationPage, allocationProgramArea, allocationSafehouseId]);
+
+  useEffect(() => {
+    fetchBreakdown();
+  }, [fetchBreakdown]);
+
+  useEffect(() => {
+    fetchAllocations();
+  }, [fetchAllocations]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/reports/residents-by-safehouse`, { credentials: 'include' })
+      .then(async (r) => {
+        if (!r.ok) return;
+        const data = await r.json();
+        setSafehouseOptions((data ?? []).map((s: { safehouseId: number; name: string }) => ({
+          safehouseId: s.safehouseId,
+          name: s.name,
+        })));
+      })
+      .catch(() => {});
+  }, []);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -332,6 +446,8 @@ export default function Donors() {
     sortField === field ? sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} /> : null;
 
   const activeCount = supporters.filter(s => s.status === 'Active').length;
+  const contributionTypes = breakdown?.byType ?? [];
+  const allocationTotalPages = allocationData ? Math.max(1, Math.ceil(allocationData.total / allocationData.pageSize)) : 1;
 
   return (
     <div className="admin-page">
@@ -482,6 +598,137 @@ export default function Donors() {
             <span>Page {page} of {totalPages}</span>
             <button className="btn-icon" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}><ChevronUp size={16} /></button>
           </div>
+        )}
+      </div>
+
+      <div className="dashboard-card" style={{ marginBottom: '1rem' }}>
+        <div className="card-header">
+          <h2>Contribution Type Breakdown</h2>
+        </div>
+        {breakdownLoading ? (
+          <div style={{ textAlign: 'center', padding: '1rem' }}>Loading contribution metrics...</div>
+        ) : (
+          <>
+            <div className="metrics-grid metrics-grid-4">
+              <div className="metric-card metric-card-blue">
+                <div className="metric-value">{breakdown?.totals.donationCount ?? 0}</div>
+                <div className="metric-label">Total Contributions</div>
+              </div>
+              <div className="metric-card metric-card-green">
+                <div className="metric-value">${(breakdown?.totals.monetaryTotal ?? 0).toLocaleString()}</div>
+                <div className="metric-label">Monetary Total</div>
+              </div>
+              <div className="metric-card metric-card-amber">
+                <div className="metric-value">{breakdown?.totals.inKindItemCount ?? 0}</div>
+                <div className="metric-label">In-Kind Items</div>
+              </div>
+              <div className="metric-card metric-card-rose">
+                <div className="metric-value">${(breakdown?.totals.allocatedTotal ?? 0).toLocaleString()}</div>
+                <div className="metric-label">Allocated Across Programs</div>
+              </div>
+            </div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Contribution Type</th>
+                  <th>Count</th>
+                  <th>Monetary</th>
+                  <th>Estimated Value</th>
+                  <th>In-Kind Items</th>
+                  <th>Allocated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contributionTypes.map((row) => (
+                  <tr key={row.donationType}>
+                    <td><span className="category-chip">{row.donationType}</span></td>
+                    <td>{row.donationCount}</td>
+                    <td>${row.monetaryTotal.toLocaleString()}</td>
+                    <td>${row.estimatedValueTotal.toLocaleString()}</td>
+                    <td>{row.inKindItemCount}</td>
+                    <td>${row.allocatedTotal.toLocaleString()}</td>
+                  </tr>
+                ))}
+                {contributionTypes.length === 0 && (
+                  <tr><td colSpan={6} className="empty-row"><AlertCircle size={16} /> No contribution breakdown data.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </>
+        )}
+      </div>
+
+      <div className="dashboard-card" style={{ marginBottom: '1rem' }}>
+        <div className="card-header">
+          <h2>Donation Allocations by Safehouse &amp; Program Area</h2>
+        </div>
+        <div className="filter-bar" style={{ marginBottom: '0.5rem' }}>
+          <div className="filter-group">
+            <Filter size={14} />
+            <select
+              className="form-select"
+              value={allocationSafehouseId}
+              onChange={(e) => { setAllocationSafehouseId(e.target.value); setAllocationPage(1); }}
+            >
+              <option value="All">All Safehouses</option>
+              {safehouseOptions.map((s) => (
+                <option key={s.safehouseId} value={String(s.safehouseId)}>{s.name}</option>
+              ))}
+            </select>
+            <select
+              className="form-select"
+              value={allocationProgramArea}
+              onChange={(e) => { setAllocationProgramArea(e.target.value); setAllocationPage(1); }}
+            >
+              <option value="All">All Program Areas</option>
+              {(allocationData?.byProgramArea ?? []).map((p) => (
+                <option key={p.programArea} value={p.programArea}>{p.programArea}</option>
+              ))}
+            </select>
+          </div>
+          <span className="results-count">{allocationData?.total ?? 0} allocation{(allocationData?.total ?? 0) !== 1 ? 's' : ''}</span>
+        </div>
+        {allocationLoading ? (
+          <div style={{ textAlign: 'center', padding: '1rem' }}>Loading allocations...</div>
+        ) : (
+          <>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Safehouse</th>
+                  <th>Program Area</th>
+                  <th>Contribution Type</th>
+                  <th>Donor</th>
+                  <th>Amount Allocated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(allocationData?.items ?? []).map((a) => (
+                  <tr key={a.allocationId}>
+                    <td className="table-secondary">{new Date(a.allocationDate).toLocaleDateString()}</td>
+                    <td>{a.safehouseName ?? `Safehouse #${a.safehouseId}`}</td>
+                    <td><span className="category-chip">{a.programArea}</span></td>
+                    <td>{a.donationType ?? '—'}</td>
+                    <td className="table-secondary">{a.supporterName ?? '—'}</td>
+                    <td>${a.amountAllocated.toLocaleString()}</td>
+                  </tr>
+                ))}
+                {(allocationData?.items ?? []).length === 0 && (
+                  <tr><td colSpan={6} className="empty-row"><AlertCircle size={16} /> No allocation records found.</td></tr>
+                )}
+              </tbody>
+            </table>
+            <div className="pagination">
+              <button className="btn-icon" onClick={() => setAllocationPage(Math.max(1, allocationPage - 1))} disabled={allocationPage === 1}>
+                <ChevronDown size={16} />
+              </button>
+              <span>Page {allocationPage} of {allocationTotalPages}</span>
+              <button className="btn-icon" onClick={() => setAllocationPage(Math.min(allocationTotalPages, allocationPage + 1))} disabled={allocationPage >= allocationTotalPages}>
+                <ChevronUp size={16} />
+              </button>
+            </div>
+          </>
         )}
       </div>
 

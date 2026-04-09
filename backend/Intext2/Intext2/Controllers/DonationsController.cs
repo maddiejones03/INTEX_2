@@ -157,6 +157,158 @@ public class DonationsController : ControllerBase
         }
     }
 
+    // GET /api/donations/contribution-breakdown
+    [HttpGet("contribution-breakdown")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetContributionBreakdown(
+        [FromQuery] DateOnly? dateFrom,
+        [FromQuery] DateOnly? dateTo)
+    {
+        try
+        {
+            var query = _db.Donations
+                .Include(d => d.InKindItems)
+                .Include(d => d.Allocations)
+                .AsQueryable();
+
+            if (dateFrom.HasValue)
+                query = query.Where(d => d.DonationDate >= dateFrom.Value);
+            if (dateTo.HasValue)
+                query = query.Where(d => d.DonationDate <= dateTo.Value);
+
+            var donations = await query.ToListAsync();
+
+            var byType = donations
+                .GroupBy(d => string.IsNullOrWhiteSpace(d.DonationType) ? "Unknown" : d.DonationType)
+                .Select(g => new
+                {
+                    donationType = g.Key,
+                    donationCount = g.Count(),
+                    monetaryTotal = g.Sum(x => x.Amount ?? 0),
+                    estimatedValueTotal = g.Sum(x => x.EstimatedValue ?? 0),
+                    inKindItemCount = g.Sum(x => x.InKindItems.Count),
+                    allocatedTotal = g.Sum(x => x.Allocations.Sum(a => a.AmountAllocated)),
+                })
+                .OrderByDescending(x => x.donationCount)
+                .ToList();
+
+            return Ok(new
+            {
+                totals = new
+                {
+                    donationCount = donations.Count,
+                    monetaryTotal = donations.Sum(x => x.Amount ?? 0),
+                    estimatedValueTotal = donations.Sum(x => x.EstimatedValue ?? 0),
+                    inKindItemCount = donations.Sum(x => x.InKindItems.Count),
+                    allocatedTotal = donations.Sum(x => x.Allocations.Sum(a => a.AmountAllocated)),
+                },
+                byType,
+            });
+        }
+        catch (Exception ex)
+        {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
+            return StatusCode(500, new { message = "Failed to retrieve contribution breakdown.", detail = ex.Message });
+        }
+    }
+
+    // GET /api/donations/allocation-breakdown
+    [HttpGet("allocation-breakdown")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAllocationBreakdown(
+        [FromQuery] int? safehouseId,
+        [FromQuery] string? programArea,
+        [FromQuery] DateOnly? dateFrom,
+        [FromQuery] DateOnly? dateTo,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        try
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 20;
+            if (pageSize > 100) pageSize = 100;
+
+            var query = _db.DonationAllocations
+                .Include(a => a.Safehouse)
+                .Include(a => a.Donation)
+                .ThenInclude(d => d!.Supporter)
+                .AsQueryable();
+
+            if (safehouseId.HasValue)
+                query = query.Where(a => a.SafehouseId == safehouseId.Value);
+            if (!string.IsNullOrWhiteSpace(programArea))
+                query = query.Where(a => a.ProgramArea == programArea);
+            if (dateFrom.HasValue)
+                query = query.Where(a => a.AllocationDate >= dateFrom.Value);
+            if (dateTo.HasValue)
+                query = query.Where(a => a.AllocationDate <= dateTo.Value);
+
+            var total = await query.CountAsync();
+            var items = await query
+                .OrderByDescending(a => a.AllocationDate)
+                .ThenByDescending(a => a.AllocationId)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(a => new
+                {
+                    a.AllocationId,
+                    a.DonationId,
+                    donationType = a.Donation != null ? a.Donation.DonationType : null,
+                    supporterName = a.Donation != null && a.Donation.Supporter != null
+                        ? a.Donation.Supporter.DisplayName
+                        : null,
+                    a.SafehouseId,
+                    safehouseName = a.Safehouse != null ? a.Safehouse.Name : null,
+                    a.ProgramArea,
+                    a.AmountAllocated,
+                    a.AllocationDate,
+                    a.AllocationNotes,
+                })
+                .ToListAsync();
+
+            var byProgramArea = await query
+                .GroupBy(a => a.ProgramArea)
+                .Select(g => new
+                {
+                    programArea = g.Key,
+                    allocationCount = g.Count(),
+                    totalAllocated = g.Sum(x => x.AmountAllocated),
+                })
+                .OrderByDescending(x => x.totalAllocated)
+                .ToListAsync();
+
+            var bySafehouse = await query
+                .GroupBy(a => new { a.SafehouseId, SafehouseName = a.Safehouse != null ? a.Safehouse.Name : null })
+                .Select(g => new
+                {
+                    safehouseId = g.Key.SafehouseId,
+                    safehouseName = g.Key.SafehouseName,
+                    allocationCount = g.Count(),
+                    totalAllocated = g.Sum(x => x.AmountAllocated),
+                })
+                .OrderByDescending(x => x.totalAllocated)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                total,
+                page,
+                pageSize,
+                items,
+                byProgramArea,
+                bySafehouse,
+            });
+        }
+        catch (Exception ex)
+        {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
+            return StatusCode(500, new { message = "Failed to retrieve allocation breakdown.", detail = ex.Message });
+        }
+    }
+
     // POST /api/donations/public  (unauthenticated — Time & InKind only)
     [HttpPost("public")]
     [AllowAnonymous]
