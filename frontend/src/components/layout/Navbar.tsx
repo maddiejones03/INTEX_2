@@ -90,15 +90,18 @@ export default function Navbar() {
           </div>
         )}
 
-        {isAdmin && <span className="navbar-section-label">Admin portal</span>}
         {isCaseManagerArea && <span className="navbar-section-label">Case manager portal</span>}
 
         <div className="navbar-actions">
           {isAuthenticated ? (
             <div className="profile-menu-wrapper">
               <button
+                type="button"
                 className="profile-trigger"
                 onClick={() => setProfileOpen(!profileOpen)}
+                aria-expanded={profileOpen}
+                aria-haspopup="menu"
+                aria-label="Account menu"
               >
                 <div className="avatar">
                   {authSession.username?.[0]?.toUpperCase() ?? 'U'}

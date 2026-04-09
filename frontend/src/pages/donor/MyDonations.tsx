@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Heart, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Heart, AlertCircle, ArrowRight } from 'lucide-react';
 import { getApiBaseUrl } from '../../services/authApi';
 
 interface DonationRow {
@@ -52,12 +53,21 @@ export default function MyDonations() {
   return (
     <div className="section" style={{ paddingTop: '2rem' }}>
       <div className="container-narrow" style={{ maxWidth: 900, margin: '0 auto' }}>
-        <h1 className="section-title" style={{ marginBottom: '0.5rem' }}>
-          Your giving history
-        </h1>
-        <p className="section-body" style={{ marginBottom: '2rem' }}>
-          Thank you for supporting Laya Foundation. Below is a record of donations tied to your account.
-        </p>
+        <header className="my-donations-header">
+          <div className="my-donations-header-text">
+            <h1 className="section-title" style={{ marginBottom: '0.5rem' }}>
+              Your giving history
+            </h1>
+            <p className="section-body" style={{ marginBottom: 0 }}>
+              Thank you for supporting Laya Foundation. Below is a record of donations tied to your account.
+            </p>
+          </div>
+          <div className="my-donations-header-cta">
+            <Link to="/donate" className="btn btn-accent">
+              Donate now <ArrowRight size={18} aria-hidden />
+            </Link>
+          </div>
+        </header>
 
         {error && (
           <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
@@ -73,38 +83,56 @@ export default function MyDonations() {
         {loading ? (
           <p className="section-body">Loading…</p>
         ) : items.length === 0 ? (
-          <p className="section-body">No donations found for this profile yet.</p>
+          <div className="my-donations-empty">
+            <p className="section-body" style={{ marginBottom: '1rem' }}>
+              No donations found for this profile yet.
+            </p>
+            <Link to="/donate" className="btn btn-accent btn-lg">
+              Make your first gift <ArrowRight size={18} aria-hidden />
+            </Link>
+          </div>
         ) : (
-          <div className="table-card">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Amount</th>
-                  <th>Campaign</th>
-                  <th>Channel</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((d) => (
-                  <tr key={d.donationId}>
-                    <td>{d.donationDate ? d.donationDate : '—'}</td>
-                    <td>{d.donationType}</td>
-                    <td>
-                      {d.amount != null
-                        ? `${d.currencyCode ?? 'PHP'} ${d.amount.toLocaleString()}`
-                        : '—'}
-                    </td>
-                    <td>{d.campaignName ?? '—'}</td>
-                    <td>{d.channelSource}</td>
+          <div className="table-card my-donations-table-card">
+            <div className="table-scroll">
+              <table className="data-table my-donations-table">
+                <colgroup>
+                  <col style={{ width: '18%' }} />
+                  <col style={{ width: '14%' }} />
+                  <col style={{ width: '16%' }} />
+                  <col style={{ width: '36%' }} />
+                  <col style={{ width: '16%' }} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Campaign</th>
+                    <th scope="col">Channel</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <p style={{ padding: '0.75rem 1rem', fontSize: '0.875rem', color: 'var(--gray-600)' }}>
-              <Heart size={14} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-              {total} record{total === 1 ? '' : 's'} total
+                </thead>
+                <tbody>
+                  {items.map((d) => (
+                    <tr key={d.donationId}>
+                      <td>{d.donationDate ? d.donationDate : '—'}</td>
+                      <td>{d.donationType}</td>
+                      <td>
+                        {d.amount != null
+                          ? `${d.currencyCode ?? 'PHP'} ${d.amount.toLocaleString()}`
+                          : '—'}
+                      </td>
+                      <td>{d.campaignName ?? '—'}</td>
+                      <td>{d.channelSource}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="table-card-footer my-donations-footer">
+              <Heart size={14} style={{ flexShrink: 0 }} aria-hidden />
+              <span>
+                {total} record{total === 1 ? '' : 's'} total
+              </span>
             </p>
           </div>
         )}

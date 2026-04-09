@@ -7,6 +7,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import DonorWatchlist from '../../components/ui/DonorWatchlist';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
@@ -79,6 +80,7 @@ function asBool(value: boolean | number | null | undefined): boolean {
 }
 
 export default function AdminDashboard() {
+  useDocumentTitle('Dashboard');
   const { authSession } = useAuth();
   const [safehouses, setSafehouses] = useState<SafehouseData[]>([]);
   const [donationTrends, setDonationTrends] = useState<{ month: string; monetary: number }[]>([]);

@@ -5,6 +5,7 @@ import {
 } from 'recharts';
 import { Download, TrendingUp, Users, Heart, BookOpen, Share2 } from 'lucide-react';
 import ImpactChart from '../../components/ui/ImpactChart';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
@@ -25,6 +26,7 @@ interface HealthScore { year: number; month: number; avgGeneralHealth: number; r
 interface EducationScore { educationLevel: string; avgProgress: number; recordCount: number; }
 
 export default function Reports() {
+  useDocumentTitle('Reports & Analytics');
   const [donationTrends, setDonationTrends] = useState<{ month: string; monetary: number }[]>([]);
   const [safehouses, setSafehouses] = useState<SafehouseData[]>([]);
   const [reintegration, setReintegration] = useState<{ summary: ReintegrationSummary[] }>({ summary: [] });
@@ -104,25 +106,41 @@ export default function Reports() {
           <h1>Reports &amp; Analytics</h1>
           <p>Aggregated insights and trends to support decision-making.</p>
         </div>
-        <button className="btn btn-outline">
-          <Download size={16} /> Export Report
+        <button type="button" className="btn btn-outline">
+          <Download size={16} aria-hidden /> Export Report
         </button>
       </div>
 
       {/* Tab bar */}
-      <div className="tab-bar">
-        <button className={`tab-btn ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
-          <TrendingUp size={15} /> Overview
+      <div className="tab-bar" role="tablist" aria-label="Report sections">
+        <button
+          type="button"
+          role="tab"
+          id="reports-tab-overview"
+          aria-selected={tab === 'overview'}
+          aria-controls="reports-panel-overview"
+          className={`tab-btn ${tab === 'overview' ? 'active' : ''}`}
+          onClick={() => setTab('overview')}
+        >
+          <TrendingUp size={15} aria-hidden /> Overview
         </button>
-        <button className={`tab-btn ${tab === 'social' ? 'active' : ''}`} onClick={() => setTab('social')}>
-          <Share2 size={15} /> Social Media Insights
+        <button
+          type="button"
+          role="tab"
+          id="reports-tab-social"
+          aria-selected={tab === 'social'}
+          aria-controls="reports-panel-social"
+          className={`tab-btn ${tab === 'social' ? 'active' : ''}`}
+          onClick={() => setTab('social')}
+        >
+          <Share2 size={15} aria-hidden /> Social Media Insights
         </button>
       </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '2rem' }}>Loading report data...</div>
       ) : tab === 'social' ? (
-        <div>
+        <div id="reports-panel-social" role="tabpanel" aria-labelledby="reports-tab-social">
           <div className="metrics-grid metrics-grid-4">
             {socialData?.byPlatform.map((p) => (
               <div key={p.platform} className="metric-card metric-card-blue">
@@ -171,7 +189,7 @@ export default function Reports() {
             </ResponsiveContainer>
           </div>
           <div className="report-section">
-            <h2 className="report-section-title">🤖 ML Pipeline Recommendations</h2>
+            <h2 className="report-section-title">ML pipeline recommendations</h2>
             <p className="report-section-sub">Coming soon — our ML pipeline will analyze post timing, content type, and audience behavior to recommend optimal posting strategies.</p>
             <div className="aar-grid">
               <div className="aar-card aar-blue">
@@ -190,7 +208,7 @@ export default function Reports() {
           </div>
         </div>
       ) : (
-        <>
+        <div id="reports-panel-overview" role="tabpanel" aria-labelledby="reports-tab-overview">
           {/* KPI summary */}
           <div className="metrics-grid metrics-grid-4">
             <div className="metric-card metric-card-blue">
@@ -331,7 +349,7 @@ export default function Reports() {
           </div>
            {/* Pipeline 2 — Funding Impact by Program Area */}
            <ImpactChart mode="admin" />
-        </>
+        </div>
       )}
     </div>
   );

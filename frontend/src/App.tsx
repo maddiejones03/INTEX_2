@@ -6,6 +6,7 @@ import AdminSidebar from './components/layout/AdminSidebar';
 import CaseManagerSidebar from './components/layout/CaseManagerSidebar';
 import CookieConsent from './components/ui/CookieConsent';
 import ProtectedRoute from './components/ui/ProtectedRoute';
+import ScrollToTop from './components/ui/ScrollToTop';
 
 import Home from './pages/public/Home';
 import DonatePage from './pages/public/DonatePage';
@@ -18,7 +19,6 @@ import Donors from './pages/admin/Donors';
 import CaseloadInventory from './pages/admin/CaseloadInventory';
 import ProcessRecording from './pages/admin/ProcessRecording';
 import HomeVisitation from './pages/admin/HomeVisitation';
-import CaseConferences from './pages/admin/CaseConferences';
 import Reports from './pages/admin/Reports';
 import StaffManagement from './pages/admin/StaffManagement';
 import EarlyWarning from './pages/admin/EarlyWarning';
@@ -41,10 +41,13 @@ function PublicLayout() {
 function AdminLayout() {
   return (
     <ProtectedRoute roles={['Admin']}>
+      <a href="#admin-main-content" className="skip-to-main">
+        Skip to main content
+      </a>
       <Navbar />
       <div className="admin-layout">
         <AdminSidebar />
-        <main className="admin-main">
+        <main id="admin-main-content" className="admin-main" tabIndex={-1}>
           <Outlet />
         </main>
       </div>
@@ -55,10 +58,13 @@ function AdminLayout() {
 function CaseManagerLayout() {
   return (
     <ProtectedRoute roles={['CaseManager']}>
+      <a href="#admin-main-content" className="skip-to-main">
+        Skip to main content
+      </a>
       <Navbar />
       <div className="admin-layout">
         <CaseManagerSidebar />
-        <main className="admin-main">
+        <main id="admin-main-content" className="admin-main" tabIndex={-1}>
           <Outlet />
         </main>
       </div>
@@ -69,6 +75,7 @@ function CaseManagerLayout() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <Routes>
           <Route element={<PublicLayout />}>
@@ -99,7 +106,7 @@ export default function App() {
             <Route path="caseload" element={<CaseloadInventory />} />
             <Route path="process-recording" element={<ProcessRecording />} />
             <Route path="visitation" element={<HomeVisitation />} />
-            <Route path="case-conferences" element={<CaseConferences />} />
+            <Route path="case-conferences" element={<Navigate to="/admin/visitation" replace />} />
             <Route path="reports" element={<Reports />} />
             <Route path="staff" element={<StaffManagement />} />
             <Route path="early-warning" element={<EarlyWarning />} />

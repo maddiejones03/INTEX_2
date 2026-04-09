@@ -103,7 +103,6 @@ public class DonationsController : ControllerBase
                 .OrderByDescending(d => d.DonationDate)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Include(d => d.Supporter)
                 .ToListAsync();
 
             return Ok(new { total, page, pageSize, items });
@@ -500,6 +499,41 @@ public class DonationsController : ControllerBase
             if (IsSchemaTypeMismatch(ex))
                 return StatusCode(500, new { message = SchemaMismatchMessage });
             return StatusCode(500, new { message = "Failed to delete donation.", detail = ex.Message });
+        }
+    }
+    // POST /api/donations/donor  (authenticated donor — Monetary only)
+    [HttpPost("donor")]
+    [Authorize]
+    public async Task<IActionResult> CreateDonorDonation([FromBody] DonorDonationDto dto)
+    {
+        try
+        {
+            var appUser = await _userManager.GetUserAsync(User);
+            if (appUser is null) return Unauthorized();
+            var supporterId = appUser.SupporterId ?? 1;
+            var maxId = await _db.Donations.AnyAsync()
+                ? await _db.Donations.MaxAsync(d => d.DonationId)
+                : 0;
+            var donation = new Donation
+            {
+                DonationId        = maxId + 1,
+                SupporterId       = supporterId,
+                DonationType      = "Monetary",
+                DonationDate      = DateOnly.FromDateTime(DateTime.UtcNow),
+                Amount            = dto.Amount,
+                CurrencyCode      = "PHP",
+                ChannelSource     = "Direct",
+                CampaignName      = dto.CampaignName ?? null,
+                IsRecurring       = dto.IsRecurring,
+                Notes             = dto.Notes ?? null,
+            };
+            _db.Donations.Add(donation);
+            await _db.SaveChangesAsync();
+            return Ok(new { message = "Donation recorded. Thank you!", donationId = donation.DonationId });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Failed to record donation.", detail = ex.Message });
         }
     }
 }

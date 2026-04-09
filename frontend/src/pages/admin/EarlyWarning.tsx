@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, Clock } from 'lucide-react';
 import { apiFetch } from '../../services/apiClient';
 import type { ResidentEarlyWarning, RiskAlert } from '../../types/index';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 // ---- Types for API responses ----
 interface DashboardResponse {
@@ -83,6 +84,7 @@ function SeverityBadge({ severity }: { severity: string }) {
 
 // ---- Main Component ----
 export default function EarlyWarning() {
+  useDocumentTitle('Early Warning');
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [residents, setResidents] = useState<ResidentEarlyWarning[]>([]);
   const [alerts, setAlerts] = useState<RiskAlert[]>([]);
@@ -183,10 +185,10 @@ export default function EarlyWarning() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Resident ID</th>
-                  <th>Alert Type</th>
-                  <th>Severity</th>
-                  <th>Detail</th>
+                  <th scope="col">Resident ID</th>
+                  <th scope="col">Alert Type</th>
+                  <th scope="col">Severity</th>
+                  <th scope="col">Detail</th>
                 </tr>
               </thead>
               <tbody>
@@ -227,10 +229,10 @@ export default function EarlyWarning() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Resident ID</th>
-                <th>Risk Level</th>
-                <th>Likelihood</th>
-                <th>Key Concerns</th>
+                <th scope="col">Resident ID</th>
+                <th scope="col">Risk Level</th>
+                <th scope="col">Likelihood</th>
+                <th scope="col">Key Concerns</th>
               </tr>
             </thead>
             <tbody>

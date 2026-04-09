@@ -235,7 +235,9 @@ export interface RiskAlert {
 }
 
 export interface PostingSchedule {
+  scheduleId: number;
   scheduleDate: string;
+  slot: number;
   platform: string | null;
   dayOfWeek: string | null;
   postHour: number | null;

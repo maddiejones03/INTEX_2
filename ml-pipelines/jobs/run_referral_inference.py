@@ -1,14 +1,16 @@
 """
 run_referral_inference.py — Pipeline 5: Post Recommendation (Referral Prediction)
 Loads the trained referral classifier + regressor, reads social_media_posts from
-Azure SQL, builds a 7-day posting schedule by scoring candidate post configurations,
-and writes results to the posting_schedule table.
+Azure SQL, builds a multi-platform 7-day posting schedule by:
+
+  1. Scoring every candidate post configuration with the ML models
+  2. Distributing posts across platforms at the correct weekly frequency
+  3. Enforcing a content mix (awareness / emotional-story / fundraising / engagement)
+  4. Rotating CTA types across the week
+  5. Boosting only the top-2 highest-predicted-referral posts
 
 This is what the C# API reads from. The app never touches ML code —
 it just queries posting_schedule like any other table.
-
-Chapter 17 pattern:
-    load models → load live data → build candidates → score → pick winners → write to DB
 
 Run:
     cd ml-pipelines/jobs
@@ -27,16 +29,41 @@ from config import REFERRAL_CLASSIFIER_PATH, REFERRAL_REGRESSOR_PATH, REFERRAL_M
 from utils_db import azure_sql_conn, read_query
 
 POSTING_SCHEDULE_TABLE = "posting_schedule"
-SCHEDULE_DAYS = 7
+SCHEDULE_DAYS          = 7
+BOOSTED_TOP_N          = 2   # only the top-2 posts by predicted referrals get is_boosted=True
 
-# Features the model was trained on (from selected_feature_names.json)
+# Posts per platform per week (capped to sensible defaults within best-practice ranges).
+# Platforms not found in the historical data are skipped automatically.
+PLATFORM_WEEKLY_POSTS = {
+    "WhatsApp":  5,    # 4–5x/week (high-trust channel, don't overpost)
+    "YouTube":   4,    # 3–5x/week
+    "TikTok":   14,    # 2x/day (mid-range of 1–3)
+    "Instagram": 7,    # 1x/day feed
+    "Facebook":  5,    # 4–5x/week
+    "LinkedIn":  4,    # 3–5x/week
+    "Twitter":   21,   # 3x/day (lower of 3–5 range; included if present in data)
+}
+
+# Weekly post-type mix targets (proportions, normalised to sum to 1.0)
+# Based on nonprofit fundraising best-practice guidelines.
+_RAW_POST_TYPE_MIX = {
+    "ImpactStory":        0.325,   # 30–35% — highest donation driver
+    "FundraisingAppeal":  0.175,   # 15–20% — direct asks
+    "Campaign":           0.175,   # 15–20% — tied to fundraising pushes
+    "ThankYou":           0.150,   # 15%    — donor retention
+    "EducationalContent": 0.125,   # 10–15% — trust/awareness building
+    "EventPromotion":     0.075,   # 5–10%  — lowest direct donation driver
+}
+_total = sum(_RAW_POST_TYPE_MIX.values())
+POST_TYPE_MIX = {k: v / _total for k, v in _RAW_POST_TYPE_MIX.items()}
+
+# Features the model was trained on
 SELECTED_FEATURES = [
     "platform", "day_of_week", "post_hour", "post_type", "media_type",
     "num_hashtags", "mentions_count", "has_call_to_action", "call_to_action_type",
     "sentiment_tone", "caption_length", "features_resident_story", "is_boosted",
     "post_month", "post_year",
 ]
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STEP 1: Load trained models
@@ -55,8 +82,8 @@ def load_models():
     with open(REFERRAL_METADATA_PATH) as f:
         metadata = json.load(f)
 
-    print(f"[REF] Loaded classifier (CV AUC: {metadata.get('cv_roc_auc_mean', '?'):.3f})")
-    print(f"[REF] Loaded regressor  (CV MAE log: {metadata.get('cv_neg_mae_log_mean', '?'):.3f})")
+    print(f"[REF] Loaded classifier (CV AUC: {metadata.get('cv_roc_auc_mean', 0):.3f})")
+    print(f"[REF] Loaded regressor  (CV MAE log: {metadata.get('cv_neg_mae_log_mean', 0):.3f})")
     return classifier, regressor, metadata
 
 
@@ -73,26 +100,26 @@ def load_post_history() -> pd.DataFrame:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STEP 3: Build 7-day candidate table
+# STEP 3: Build candidate table (unique feature combos × 7 days)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def build_candidates(df: pd.DataFrame, n_days: int = SCHEDULE_DAYS) -> pd.DataFrame:
     """
-    Unique combinations of non-temporal selected features, cross-joined with
-    the next N calendar days. day_of_week, post_month, post_year refreshed per day.
+    Unique combinations of non-temporal selected features cross-joined with the
+    next N calendar days. day_of_week, post_month, post_year are refreshed per day.
     """
-    key_cols = [c for c in SELECTED_FEATURES if c not in ("day_of_week", "post_month", "post_year")]
-    templates = df[SELECTED_FEATURES].drop_duplicates(subset=key_cols)
+    key_cols   = [c for c in SELECTED_FEATURES if c not in ("day_of_week", "post_month", "post_year")]
+    templates  = df[SELECTED_FEATURES].drop_duplicates(subset=key_cols)
 
     today = date.today()
-    rows = []
+    rows  = []
     for i in range(n_days):
         target_date = today + timedelta(days=i)
         for _, row in templates.iterrows():
-            r = row.copy()
-            r["day_of_week"] = target_date.strftime("%A")
-            r["post_month"]  = target_date.strftime("%Y-%m")
-            r["post_year"]   = int(target_date.year)
+            r                   = row.copy()
+            r["day_of_week"]    = target_date.strftime("%A")
+            r["post_month"]     = target_date.strftime("%Y-%m")
+            r["post_year"]      = int(target_date.year)
             r["_schedule_date"] = target_date.isoformat()
             rows.append(r)
 
@@ -102,17 +129,32 @@ def build_candidates(df: pd.DataFrame, n_days: int = SCHEDULE_DAYS) -> pd.DataFr
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STEP 4: Score candidates and pick daily winners
+# STEP 4: Score and build weekly schedule
 # ─────────────────────────────────────────────────────────────────────────────
 
-def score_and_pick_winners(
+def _needed_post_type(post_type_counts: dict, total_assigned: int) -> str:
+    """Return the post type most below its target proportion."""
+    if total_assigned == 0:
+        return "ImpactStory"
+    deficits = {
+        pt: POST_TYPE_MIX[pt] - (post_type_counts[pt] / total_assigned)
+        for pt in POST_TYPE_MIX
+    }
+    return max(deficits, key=deficits.get)
+
+
+def build_weekly_schedule(
     candidates: pd.DataFrame,
     classifier,
     regressor,
 ) -> pd.DataFrame:
-    dates    = candidates["_schedule_date"].values
+    """
+    Score every candidate with the ML models, then select posts for each
+    (platform, day, slot) according to frequency rules and content mix targets.
+    Returns a DataFrame ready to write to posting_schedule.
+    """
+    # Score all candidates
     X        = candidates[SELECTED_FEATURES]
-
     p_any    = classifier.predict_proba(X)[:, 1]
     pred_log = regressor.predict(X)
     pred_cnt = np.maximum(0, np.expm1(pred_log))
@@ -121,24 +163,109 @@ def score_and_pick_winners(
     scored["p_any_referral"]      = p_any
     scored["predicted_referrals"] = pred_cnt
 
-    # Pick highest predicted_referrals per day
-    winners = (
-        scored.sort_values(["_schedule_date", "predicted_referrals"], ascending=[True, False])
-        .groupby("_schedule_date", as_index=False)
-        .first()
-    )
+    # Only schedule platforms that appear in historical data
+    available = set(scored["platform"].dropna().unique())
+    active_platforms = {p: n for p, n in PLATFORM_WEEKLY_POSTS.items() if p in available}
+    if not active_platforms:
+        raise ValueError("[REF] No recognized platforms found in historical posts data.")
+    print(f"[REF] Active platforms: {list(active_platforms.keys())}")
 
-    print(f"[REF] {len(winners)} daily winners selected")
-    return winners
+    today          = date.today()
+    schedule_dates = [today + timedelta(days=i) for i in range(SCHEDULE_DAYS)]
+
+    # Build the ordered list of (date, platform, slot) assignments
+    slot_list = []
+    for platform, weekly_posts in active_platforms.items():
+        base_per_day = weekly_posts // SCHEDULE_DAYS
+        extras       = weekly_posts % SCHEDULE_DAYS
+        for day_idx, target_date in enumerate(schedule_dates):
+            n_slots = base_per_day + (1 if day_idx < extras else 0)
+            for slot in range(1, n_slots + 1):
+                slot_list.append((target_date, platform, slot))
+
+    # Fill each slot, enforcing post-type mix targets
+    post_type_counts = {pt: 0 for pt in POST_TYPE_MIX}
+    results          = []
+
+    for target_date, platform, slot in slot_list:
+        date_str = target_date.isoformat()
+
+        pool = scored[
+            (scored["platform"] == platform) &
+            (scored["_schedule_date"] == date_str)
+        ]
+        if pool.empty:
+            continue
+
+        total_so_far   = sum(post_type_counts.values())
+        available_types = set(pool["post_type"].dropna().unique())
+
+        # Walk post types in deficit order until one is available in this pool.
+        # This enforces the mix even when some types are missing for a given platform/date.
+        deficits = sorted(
+            POST_TYPE_MIX.keys(),
+            key=lambda pt: POST_TYPE_MIX[pt] - (post_type_counts[pt] / max(total_so_far, 1)),
+            reverse=True,
+        )
+        pt_pool = pd.DataFrame()
+        for candidate_pt in deficits:
+            if candidate_pt in available_types:
+                pt_pool = pool[pool["post_type"] == candidate_pt]
+                if not pt_pool.empty:
+                    break
+
+        # Last resort: any post in pool (should be extremely rare)
+        best_pool = pt_pool if not pt_pool.empty else pool
+        best      = best_pool.sort_values("predicted_referrals", ascending=False).iloc[0]
+        actual_pt = str(best["post_type"]) if pd.notna(best["post_type"]) else "ImpactStory"
+
+        if actual_pt in post_type_counts:
+            post_type_counts[actual_pt] += 1
+
+        cta = best.get("call_to_action_type")
+
+        results.append({
+            "schedule_date":          date_str,
+            "slot":                   slot,
+            "platform":               best["platform"],
+            "day_of_week":            target_date.strftime("%A"),
+            "post_hour":              best["post_hour"],
+            "post_type":              best["post_type"],
+            "media_type":             best["media_type"],
+            "sentiment_tone":         best["sentiment_tone"],
+            "has_call_to_action":     best["has_call_to_action"],
+            "call_to_action_type":    cta if pd.notna(cta) else None,
+            "is_boosted":             False,   # assigned below
+            "features_resident_story": best.get("features_resident_story"),
+            "p_any_referral":         float(best["p_any_referral"]),
+            "predicted_referrals":    float(best["predicted_referrals"]),
+        })
+
+    schedule = pd.DataFrame(results)
+
+    # Mark top-N posts by predicted referrals as boosted
+    if not schedule.empty and BOOSTED_TOP_N > 0:
+        top_idx = schedule["predicted_referrals"].nlargest(BOOSTED_TOP_N).index
+        schedule.loc[top_idx, "is_boosted"] = True
+
+    # Summary
+    total = len(schedule)
+    print(f"[REF] {total} posts scheduled across {len(active_platforms)} platforms")
+    print(f"[REF] Post type mix: { {k: v for k, v in post_type_counts.items() if v > 0} }")
+    print(f"[REF] Boosted posts: {int(schedule['is_boosted'].sum())}")
+
+    return schedule
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STEP 5: Write schedule to Azure SQL via MERGE upsert
+# STEP 5: Write schedule to Azure SQL (DELETE + INSERT)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def write_posting_schedule(winners: pd.DataFrame) -> None:
+def write_posting_schedule(schedule: pd.DataFrame) -> None:
     with azure_sql_conn() as conn:
         cursor = conn.cursor()
+
+        # Create table if it doesn't exist yet (first run or after migration)
         cursor.execute(f"""
             IF NOT EXISTS (
                 SELECT 1 FROM INFORMATION_SCHEMA.TABLES
@@ -146,64 +273,48 @@ def write_posting_schedule(winners: pd.DataFrame) -> None:
             )
             BEGIN
                 CREATE TABLE [{POSTING_SCHEDULE_TABLE}] (
-                    schedule_date            DATE          PRIMARY KEY,
-                    platform                 NVARCHAR(50),
-                    day_of_week              NVARCHAR(20),
-                    post_hour                INT,
-                    post_type                NVARCHAR(50),
-                    media_type               NVARCHAR(50),
-                    sentiment_tone           NVARCHAR(50),
-                    has_call_to_action       BIT,
-                    call_to_action_type      NVARCHAR(50),
-                    is_boosted               BIT,
-                    features_resident_story  BIT,
-                    p_any_referral           FLOAT,
-                    predicted_referrals      FLOAT,
-                    computed_at              DATETIME2
+                    schedule_id              INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                    schedule_date            DATE              NOT NULL,
+                    slot                     INT               NOT NULL DEFAULT 1,
+                    platform                 NVARCHAR(50)      NULL,
+                    day_of_week              NVARCHAR(20)      NULL,
+                    post_hour                INT               NULL,
+                    post_type                NVARCHAR(50)      NULL,
+                    media_type               NVARCHAR(50)      NULL,
+                    sentiment_tone           NVARCHAR(50)      NULL,
+                    has_call_to_action       BIT               NULL,
+                    call_to_action_type      NVARCHAR(50)      NULL,
+                    is_boosted               BIT               NULL,
+                    features_resident_story  BIT               NULL,
+                    p_any_referral           FLOAT             NULL,
+                    predicted_referrals      FLOAT             NULL,
+                    computed_at              DATETIME2         NULL,
+                    CONSTRAINT UQ_posting_schedule_date_platform_slot
+                        UNIQUE (schedule_date, platform, slot)
                 )
             END
         """)
         conn.commit()
 
-        merge_sql = f"""
-            MERGE [{POSTING_SCHEDULE_TABLE}] AS target
-            USING (VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)) AS source (
-                schedule_date, platform, day_of_week, post_hour, post_type,
+        # Delete this week's window and re-insert fresh
+        today    = date.today().isoformat()
+        end_date = (date.today() + timedelta(days=SCHEDULE_DAYS)).isoformat()
+        cursor.execute(
+            f"DELETE FROM [{POSTING_SCHEDULE_TABLE}] "
+            f"WHERE schedule_date >= ? AND schedule_date < ?",
+            (today, end_date),
+        )
+        conn.commit()
+
+        insert_sql = f"""
+            INSERT INTO [{POSTING_SCHEDULE_TABLE}] (
+                schedule_date, slot, platform, day_of_week, post_hour, post_type,
                 media_type, sentiment_tone, has_call_to_action, call_to_action_type,
                 is_boosted, features_resident_story, p_any_referral,
                 predicted_referrals, computed_at
-            )
-            ON target.schedule_date = source.schedule_date
-            WHEN MATCHED THEN UPDATE SET
-                platform                = source.platform,
-                day_of_week             = source.day_of_week,
-                post_hour               = source.post_hour,
-                post_type               = source.post_type,
-                media_type              = source.media_type,
-                sentiment_tone          = source.sentiment_tone,
-                has_call_to_action      = source.has_call_to_action,
-                call_to_action_type     = source.call_to_action_type,
-                is_boosted              = source.is_boosted,
-                features_resident_story = source.features_resident_story,
-                p_any_referral          = source.p_any_referral,
-                predicted_referrals     = source.predicted_referrals,
-                computed_at             = source.computed_at
-            WHEN NOT MATCHED THEN INSERT (
-                schedule_date, platform, day_of_week, post_hour, post_type,
-                media_type, sentiment_tone, has_call_to_action, call_to_action_type,
-                is_boosted, features_resident_story, p_any_referral,
-                predicted_referrals, computed_at
-            ) VALUES (
-                source.schedule_date, source.platform, source.day_of_week,
-                source.post_hour, source.post_type, source.media_type,
-                source.sentiment_tone, source.has_call_to_action,
-                source.call_to_action_type, source.is_boosted,
-                source.features_resident_story, source.p_any_referral,
-                source.predicted_referrals, source.computed_at
-            );
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         """
 
-        winners = winners.rename(columns={"_schedule_date": "schedule_date"})
         now = datetime.utcnow().isoformat()
 
         def _bit(val):
@@ -214,12 +325,13 @@ def write_posting_schedule(winners: pd.DataFrame) -> None:
         rows = [
             (
                 r.schedule_date,
-                str(r.platform) if pd.notna(r.platform) else None,
+                int(r.slot),
+                str(r.platform)          if pd.notna(r.platform)          else None,
                 str(r.day_of_week),
-                int(r.post_hour) if pd.notna(r.post_hour) else None,
-                str(r.post_type) if pd.notna(r.post_type) else None,
-                str(r.media_type) if pd.notna(r.media_type) else None,
-                str(r.sentiment_tone) if pd.notna(r.sentiment_tone) else None,
+                int(r.post_hour)         if pd.notna(r.post_hour)         else None,
+                str(r.post_type)         if pd.notna(r.post_type)         else None,
+                str(r.media_type)        if pd.notna(r.media_type)        else None,
+                str(r.sentiment_tone)    if pd.notna(r.sentiment_tone)    else None,
                 _bit(r.has_call_to_action),
                 str(r.call_to_action_type) if pd.notna(r.call_to_action_type) else None,
                 _bit(r.is_boosted),
@@ -228,9 +340,9 @@ def write_posting_schedule(winners: pd.DataFrame) -> None:
                 float(r.predicted_referrals),
                 now,
             )
-            for r in winners.itertuples(index=False)
+            for r in schedule.itertuples(index=False)
         ]
-        cursor.executemany(merge_sql, rows)
+        cursor.executemany(insert_sql, rows)
         conn.commit()
 
     print(f"[REF] {len(rows)} rows written to [{POSTING_SCHEDULE_TABLE}].")
@@ -248,17 +360,21 @@ def run_inference():
     classifier, regressor, metadata = load_models()
     history    = load_post_history()
     candidates = build_candidates(history, n_days=SCHEDULE_DAYS)
-    winners    = score_and_pick_winners(candidates, classifier, regressor)
+    schedule   = build_weekly_schedule(candidates, classifier, regressor)
 
     print("[REF] Writing to Azure SQL...")
-    write_posting_schedule(winners)
+    write_posting_schedule(schedule)
 
     print("\n[REF] Complete. posting_schedule table ready for the C# API.")
-    print(f"\n{'Date':12s} {'Platform':12s} {'Type':20s} {'Hour':>5s} {'Pred Referrals':>15s}")
-    print("-" * 68)
-    for r in winners.itertuples(index=False):
-        print(f"{r.schedule_date:12s} {str(r.platform):12s} {str(r.post_type):20s} "
-              f"{int(r.post_hour) if pd.notna(r.post_hour) else 0:5d} {r.predicted_referrals:15.2f}")
+    print(f"\n{'Date':12s} {'Platform':12s} {'Slot':>4s} {'Type':20s} "
+          f"{'Hour':>5s} {'Pred Ref':>10s} {'Boost':>6s}")
+    print("-" * 75)
+    for r in schedule.sort_values(["schedule_date", "platform", "slot"]).itertuples(index=False):
+        boost = "YES" if r.is_boosted else ""
+        print(f"{r.schedule_date:12s} {str(r.platform):12s} {int(r.slot):4d} "
+              f"{str(r.post_type):20s} "
+              f"{int(r.post_hour) if pd.notna(r.post_hour) else 0:5d} "
+              f"{r.predicted_referrals:10.2f} {boost:>6s}")
 
 
 if __name__ == "__main__":
