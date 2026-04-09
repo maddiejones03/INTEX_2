@@ -287,6 +287,53 @@ ul { list-style: none; }
 .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
 .data-table tbody tr:last-child td { border-bottom: none; }
 .data-table tbody tr:hover td { background: var(--gray-50); }
+
+/* Donor giving history */
+.my-donations-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem 1.5rem;
+  margin-bottom: 1.75rem;
+}
+.my-donations-header-text { flex: 1; min-width: min(100%, 18rem); }
+.my-donations-header-cta { flex-shrink: 0; align-self: center; }
+.my-donations-header-cta .btn { display: inline-flex; align-items: center; gap: 0.35rem; }
+@media (max-width: 520px) {
+  .my-donations-header-cta { width: 100%; }
+  .my-donations-header-cta .btn { width: 100%; justify-content: center; }
+}
+.my-donations-empty {
+  padding: 2rem 1.5rem;
+  text-align: center;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  background: var(--gray-50);
+}
+.my-donations-empty .btn { display: inline-flex; align-items: center; gap: 0.35rem; }
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.my-donations-table { table-layout: fixed; min-width: 36rem; }
+.my-donations-table th { color: var(--gray-700); }
+.my-donations-table th:nth-child(3),
+.my-donations-table td:nth-child(3) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.my-donations-table td:nth-child(4) { word-break: break-word; }
+.table-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  border-top: 1px solid var(--gray-100);
+  background: var(--gray-50);
+}
+.my-donations-footer { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+
 .table-name-cell { display: flex; align-items: center; gap: 0.625rem; }
 .table-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .table-name { font-weight: 600; color: var(--gray-800); }
