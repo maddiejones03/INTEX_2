@@ -59,17 +59,6 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="footer-heading">Our Programs</h4>
-            <ul className="footer-links">
-              <li><a href="#">Crisis Shelter</a></li>
-              <li><a href="#">Healing & Therapy</a></li>
-              <li><a href="#">Education Support</a></li>
-              <li><a href="#">Livelihood Training</a></li>
-              <li><a href="#">Reintegration</a></li>
-            </ul>
-          </div>
-
-          <div>
             <h4 className="footer-heading">Contact Us</h4>
             <ul className="footer-contact">
               <li>

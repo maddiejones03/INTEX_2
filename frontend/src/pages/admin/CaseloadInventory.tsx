@@ -338,7 +338,7 @@ export default function CaseloadInventory() {
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>{readOnly ? 'My caseload' : 'Gorls'}</h1>
+          <h1 className="residents-page-title">{readOnly ? 'My caseload' : 'Residents'}</h1>
           <p>
             {readOnly
               ? 'Residents assigned to you. Detail views omit sensitive socio-demographic fields available to admins.'

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
   Heart, Shield, BookOpen, Users, ArrowRight,
-  TrendingUp, Home as HomeIcon, Star, ChevronRight, Quote, Sprout, Leaf,
+  TrendingUp, Home as HomeIcon, Star, ChevronRight, Quote, Leaf,
 } from 'lucide-react';
 
 const stats = [
@@ -132,12 +132,6 @@ const partners = [
   'SM Foundation',
 ];
 
-const growthPillars = [
-  { title: 'Growth', text: 'Healing is a process we nurture every day.' },
-  { title: 'Renewal', text: 'Residents rebuild confidence, purpose, and belonging.' },
-  { title: 'Future', text: 'Each step forward opens new life opportunities.' },
-];
-
 export default function Home() {
   return (
     <div className="page-home">
@@ -190,22 +184,6 @@ export default function Home() {
           <div className="mission-values">
             {['Dignity', 'Safety', 'Healing', 'Empowerment', 'Community'].map((v) => (
               <span key={v} className="value-chip"><Leaf size={13} /> {v}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="botanical-strip">
-        <div className="container">
-          <div className="botanical-grid">
-            {growthPillars.map((p) => (
-              <div key={p.title} className="botanical-item">
-                <Sprout size={18} className="botanical-icon" />
-                <div>
-                  <strong>{p.title}</strong>
-                  <p>{p.text}</p>
-                </div>
-              </div>
             ))}
           </div>
         </div>
@@ -357,7 +335,7 @@ export default function Home() {
       </section>
 
       {/* Partners */}
-      <section className="section section-alt">
+      <section className="section section-alt section-partners">
         <div className="container">
           <div className="section-label">Our Partners</div>
           <h2 className="section-title">Together we do more</h2>
