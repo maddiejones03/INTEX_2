@@ -110,7 +110,7 @@ var app = builder.Build();
 // ----------------------------------------------------------------
 // Seed roles and default admin on startup
 // ----------------------------------------------------------------
-await SeedAsync(app);
+try { await SeedAsync(app); } catch (Exception ex) { app.Logger.LogError(ex, "Seeding failed — app will continue."); }
 
 if (app.Environment.IsDevelopment())
 {
