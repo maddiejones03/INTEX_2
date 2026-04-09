@@ -203,10 +203,11 @@ export default function AdminDashboard() {
   const reintegrationInProgress = (reintegrationSummary?.summary ?? []).reduce((sum, row) => sum + row.inProgress, 0);
   const reintegrationNotStarted = (reintegrationSummary?.summary ?? []).reduce((sum, row) => sum + row.notStarted, 0);
 
-  const metrics = [
+  const metricsBeforeOutreach = [
     { icon: Users, label: 'Active Residents', value: activeResidents, sub: `${totalOccupied}/${totalCapacity} capacity`, color: 'blue', to: '/admin/caseload' },
     { icon: CheckCircle, label: 'Total Residents', value: residentSummary?.total ?? '—', sub: 'All time', color: 'green', to: '/admin/caseload' },
-    { icon: Calendar, label: 'Follow-Up Queue', value: followUpQueue.length, sub: 'Pending case follow-ups', color: 'rose', to: '/admin/visitation' },
+  ];
+  const metricsAfterOutreach = [
     { icon: FolderOpen, label: 'Recent Sessions', value: recentProcess.length, sub: 'Latest process recordings', color: 'amber', to: '/admin/process-recording' },
   ];
 
@@ -228,7 +229,7 @@ export default function AdminDashboard() {
         <>
           {/* Metric cards */}
           <div className="metrics-grid">
-            {metrics.map((m) => (
+            {metricsBeforeOutreach.map((m) => (
               <Link key={m.label} to={m.to} className={`metric-card metric-card-${m.color}`}>
                 <div className={`metric-icon icon-${m.color}`}><m.icon size={20} /></div>
                 <div className="metric-value">{m.value}</div>
@@ -317,6 +318,14 @@ export default function AdminDashboard() {
                   : '✓ All at-risk donors contacted'}
               </div>
             </div>
+            {metricsAfterOutreach.map((m) => (
+              <Link key={m.label} to={m.to} className={`metric-card metric-card-${m.color}`}>
+                <div className={`metric-icon icon-${m.color}`}><m.icon size={20} /></div>
+                <div className="metric-value">{m.value}</div>
+                <div className="metric-label">{m.label}</div>
+                <div className="metric-sub">{m.sub}</div>
+              </Link>
+            ))}
           </div>
 
           <div className="dashboard-row">
