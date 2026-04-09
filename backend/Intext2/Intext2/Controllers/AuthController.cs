@@ -47,8 +47,6 @@ public class AuthController : ControllerBase
         var check = await _signInManager.CheckPasswordSignInAsync(user, body.Password, lockoutOnFailure: true);
         if (check.IsLockedOut)
             return Unauthorized(new { error = "Account is locked out. Try again later." });
-        if (check.RequiresTwoFactor)
-            return Unauthorized(new { error = "Additional verification is required." });
         if (!check.Succeeded)
             return Unauthorized(new { error = "Invalid email or password." });
 

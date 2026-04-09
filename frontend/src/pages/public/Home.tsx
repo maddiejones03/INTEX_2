@@ -341,7 +341,7 @@ export default function Home() {
       </section>
 
       {/* Testimonials */}
-      <section className="section">
+      <section className="section section-testimonials">
         <div className="container">
           <div className="section-label">Voices of Hope</div>
           <h2 className="section-title">Stories of resilience</h2>
