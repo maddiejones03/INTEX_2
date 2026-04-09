@@ -104,7 +104,7 @@ public class SupportersController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Failed to create supporter.", detail = ex.Message });
+            return StatusCode(500, new { message = "Failed to create supporter.", detail = ex.Message, inner = ex.InnerException?.Message, innerInner = ex.InnerException?.InnerException?.Message });
         }
     }
 
