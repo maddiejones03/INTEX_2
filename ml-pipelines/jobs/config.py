@@ -25,12 +25,12 @@ ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)    # create on first run
 # One trio of paths per pipeline: model .sav, metadata .json, metrics .json
 # Add a new trio here each time you add a pipeline.
 
-# Pipeline 1: Donor Lapse Risk Classifier
+# Donor Risk Score: Donor Lapse Risk Classifier
 DONOR_CHURN_MODEL_PATH    = ARTIFACTS_DIR / "donor_churn_model.sav"
 DONOR_CHURN_METADATA_PATH = ARTIFACTS_DIR / "donor_churn_metadata.json"
 DONOR_CHURN_METRICS_PATH  = ARTIFACTS_DIR / "donor_churn_metrics.json"
 
-# Pipeline 2: Resident Reintegration Readiness (or whatever Pipeline 2 predicts)
+# Donation to Outcome: Resident Reintegration Readiness (or whatever Donation to Outcome predicts)
 PIPELINE2_MODEL_PATH    = ARTIFACTS_DIR / "pipeline2_model.sav"
 PIPELINE2_METADATA_PATH = ARTIFACTS_DIR / "pipeline2_metadata.json"
 PIPELINE2_METRICS_PATH  = ARTIFACTS_DIR / "pipeline2_metrics.json"

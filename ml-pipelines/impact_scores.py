@@ -1,5 +1,5 @@
 """
-Pipeline 2 — Production Impact Scoring Script
+Donation to Outcome Pipeline — Production Impact Scoring Script
 Loads OLS regression results and produces:
 - impact_per_1000.json: coefficient per program area per 1000 PHP
 - safehouse_impact_ranking.json: which safehouse gets most outcome

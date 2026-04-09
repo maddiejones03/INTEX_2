@@ -1,10 +1,10 @@
 """
-train_pipeline2.py — Pipeline 2: Donation-to-Outcome Correlation
+train_pipeline2.py — Donation to Outcome Pipeline: Donation-to-Outcome Correlation
 Reads the impact_modeling_panel table built by etl_pipeline2.py,
 fits OLS regression models (with and without safehouse fixed effects),
 and saves impact_per_1000.json to the artifacts folder.
 
-Unlike Pipeline 1, there is no model.pkl here — the deployment artifact
+Unlike Donor Risk Score Pipeline, there is no model.pkl here — the deployment artifact
 is the JSON file containing OLS coefficients. The app reads this JSON
 directly to display funding impact on the dashboard.
 
@@ -56,7 +56,7 @@ def load_modeling_table() -> pd.DataFrame:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # STEP 2: Fit OLS models
-# Mirrors Pipeline2.ipynb exactly — Model A (no FE) and Model B (with FE)
+# Mirrors donation_to_outcome.ipynb exactly — Model A (no FE) and Model B (with FE)
 # for both outcome variables.
 # ─────────────────────────────────────────────────────────────────────────────
 
