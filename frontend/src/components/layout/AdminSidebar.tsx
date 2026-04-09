@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, FolderOpen, FileText,
-  Home, BarChart3, Heart, ChevronLeft, ChevronRight, AlertCircle, Calendar,
+  Home, BarChart3, Heart, ChevronLeft, ChevronRight, AlertCircle, Calendar, ClipboardList,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -11,6 +11,7 @@ const navItems = [
   { to: '/admin/caseload', label: 'Residents', icon: FolderOpen },
   { to: '/admin/process-recording', label: 'Process Recording', icon: FileText },
   { to: '/admin/visitation', label: 'Home Visitation', icon: Home },
+  { to: '/admin/case-conferences', label: 'Case Conferences', icon: ClipboardList },
   { to: '/admin/reports', label: 'Reports & Analytics', icon: BarChart3 },
   { to: '/admin/staff', label: 'Staff Management', icon: Users },
   { to: '/admin/early-warning', label: 'Early Warning', icon: AlertCircle },

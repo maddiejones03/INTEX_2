@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Users, Heart, FolderOpen, Home, Calendar,
+  Users, FolderOpen, Calendar,
   AlertCircle, CheckCircle, Clock, ArrowRight,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -10,14 +10,6 @@ import DonorWatchlist from '../../components/ui/DonorWatchlist';
 
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
-
-const recentActivity = [
-  { icon: Users, color: 'blue', text: 'New resident admitted', time: '2 hours ago' },
-  { icon: Heart, color: 'rose', text: 'Donation received', time: '4 hours ago' },
-  { icon: FolderOpen, color: 'amber', text: 'Process recording added', time: 'Yesterday' },
-  { icon: Home, color: 'green', text: 'Home visit completed', time: '2 days ago' },
-  { icon: Calendar, color: 'purple', text: 'Case conference scheduled', time: '3 days ago' },
-];
 
 interface SafehouseData {
   safehouseId: number;
@@ -48,20 +40,64 @@ interface ResidentSummary {
   }[];
 }
 
+interface ProcessSummary {
+  total: number;
+  items: {
+    recordingId: number;
+    residentId: number;
+    socialWorker: string;
+    sessionDate: string;
+    sessionType: string;
+    emotionalStateObserved: string;
+  }[];
+}
+
+interface HomeVisitSummary {
+  total: number;
+  items: {
+    visitationId: number;
+    residentId: number;
+    socialWorker: string;
+    visitDate: string;
+    visitType: string;
+    followUpNeeded: boolean | number;
+    followUpNotes: string;
+  }[];
+}
+
+interface ReintegrationSummaryResponse {
+  summary: {
+    completed: number;
+    inProgress: number;
+    notStarted: number;
+  }[];
+}
+
+function asBool(value: boolean | number | null | undefined): boolean {
+  if (typeof value === 'boolean') return value;
+  return (value ?? 0) !== 0;
+}
+
 export default function AdminDashboard() {
   const { authSession } = useAuth();
   const [safehouses, setSafehouses] = useState<SafehouseData[]>([]);
   const [donationTrends, setDonationTrends] = useState<{ month: string; monetary: number }[]>([]);
   const [residentSummary, setResidentSummary] = useState<ResidentSummary | null>(null);
+  const [processSummary, setProcessSummary] = useState<ProcessSummary | null>(null);
+  const [homeVisits, setHomeVisits] = useState<HomeVisitSummary | null>(null);
+  const [reintegrationSummary, setReintegrationSummary] = useState<ReintegrationSummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [safehouseRes, donationRes, residentRes] = await Promise.all([
+        const [safehouseRes, donationRes, residentRes, processRes, homeVisitRes, reintegrationRes] = await Promise.all([
           fetch(`${API_BASE}/api/reports/residents-by-safehouse`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/reports/donations-by-month`, { credentials: 'include' }),
-          fetch(`${API_BASE}/api/residents?pageSize=5`, { credentials: 'include' }),
+          fetch(`${API_BASE}/api/residents?pageSize=100`, { credentials: 'include' }),
+          fetch(`${API_BASE}/api/processrecordings?pageSize=100`, { credentials: 'include' }),
+          fetch(`${API_BASE}/api/homevisitations?pageSize=100`, { credentials: 'include' }),
+          fetch(`${API_BASE}/api/reports/reintegration-success-rates`, { credentials: 'include' }),
         ]);
 
         if (safehouseRes.ok) {
@@ -82,6 +118,21 @@ export default function AdminDashboard() {
           const data = await residentRes.json();
           setResidentSummary(data);
         }
+
+        if (processRes.ok) {
+          const data = await processRes.json();
+          setProcessSummary(data);
+        }
+
+        if (homeVisitRes.ok) {
+          const data = await homeVisitRes.json();
+          setHomeVisits(data);
+        }
+
+        if (reintegrationRes.ok) {
+          const data = await reintegrationRes.json();
+          setReintegrationSummary(data);
+        }
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
       } finally {
@@ -95,12 +146,25 @@ export default function AdminDashboard() {
   const activeResidents = safehouses.reduce((s, h) => s + h.activeResidents, 0);
   const totalCapacity = safehouses.reduce((s, h) => s + h.capacityGirls, 0);
   const totalOccupied = safehouses.reduce((s, h) => s + h.currentOccupancy, 0);
+  const followUpQueue = (homeVisits?.items ?? [])
+    .filter((visit) => asBool(visit.followUpNeeded))
+    .sort((a, b) => b.visitDate.localeCompare(a.visitDate))
+    .slice(0, 5);
+  const recentProcess = (processSummary?.items ?? [])
+    .slice()
+    .sort((a, b) => b.sessionDate.localeCompare(a.sessionDate))
+    .slice(0, 5);
+
+  const residentCaseById = new Map((residentSummary?.items ?? []).map((r) => [r.residentId, r.caseControlNo]));
+  const reintegrationCompleted = (reintegrationSummary?.summary ?? []).reduce((sum, row) => sum + row.completed, 0);
+  const reintegrationInProgress = (reintegrationSummary?.summary ?? []).reduce((sum, row) => sum + row.inProgress, 0);
+  const reintegrationNotStarted = (reintegrationSummary?.summary ?? []).reduce((sum, row) => sum + row.notStarted, 0);
 
   const metrics = [
     { icon: Users, label: 'Active Residents', value: activeResidents, sub: `${totalOccupied}/${totalCapacity} capacity`, color: 'blue', to: '/admin/caseload' },
     { icon: CheckCircle, label: 'Total Residents', value: residentSummary?.total ?? '—', sub: 'All time', color: 'green', to: '/admin/caseload' },
-    { icon: Heart, label: 'Donation Months', value: donationTrends.length, sub: 'Months with donations', color: 'rose', to: '/admin/donors' },
-    { icon: Calendar, label: 'Safehouses', value: safehouses.length, sub: 'Active locations', color: 'amber', to: '/admin/caseload' },
+    { icon: Calendar, label: 'Follow-Up Queue', value: followUpQueue.length, sub: 'Pending case follow-ups', color: 'rose', to: '/admin/visitation' },
+    { icon: FolderOpen, label: 'Recent Sessions', value: recentProcess.length, sub: 'Latest process recordings', color: 'amber', to: '/admin/process-recording' },
   ];
 
   return (
@@ -209,20 +273,42 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </div>
 
-          {/* Activity feed */}
+          {/* Operations + Risk */}
           <div className="dashboard-row">
             <div className="dashboard-card">
-              <div className="card-header"><h2>Recent Activity</h2></div>
-              <div className="activity-feed">
-                {recentActivity.map((a, i) => (
-                  <div key={i} className="activity-item">
-                    <div className={`activity-icon icon-${a.color}`}><a.icon size={14} /></div>
-                    <div className="activity-content">
-                      <div className="activity-text">{a.text}</div>
-                      <div className="activity-time">{a.time}</div>
+              <div className="card-header">
+                <h2>Upcoming Case Conferences (Follow-Up Queue)</h2>
+                <Link to="/admin/visitation" className="card-link">Open queue <ArrowRight size={14} /></Link>
+              </div>
+              <div className="conference-list">
+                {followUpQueue.map((v) => {
+                  const conferenceDate = new Date(v.visitDate);
+                  conferenceDate.setDate(conferenceDate.getDate() + 14);
+                  return (
+                    <div key={v.visitationId} className="conference-item">
+                      <div className="conference-date">
+                        <div className="conf-month">
+                          {conferenceDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
+                        </div>
+                        <div className="conf-day">{conferenceDate.getDate()}</div>
+                      </div>
+                      <div>
+                        <div className="conference-resident">
+                          {residentCaseById.get(v.residentId) ?? `Resident #${v.residentId}`}
+                        </div>
+                        <div className="conference-agenda">
+                          {v.visitType} follow-up with {v.socialWorker || 'assigned worker'}
+                        </div>
+                      </div>
                     </div>
+                  );
+                })}
+                {followUpQueue.length === 0 && (
+                  <div className="empty-state">
+                    <AlertCircle size={20} />
+                    <p>No pending follow-up conferences</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
@@ -247,6 +333,55 @@ export default function AdminDashboard() {
                   <div className="empty-state">
                     <AlertCircle size={20} />
                     <p>No high risk residents</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="dashboard-row">
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2>Progress Snapshot</h2>
+                <Link to="/admin/reports" className="card-link">View analytics <ArrowRight size={14} /></Link>
+              </div>
+              <div className="metrics-grid metrics-grid-3">
+                <div className="metric-card metric-card-green">
+                  <div className="metric-value">{reintegrationCompleted}</div>
+                  <div className="metric-label">Reintegrated</div>
+                </div>
+                <div className="metric-card metric-card-blue">
+                  <div className="metric-value">{reintegrationInProgress}</div>
+                  <div className="metric-label">In Progress</div>
+                </div>
+                <div className="metric-card metric-card-amber">
+                  <div className="metric-value">{reintegrationNotStarted}</div>
+                  <div className="metric-label">Not Started</div>
+                </div>
+              </div>
+            </div>
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2>Recent Process Notes</h2>
+                <Link to="/admin/process-recording" className="card-link">View all <ArrowRight size={14} /></Link>
+              </div>
+              <div className="activity-feed">
+                {recentProcess.map((entry) => (
+                  <div key={entry.recordingId} className="activity-item">
+                    <div className="activity-icon icon-amber"><FolderOpen size={14} /></div>
+                    <div className="activity-content">
+                      <div className="activity-text">
+                        {residentCaseById.get(entry.residentId) ?? `Resident #${entry.residentId}`} - {entry.sessionType}
+                      </div>
+                      <div className="activity-time">
+                        {new Date(entry.sessionDate).toLocaleDateString()} - {entry.emotionalStateObserved || 'No mood noted'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {recentProcess.length === 0 && (
+                  <div className="empty-state">
+                    <AlertCircle size={20} />
+                    <p>No recent process recordings</p>
                   </div>
                 )}
               </div>
