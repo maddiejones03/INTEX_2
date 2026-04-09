@@ -136,7 +136,7 @@ ul { list-style: none; }
 /* === ADMIN SIDEBAR === */
 .admin-layout { display: flex; min-height: calc(100vh - var(--navbar-height)); }
 .admin-main { flex: 1; overflow-x: hidden; }
-.admin-sidebar { width: 220px; background: #fff; border-right: 1px solid var(--gray-200); flex-shrink: 0; display: flex; flex-direction: column; transition: width 0.2s ease; }
+.admin-sidebar { width: 248px; background: #fff; border-right: 1px solid var(--gray-200); flex-shrink: 0; display: flex; flex-direction: column; transition: width 0.2s ease; }
 .admin-sidebar.collapsed { width: 56px; }
 .sidebar-inner { display: flex; flex-direction: column; height: 100%; padding: 1rem 0; }
 .sidebar-nav { display: flex; flex-direction: column; gap: 0.125rem; padding: 0 0.5rem; flex: 1; }
