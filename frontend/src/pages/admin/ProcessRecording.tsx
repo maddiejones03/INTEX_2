@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Eye, Trash2, X, Check, AlertCircle, FileText, ChevronDown, ChevronUp } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
+import { getApiBaseUrl } from '../../services/authApi';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
+const API_BASE = getApiBaseUrl();
 
 const EMOTIONAL_STATES = ['Anxious', 'Angry', 'Withdrawn', 'Sad', 'Stable', 'Engaged', 'Hopeful', 'Distressed', 'Calm', 'Mixed'];
 const INTERVENTIONS = ['Trauma-Informed Care', 'Cognitive Behavioral Therapy', 'Narrative Therapy', 'Art Therapy', 'Play Therapy', 'Solution-Focused Therapy', 'Strengths-Based Approach', 'Psychoeducation', 'Relaxation Techniques', 'Family Systems Therapy'];
@@ -20,15 +21,19 @@ interface ProcessRecording {
   sessionNarrative: string;
   interventionsApplied: string;
   followUpActions: string;
-  progressNoted: boolean;
-  concernsFlagged: boolean;
-  referralMade: boolean;
+  progressNoted: boolean | number;
+  concernsFlagged: boolean | number;
+  referralMade: boolean | number;
   interventionsList: string;
 }
 
 interface Resident {
   residentId: number;
   caseControlNo: string;
+}
+
+function asBool(value: boolean | number | null | undefined): boolean {
+  return typeof value === 'boolean' ? value : (value ?? 0) !== 0;
 }
 
 function RecordingModal({ rec, onClose }: { rec: ProcessRecording; onClose: () => void }) {
@@ -49,9 +54,9 @@ function RecordingModal({ rec, onClose }: { rec: ProcessRecording; onClose: () =
             <div className="detail-item"><span>Emotional State (Start)</span><strong>{rec.emotionalStateObserved || '—'}</strong></div>
             <div className="detail-item"><span>Emotional State (End)</span><strong>{rec.emotionalStateEnd || '—'}</strong></div>
             <div className="detail-item"><span>Duration</span><strong>{rec.sessionDurationMinutes ? `${rec.sessionDurationMinutes} min` : '—'}</strong></div>
-            <div className="detail-item"><span>Progress Noted</span><strong>{rec.progressNoted ? 'Yes' : 'No'}</strong></div>
-            <div className="detail-item"><span>Concerns Flagged</span><strong>{rec.concernsFlagged ? 'Yes' : 'No'}</strong></div>
-            <div className="detail-item"><span>Referral Made</span><strong>{rec.referralMade ? 'Yes' : 'No'}</strong></div>
+            <div className="detail-item"><span>Progress Noted</span><strong>{asBool(rec.progressNoted) ? 'Yes' : 'No'}</strong></div>
+            <div className="detail-item"><span>Concerns Flagged</span><strong>{asBool(rec.concernsFlagged) ? 'Yes' : 'No'}</strong></div>
+            <div className="detail-item"><span>Referral Made</span><strong>{asBool(rec.referralMade) ? 'Yes' : 'No'}</strong></div>
           </div>
           {rec.sessionNarrative && (
             <div className="narrative-section">
@@ -84,6 +89,7 @@ export default function ProcessRecordingPage() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [filterResident, setFilterResident] = useState('All');
   const [selected, setSelected] = useState<ProcessRecording | null>(null);
@@ -105,6 +111,7 @@ export default function ProcessRecordingPage() {
 
   const fetchRecordings = useCallback(async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const params = new URLSearchParams({ page: '1', pageSize: String(PAGE_SIZE) });
       if (filterResident !== 'All') params.set('residentId', filterResident);
@@ -112,11 +119,15 @@ export default function ProcessRecordingPage() {
       const res = await fetch(`${API_BASE}/api/processrecordings?${params}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-        setRecordings(data.items);
-        setTotal(data.total);
+        setRecordings(data.items ?? []);
+        setTotal(data.total ?? 0);
+      } else {
+        const text = await res.text();
+        setLoadError(text || `Failed to load process recordings (${res.status})`);
       }
     } catch (err) {
       console.error('Failed to fetch recordings', err);
+      setLoadError('Failed to fetch process recordings. Check API connectivity and your login session.');
     } finally {
       setLoading(false);
     }
@@ -142,8 +153,11 @@ export default function ProcessRecordingPage() {
 
   useEffect(() => {
     fetch(`${API_BASE}/api/residents?pageSize=100`, { credentials: 'include' })
-      .then(r => r.json())
-      .then(data => setResidents(data.items))
+      .then(async (r) => {
+        if (!r.ok) return;
+        const data = await r.json();
+        setResidents(data.items ?? []);
+      })
       .catch(() => {});
   }, []);
 
@@ -317,6 +331,11 @@ export default function ProcessRecordingPage() {
         <div style={{ textAlign: 'center', padding: '2rem' }}>Loading recordings...</div>
       ) : (
         <div className="accordion-list">
+          {loadError && (
+            <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
+              <AlertCircle size={14} /> {loadError}
+            </div>
+          )}
           {Object.entries(grouped).map(([rid, group]) => {
             const resId = +rid;
             const isOpen = expandedResident === resId;

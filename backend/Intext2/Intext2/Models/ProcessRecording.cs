@@ -46,16 +46,28 @@ public class ProcessRecording
     public string? FollowUpActions { get; set; }
 
     [Column("progress_noted")]
-    public bool ProgressNoted { get; set; } = false;
+    public int? ProgressNoted { get; set; } = 0;
 
     [Column("concerns_flagged")]
-    public bool ConcernsFlagged { get; set; } = false;
+    public int? ConcernsFlagged { get; set; } = 0;
 
     [Column("referral_made")]
-    public bool ReferralMade { get; set; } = false;
+    public int? ReferralMade { get; set; } = 0;
 
     [Column("notes_restricted")]
     public string? NotesRestricted { get; set; }
+
+    [Column("interventions_list")]
+    public string? InterventionsList { get; set; }
+
+    [Column("start_valence")]
+    public string? StartValence { get; set; }
+
+    [Column("end_valence")]
+    public string? EndValence { get; set; }
+
+    [Column("emotional_improvement")]
+    public int? EmotionalImprovement { get; set; }
 
     // Navigation
     [ForeignKey(nameof(ResidentId))]
