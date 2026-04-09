@@ -90,7 +90,7 @@ public class DonationsController : ControllerBase
 
             if (!string.IsNullOrWhiteSpace(campaignName))
                 query = query.Where(d => d.CampaignName != null &&
-                                         d.CampaignName.ToLower().Contains(campaignName.ToLower()));
+                                        d.CampaignName.ToLower().Contains(campaignName.ToLower()));
 
             if (dateFrom.HasValue)
                 query = query.Where(d => d.DonationDate >= dateFrom.Value);
@@ -192,8 +192,8 @@ public class DonationsController : ControllerBase
                     RelationshipType = "Donor",
                     Email            = dto.DonorEmail,
                     Status           = "Active",
-                    CreatedAt        = DateTime.UtcNow.ToString("yyyy-MM-dd"),
-                    FirstDonationDate = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                    CreatedAt        = DateOnly.FromDateTime(DateTime.UtcNow),
+                    FirstDonationDate = DateOnly.FromDateTime(DateTime.UtcNow),
                     AcquisitionChannel = "Direct",
                 };
                 _db.Supporters.Add(supporter);
