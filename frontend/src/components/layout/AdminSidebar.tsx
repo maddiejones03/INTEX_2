@@ -8,7 +8,7 @@ import { useState } from 'react';
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { to: '/admin/donors', label: 'Donors & Contributions', icon: Heart },
-  { to: '/admin/caseload', label: 'Caseload Inventory', icon: FolderOpen },
+  { to: '/admin/caseload', label: 'Gorls', icon: FolderOpen },
   { to: '/admin/process-recording', label: 'Process Recording', icon: FileText },
   { to: '/admin/visitation', label: 'Home Visitation', icon: Home },
   { to: '/admin/reports', label: 'Reports & Analytics', icon: BarChart3 },
