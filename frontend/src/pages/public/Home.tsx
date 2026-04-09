@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Heart, Shield, BookOpen, Users, ArrowRight,
@@ -142,6 +142,34 @@ function formatCurrency(value: number) {
 
 export default function Home() {
   const [impact, setImpact] = useState<PublicImpactResponse | null>(null);
+  const heroSectionRef = useRef<HTMLElement>(null);
+  const prevHeroInViewRef = useRef(false);
+  const heroEverLeftRef = useRef(false);
+  const [heroAnimKey, setHeroAnimKey] = useState(0);
+
+  useEffect(() => {
+    const el = heroSectionRef.current;
+    if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const inView = entry.isIntersecting;
+        if (!inView) {
+          heroEverLeftRef.current = true;
+          prevHeroInViewRef.current = false;
+          return;
+        }
+        if (heroEverLeftRef.current && !prevHeroInViewRef.current) {
+          setHeroAnimKey((k) => k + 1);
+        }
+        prevHeroInViewRef.current = true;
+      },
+      { threshold: 0.15 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -176,9 +204,9 @@ export default function Home() {
   return (
     <div className="page-home">
       {/* Hero */}
-      <section className="hero">
+      <section className="hero" ref={heroSectionRef}>
         <div className="hero-image-overlay" aria-hidden="true" />
-        <div className="hero-content">
+        <div className="hero-content" key={heroAnimKey}>
           <div className="hero-lead">
             <h1 className="hero-title hero-title--one-line">Laya{'\u00A0'}Foundation</h1>
             <p className="hero-tagline">A refuge for those who need it most</p>
