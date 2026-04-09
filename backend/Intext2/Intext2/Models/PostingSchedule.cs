@@ -7,8 +7,15 @@ namespace Intext2.Models;
 public class PostingSchedule
 {
     [Key]
+    [Column("schedule_id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int ScheduleId { get; set; }
+
     [Column("schedule_date")]
     public DateOnly ScheduleDate { get; set; }
+
+    [Column("slot")]
+    public int Slot { get; set; } = 1;
 
     [Column("platform")]
     public string? Platform { get; set; }
