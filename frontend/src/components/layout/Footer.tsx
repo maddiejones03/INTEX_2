@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, FileText } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -62,16 +62,16 @@ export default function Footer() {
             <h4 className="footer-heading">Contact Us</h4>
             <ul className="footer-contact">
               <li>
-                <MapPin size={14} />
-                <span>123 Laya Street, Quezon City, Philippines 1100</span>
+                <Phone size={14} aria-hidden />
+                <a href="tel:+18018313323">(801) 831-3323</a>
               </li>
               <li>
-                <Phone size={14} />
-                <span>+63 2 8123 4567</span>
+                <Mail size={14} aria-hidden />
+                <a href="mailto:Info@LighthouseSanctuary.org">Info@LighthouseSanctuary.org</a>
               </li>
               <li>
-                <Mail size={14} />
-                <span>info@kanlungan.org</span>
+                <FileText size={14} aria-hidden />
+                <span>EIN: 81-3220618</span>
               </li>
             </ul>
           </div>
@@ -80,7 +80,6 @@ export default function Footer() {
         <div className="footer-bottom">
           <p className="footer-closing">Every child deserves to be free.</p>
           <p>© {new Date().getFullYear()} Laya Foundation. All rights reserved.</p>
-          <p>Registered Non-Profit Organization · SEC Reg. No. CN200800123</p>
           <p>
             <button
               className="footer-cookie-btn"
