@@ -210,7 +210,7 @@ public class DonationsController : ControllerBase
                 SupporterId  = supporter.SupporterId,
                 DonationType = dto.DonationType,
                 DonationDate = DateOnly.FromDateTime(DateTime.UtcNow),
-                IsRecurring  = false,
+                IsRecurring  = 0,
                 ChannelSource = "Direct",
                 Notes         = dto.Notes,
             };

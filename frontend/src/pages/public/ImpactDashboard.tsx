@@ -1,46 +1,51 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { TrendingUp, Users, Heart, Home, BookOpen, Activity } from 'lucide-react';
-import { mockDonationTrends, mockOutcomeMetrics } from '../../services/mockData';
+import { getApiBaseUrl } from '../../services/authApi';
 import ImpactChart from '../../components/ui/ImpactChart';
-
-const impactHighlights = [
-  { icon: Users, label: 'Total Residents Served (2024)', value: '147', sub: '+18% from 2023', color: 'blue' },
-  { icon: Home, label: 'Currently in Safe Houses', value: '55', sub: 'Across 3 facilities', color: 'green' },
-  { icon: Heart, label: 'Total Reintegrated (All Time)', value: '1,089', sub: '94% success rate', color: 'rose' },
-  { icon: TrendingUp, label: 'Donations This Year', value: '$6.44M', sub: '+12% from last year', color: 'amber' },
-  { icon: BookOpen, label: 'In Education Programs', value: '82', sub: '56% enrolled in formal schooling', color: 'purple' },
-  { icon: Activity, label: 'Counseling Sessions (YTD)', value: '1,340', sub: 'Avg. 9 sessions per resident', color: 'teal' },
-];
-
-const caseDistribution = [
-  { name: 'Physical Abuse', value: 31 },
-  { name: 'Sexual Abuse', value: 23 },
-  { name: 'Trafficking', value: 18 },
-  { name: 'Neglect', value: 32 },
-  { name: 'CICL', value: 11 },
-  { name: 'Abandoned', value: 8 },
-];
 
 const COLORS = ['#4f8a68', '#6aa17f', '#5a9b76', '#e99bb8', '#f0b6cc', '#f7d3e1'];
 
-const safeHouseData = [
-  { name: 'Tahanan ng Pag-asa', capacity: 30, occupied: 22, reintegrated: 48 },
-  { name: 'Bahay Kalinga', capacity: 25, occupied: 19, reintegrated: 39 },
-  { name: 'Laya Center', capacity: 20, occupied: 14, reintegrated: 31 },
-];
-
-const outcomeProgressData = [
-  { year: '2020', reintegrated: 58, transferred: 12, independent: 8 },
-  { year: '2021', reintegrated: 72, transferred: 10, independent: 11 },
-  { year: '2022', reintegrated: 81, transferred: 9, independent: 14 },
-  { year: '2023', reintegrated: 94, transferred: 8, independent: 18 },
-  { year: '2024 (YTD)', reintegrated: 67, transferred: 5, independent: 12 },
-];
+type PublicImpactResponse = {
+  totalResidents: number;
+  activeResidents: number;
+  reintegrated: number;
+  reintegrationRate: number;
+  totalSafehouses: number;
+  totalDonationsPhp: number;
+  caseByCategory: Array<{ category: string; count: number }>;
+  donationsByMonth: Array<{
+    year: number;
+    month: number;
+    monetary: number;
+    inKind: number;
+    volunteer: number;
+    totalAmount: number;
+  }>;
+  safehouses: Array<{
+    name: string;
+    city: string;
+    capacityGirls: number;
+    activeResidents: number;
+    reintegratedResidents: number;
+  }>;
+  outcomeByCategory: Array<{
+    category: string;
+    reintegrated: number;
+    inProgress: number;
+    transferred: number;
+  }>;
+  outcomeByYear: Array<{
+    year: number;
+    reintegrated: number;
+    transferred: number;
+    independent: number;
+  }>;
+};
 
 function formatCurrency(value: number) {
   if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
@@ -50,12 +55,97 @@ function formatCurrency(value: number) {
 
 export default function ImpactDashboard() {
   const location = useLocation();
+  const [impact, setImpact] = useState<PublicImpactResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (location.hash === '#top') {
       window.scrollTo(0, 0);
     }
   }, [location.hash]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const loadImpact = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch(`${getApiBaseUrl()}/api/reports/public-impact`, {
+          credentials: 'include',
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          throw new Error(`Request failed (${res.status})`);
+        }
+        const data = (await res.json()) as PublicImpactResponse;
+        setImpact(data);
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return;
+        setError('Unable to load live impact metrics right now.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadImpact();
+    return () => controller.abort();
+  }, []);
+
+  const impactHighlights = useMemo(() => {
+    const totalResidents = impact?.totalResidents ?? 0;
+    const activeResidents = impact?.activeResidents ?? 0;
+    const reintegrated = impact?.reintegrated ?? 0;
+    const reintegrationRate = impact?.reintegrationRate ?? 0;
+    const totalDonations = impact?.totalDonationsPhp ?? 0;
+    const totalSafehouses = impact?.totalSafehouses ?? 0;
+    const categoryCount = impact?.caseByCategory.length ?? 0;
+    const occupiedPct = totalResidents > 0 ? Math.round((activeResidents / totalResidents) * 100) : 0;
+    return [
+      { icon: Users, label: 'Total Residents Served', value: totalResidents.toLocaleString(), sub: 'All-time residents in records', color: 'blue' },
+      { icon: Home, label: 'Currently in Safe Houses', value: activeResidents.toLocaleString(), sub: `Across ${totalSafehouses} active facilities`, color: 'green' },
+      { icon: Heart, label: 'Total Reintegrated', value: reintegrated.toLocaleString(), sub: `${reintegrationRate}% reintegration rate`, color: 'rose' },
+      { icon: TrendingUp, label: 'Total Donations', value: formatCurrency(totalDonations), sub: 'Aggregated donations in database', color: 'amber' },
+      { icon: BookOpen, label: 'Case Categories Tracked', value: categoryCount.toLocaleString(), sub: 'Distinct categories in resident data', color: 'purple' },
+      { icon: Activity, label: 'Current Occupancy Ratio', value: `${occupiedPct}%`, sub: 'Active residents / total residents', color: 'teal' },
+    ];
+  }, [impact]);
+
+  const caseDistribution = useMemo(
+    () => (impact?.caseByCategory ?? []).map((c) => ({ name: c.category || 'Unknown', value: c.count })),
+    [impact]
+  );
+
+  const donationTrendData = useMemo(
+    () =>
+      (impact?.donationsByMonth ?? []).map((d) => ({
+        month: `${String(d.month).padStart(2, '0')}/${String(d.year).slice(-2)}`,
+        monetary: d.monetary,
+        inKind: d.inKind,
+        volunteer: d.volunteer,
+      })),
+    [impact]
+  );
+
+  const safeHouseData = useMemo(
+    () =>
+      (impact?.safehouses ?? []).map((s) => ({
+        name: s.name,
+        capacity: s.capacityGirls,
+        occupied: s.activeResidents,
+        reintegrated: s.reintegratedResidents,
+      })),
+    [impact]
+  );
+
+  const outcomeMetrics = useMemo(
+    () => (impact?.outcomeByCategory ?? []).map((c) => ({ ...c, category: c.category || 'General' })),
+    [impact]
+  );
+
+  const outcomeProgressData = useMemo(
+    () => (impact?.outcomeByYear ?? []).map((x) => ({ ...x, year: String(x.year) })),
+    [impact]
+  );
 
   return (
     <div className="page-impact" id="top">
@@ -65,12 +155,23 @@ export default function ImpactDashboard() {
           <h1>Our Impact in Numbers</h1>
           <p>
             Real, anonymized, aggregated data on how your support transforms lives.
-            Updated quarterly. Last updated: April 2024.
+            Data is loaded live from the production database.
           </p>
         </div>
       </div>
 
       <div className="container">
+        {loading && (
+          <div className="data-note">
+            Loading live impact metrics...
+          </div>
+        )}
+        {error && (
+          <div className="data-note">
+            <strong>Live Data Error:</strong> {error}
+          </div>
+        )}
+
         {/* Highlight cards */}
         <div className="impact-highlights-grid">
           {impactHighlights.map((h) => (
@@ -93,7 +194,7 @@ export default function ImpactDashboard() {
           </div>
           <div className="chart-card">
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={mockDonationTrends} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+              <AreaChart data={donationTrendData} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorMonetary" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#4f8a68" stopOpacity={0.3} />
@@ -171,7 +272,7 @@ export default function ImpactDashboard() {
           </div>
           <div className="chart-card">
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={mockOutcomeMetrics} margin={{ top: 5, right: 20, left: 0, bottom: 0 }} layout="vertical">
+              <BarChart data={outcomeMetrics} margin={{ top: 5, right: 20, left: 0, bottom: 0 }} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis type="number" tick={{ fontSize: 12 }} />
                 <YAxis dataKey="category" type="category" tick={{ fontSize: 12 }} width={110} />
