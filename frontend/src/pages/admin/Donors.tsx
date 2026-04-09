@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Search, Plus, Filter, Heart, ChevronDown, ChevronUp,
-  Edit2, Eye, Trash2, X, Check, AlertCircle,
+  Edit2, Trash2, X, Check, AlertCircle,
 } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 
