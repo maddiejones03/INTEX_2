@@ -151,7 +151,7 @@ public class SupportersController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Failed to delete supporter.", detail = ex.Message });
+            return StatusCode(500, new { message = "Failed to retrieve supporter.", detail = ex.Message, stack = ex.StackTrace, inner = ex.InnerException?.Message });
         }
     }
 }
