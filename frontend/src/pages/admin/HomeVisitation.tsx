@@ -9,6 +9,7 @@ import {
   Home,
   Search,
   CalendarClock,
+  ClipboardList,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -21,7 +22,25 @@ const API_BASE = getApiBaseUrl();
 const VISIT_TYPES = ['Initial Assessment', 'Routine Follow-Up', 'Reintegration Assessment', 'Post-Placement Monitoring', 'Emergency'];
 const COOPERATION_LEVELS = ['High', 'Moderate', 'Low', 'Uncooperative'];
 const PAGE_SIZE = 100;
+const CONFERENCE_PAGE_SIZE = 100;
 const TABLE_PREVIEW_ROWS = 10;
+
+interface CaseConference {
+  conferenceId: number;
+  residentId: number;
+  conferenceDate: string;
+  conferenceType: string;
+  facilitator: string | null;
+  agenda: string | null;
+  discussionNotes: string | null;
+  actionItems: string | null;
+  status: string;
+}
+
+function conferenceDateKey(s: string | null | undefined): string {
+  if (!s?.trim()) return '';
+  return s.slice(0, 10);
+}
 
 interface HomeVisit {
   visitationId: number;
@@ -62,6 +81,10 @@ function parseVisitDate(iso: string | null | undefined): Date | null {
 function formatVisitDate(iso: string | null | undefined): string {
   const d = parseVisitDate(iso);
   return d ? d.toLocaleDateString() : '—';
+}
+
+function formatConferenceDate(iso: string | null | undefined): string {
+  return formatVisitDate(iso);
 }
 
 function visitDayMs(iso: string | null | undefined): number | null {
@@ -161,7 +184,7 @@ function VisitModal({ visit, onClose }: { visit: HomeVisit; onClose: () => void 
 }
 
 export default function HomeVisitation() {
-  useDocumentTitle('Home Visitation');
+  useDocumentTitle('Home Visitation & Case Conferences');
   const [visits, setVisits] = useState<HomeVisit[]>([]);
   const [residents, setResidents] = useState<Resident[]>([]);
   const [total, setTotal] = useState(0);
@@ -186,6 +209,12 @@ export default function HomeVisitation() {
   });
   const [upcomingLimit, setUpcomingLimit] = useState(TABLE_PREVIEW_ROWS);
   const [pastLimit, setPastLimit] = useState(TABLE_PREVIEW_ROWS);
+  const [confUpcoming, setConfUpcoming] = useState<CaseConference[]>([]);
+  const [confPast, setConfPast] = useState<CaseConference[]>([]);
+  const [confLoading, setConfLoading] = useState(true);
+  const [confError, setConfError] = useState('');
+  const [confUpcomingLimit, setConfUpcomingLimit] = useState(TABLE_PREVIEW_ROWS);
+  const [confPastLimit, setConfPastLimit] = useState(TABLE_PREVIEW_ROWS);
 
   const fetchVisits = useCallback(async () => {
     setLoading(true);
@@ -210,6 +239,100 @@ export default function HomeVisitation() {
   }, []);
 
   useEffect(() => { fetchVisits(); }, [fetchVisits]);
+
+  const fetchCaseConferences = useCallback(async () => {
+    setConfLoading(true);
+    setConfError('');
+    try {
+      const params = new URLSearchParams({ page: '1', pageSize: String(CONFERENCE_PAGE_SIZE) });
+      const up = new URLSearchParams(params);
+      up.set('upcoming', 'true');
+      const past = new URLSearchParams(params);
+      past.set('upcoming', 'false');
+
+      const [resUp, resPast] = await Promise.all([
+        fetch(`${API_BASE}/api/caseconferences?${up}`, { credentials: 'include' }),
+        fetch(`${API_BASE}/api/caseconferences?${past}`, { credentials: 'include' }),
+      ]);
+
+      if (!resUp.ok) {
+        const t = await resUp.text();
+        throw new Error(t || `Upcoming conferences failed (${resUp.status})`);
+      }
+      if (!resPast.ok) {
+        const t = await resPast.text();
+        throw new Error(t || `Past conferences failed (${resPast.status})`);
+      }
+
+      const dataUp = (await resUp.json()) as { items?: CaseConference[] };
+      const dataPast = (await resPast.json()) as { items?: CaseConference[] };
+      setConfUpcoming(dataUp.items ?? []);
+      setConfPast(dataPast.items ?? []);
+    } catch (e) {
+      console.error(e);
+      setConfError(e instanceof Error ? e.message : 'Could not load case conferences.');
+      setConfUpcoming([]);
+      setConfPast([]);
+    } finally {
+      setConfLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCaseConferences();
+  }, [fetchCaseConferences]);
+
+  const filterConferenceBySearch = useCallback(
+    (list: CaseConference[]) => {
+      const q = search.trim().toLowerCase();
+      if (!q) return list;
+      return list.filter((c) => {
+        const caseNo = residents.find((r) => r.residentId === c.residentId)?.caseControlNo?.toLowerCase() ?? '';
+        return String(c.residentId).includes(q) || caseNo.includes(q);
+      });
+    },
+    [search, residents]
+  );
+
+  const scheduledConferences = useMemo(() => {
+    return filterConferenceBySearch(confUpcoming)
+      .filter((c) => (c.status ?? '').toLowerCase() !== 'cancelled')
+      .slice()
+      .sort((a, b) =>
+        conferenceDateKey(a.conferenceDate).localeCompare(conferenceDateKey(b.conferenceDate))
+      );
+  }, [confUpcoming, filterConferenceBySearch]);
+
+  const pastConferencesSorted = useMemo(() => {
+    return filterConferenceBySearch(confPast)
+      .slice()
+      .sort((a, b) =>
+        conferenceDateKey(b.conferenceDate).localeCompare(conferenceDateKey(a.conferenceDate))
+      );
+  }, [confPast, filterConferenceBySearch]);
+
+  const confUpcomingVisible = useMemo(
+    () => scheduledConferences.slice(0, confUpcomingLimit),
+    [scheduledConferences, confUpcomingLimit]
+  );
+  const confPastVisible = useMemo(
+    () => pastConferencesSorted.slice(0, confPastLimit),
+    [pastConferencesSorted, confPastLimit]
+  );
+
+  useEffect(() => {
+    setConfUpcomingLimit((prev) => {
+      if (scheduledConferences.length === 0) return TABLE_PREVIEW_ROWS;
+      return Math.min(Math.max(TABLE_PREVIEW_ROWS, prev), scheduledConferences.length);
+    });
+  }, [scheduledConferences.length]);
+
+  useEffect(() => {
+    setConfPastLimit((prev) => {
+      if (pastConferencesSorted.length === 0) return TABLE_PREVIEW_ROWS;
+      return Math.min(Math.max(TABLE_PREVIEW_ROWS, prev), pastConferencesSorted.length);
+    });
+  }, [pastConferencesSorted.length]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -352,11 +475,12 @@ export default function HomeVisitation() {
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>Home Visitation</h1>
+          <h1>Home Visitation &amp; Case Conferences</h1>
           <p>
-            Log field visits and review history. <strong>Upcoming</strong> lists visits scheduled for today or later, plus
-            older visits that still have follow-up flagged. <strong>Past visitations</strong> is everything else (completed
-            history).
+            Log field visits, review visit history, and track <strong>scheduled case conferences</strong> from the database.
+            Visit tables: <strong>Upcoming</strong> includes visits on or after today plus open follow-ups from older visits;{' '}
+            <strong>Past visitations</strong> is completed history. Conference tables mirror upcoming vs past by conference
+            date.
           </p>
           {total > PAGE_SIZE && (
             <p className="table-secondary" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
@@ -383,8 +507,8 @@ export default function HomeVisitation() {
           <div className="metric-label">Residents Visited</div>
         </div>
         <div className="metric-card metric-card-purple">
-          <div className="metric-value">{upcomingVisits.length}</div>
-          <div className="metric-label">Due / upcoming (in view)</div>
+          <div className="metric-value">{scheduledConferences.length}</div>
+          <div className="metric-label">Scheduled conferences (in view)</div>
         </div>
       </div>
 
@@ -444,13 +568,13 @@ export default function HomeVisitation() {
         </div>
       )}
 
-      {/* Search and filter — applies to both tables */}
+      {/* Search filters visits and conferences; visit type applies to visits only */}
       <div className="filter-bar">
         <div className="search-wrapper">
           <Search size={16} className="search-icon" aria-hidden />
           <input
             className="search-input"
-            placeholder="Search worker, case no., resident ID…"
+            placeholder="Search worker, case no., resident ID (visits & conferences)…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -464,9 +588,110 @@ export default function HomeVisitation() {
           ))}
         </select>
         <span className="results-count">
-          {upcomingVisits.length} upcoming · {pastVisits.length} past
+          {scheduledConferences.length} conf. upcoming · {pastConferencesSorted.length} conf. past · {upcomingVisits.length}{' '}
+          visits up · {pastVisits.length} visits past
         </span>
       </div>
+
+      {confError && (
+        <div className="alert alert-error" style={{ margin: '0 0 1rem' }}>
+          <AlertCircle size={14} /> {confError}
+        </div>
+      )}
+
+      {confLoading ? (
+        <div className="table-card" style={{ textAlign: 'center', padding: '2rem', marginBottom: '1.5rem' }}>
+          Loading case conferences…
+        </div>
+      ) : (
+        <div className="table-card" style={{ marginBottom: '1.5rem' }}>
+          <div className="card-header" style={{ padding: '1rem 1rem 0', borderBottom: 'none' }}>
+            <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ClipboardList size={20} aria-hidden />
+              Scheduled case conferences
+            </h2>
+            <p className="table-secondary" style={{ fontSize: '0.875rem', margin: '0.35rem 0 0', lineHeight: 1.45 }}>
+              Stored case conferences with date on or after today (excluding cancelled).
+            </p>
+            {scheduledConferences.length > 0 && (
+              <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0.5rem 0 0' }}>
+                Showing {confUpcomingVisible.length} of {scheduledConferences.length}
+              </p>
+            )}
+          </div>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Resident</th>
+                <th scope="col">Type</th>
+                <th scope="col">Facilitator</th>
+                <th scope="col">Status</th>
+                <th scope="col">Agenda</th>
+              </tr>
+            </thead>
+            <tbody>
+              {confUpcomingVisible.map((c) => (
+                <tr key={c.conferenceId}>
+                  <td className="table-secondary">{formatConferenceDate(c.conferenceDate)}</td>
+                  <td>
+                    <div className="table-name">
+                      {residents.find((r) => r.residentId === c.residentId)?.caseControlNo ?? `#${c.residentId}`}
+                    </div>
+                  </td>
+                  <td>
+                    <span className="category-chip">{c.conferenceType ?? '—'}</span>
+                  </td>
+                  <td className="table-secondary">{c.facilitator || '—'}</td>
+                  <td>
+                    <span className="status-badge">{c.status ?? '—'}</span>
+                  </td>
+                  <td className="table-secondary" style={{ maxWidth: 220 }}>
+                    {(c.agenda || '—').slice(0, 100)}
+                    {(c.agenda?.length ?? 0) > 100 ? '…' : ''}
+                  </td>
+                </tr>
+              ))}
+              {scheduledConferences.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="empty-row">
+                    <AlertCircle size={16} /> No scheduled case conferences in this view.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+          {scheduledConferences.length > TABLE_PREVIEW_ROWS && (
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+                padding: '0.75rem 1rem 1rem',
+                borderTop: '1px solid var(--gray-200, #e5e7eb)',
+              }}
+            >
+              {confUpcomingLimit < scheduledConferences.length ? (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() =>
+                    setConfUpcomingLimit((n) => Math.min(n + TABLE_PREVIEW_ROWS, scheduledConferences.length))
+                  }
+                >
+                  <ChevronDown size={16} /> Show more (
+                  {Math.min(TABLE_PREVIEW_ROWS, scheduledConferences.length - confUpcomingLimit)} more)
+                </button>
+              ) : null}
+              {confUpcomingLimit > TABLE_PREVIEW_ROWS ? (
+                <button type="button" className="btn btn-ghost" onClick={() => setConfUpcomingLimit(TABLE_PREVIEW_ROWS)}>
+                  <ChevronUp size={16} /> Show less
+                </button>
+              ) : null}
+            </div>
+          )}
+        </div>
+      )}
 
       {loadError && (
         <div className="alert alert-error" style={{ margin: '0 0 1rem' }}>
@@ -605,6 +830,97 @@ export default function HomeVisitation() {
               </div>
             )}
           </div>
+
+          {!confLoading && (
+            <div className="table-card" style={{ marginBottom: '1.5rem' }}>
+              <div className="card-header" style={{ padding: '1rem 1rem 0', borderBottom: 'none' }}>
+                <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ClipboardList size={20} aria-hidden />
+                  Past case conferences
+                </h2>
+                <p className="table-secondary" style={{ fontSize: '0.875rem', margin: '0.35rem 0 0', lineHeight: 1.45 }}>
+                  Conference date before today, newest first.
+                </p>
+                {pastConferencesSorted.length > 0 && (
+                  <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0.5rem 0 0' }}>
+                    Showing {confPastVisible.length} of {pastConferencesSorted.length}
+                  </p>
+                )}
+              </div>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Resident</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Discussion</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {confPastVisible.map((c) => (
+                    <tr key={c.conferenceId}>
+                      <td className="table-secondary">{formatConferenceDate(c.conferenceDate)}</td>
+                      <td>
+                        <div className="table-name">
+                          {residents.find((r) => r.residentId === c.residentId)?.caseControlNo ?? `#${c.residentId}`}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="category-chip">{c.conferenceType ?? '—'}</span>
+                      </td>
+                      <td>
+                        <span className="status-badge">{c.status ?? '—'}</span>
+                      </td>
+                      <td className="table-secondary" style={{ maxWidth: 280 }}>
+                        {(() => {
+                          const raw =
+                            [c.discussionNotes, c.actionItems].filter(Boolean).join(' · ') || '—';
+                          return raw.length > 120 ? `${raw.slice(0, 120)}…` : raw;
+                        })()}
+                      </td>
+                    </tr>
+                  ))}
+                  {pastConferencesSorted.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="empty-row">
+                        <AlertCircle size={16} /> No past case conferences in this view.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              {pastConferencesSorted.length > TABLE_PREVIEW_ROWS && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1rem 1rem',
+                    borderTop: '1px solid var(--gray-200, #e5e7eb)',
+                  }}
+                >
+                  {confPastLimit < pastConferencesSorted.length ? (
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() =>
+                        setConfPastLimit((n) => Math.min(n + TABLE_PREVIEW_ROWS, pastConferencesSorted.length))
+                      }
+                    >
+                      <ChevronDown size={16} /> Show more (
+                      {Math.min(TABLE_PREVIEW_ROWS, pastConferencesSorted.length - confPastLimit)} more)
+                    </button>
+                  ) : null}
+                  {confPastLimit > TABLE_PREVIEW_ROWS ? (
+                    <button type="button" className="btn btn-ghost" onClick={() => setConfPastLimit(TABLE_PREVIEW_ROWS)}>
+                      <ChevronUp size={16} /> Show less
+                    </button>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="table-card">
             <div className="card-header" style={{ padding: '1rem 1rem 0', borderBottom: 'none' }}>
