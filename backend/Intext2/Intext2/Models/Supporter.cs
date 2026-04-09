@@ -60,7 +60,7 @@ public class Supporter
     public string Status { get; set; } = "Active";
 
     [Column("created_at")]
-    public DateOnly? CreatedAt { get; set; }
+    public string? CreatedAt { get; set; }
 
     [Column("first_donation_date")]
     public DateOnly? FirstDonationDate { get; set; }
