@@ -1,8 +1,12 @@
+using System.Data;
+using System.Data.Common;
+using System.Text;
 using Intext2.Data;
 using Intext2.Dtos;
 using Intext2.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Intext2.Controllers;
@@ -19,6 +23,96 @@ public class HomeVisitationsController : ControllerBase
         => ex is InvalidCastException
            || ex.Message.Contains("Unable to cast object of type", StringComparison.OrdinalIgnoreCase);
 
+    private const string HomeVisitationSelectColumns = """
+        SELECT
+            ISNULL(visitation_id, 0) AS VisitationId,
+            ISNULL(resident_id, 0) AS ResidentId,
+            TRY_CONVERT(datetime2, visit_date) AS VisitDate,
+            social_worker AS SocialWorker,
+            COALESCE(visit_type, N'Routine Follow-Up') AS VisitType,
+            location_visited AS LocationVisited,
+            family_members_present AS FamilyMembersPresent,
+            purpose AS Purpose,
+            observations AS Observations,
+            COALESCE(family_cooperation_level, N'Cooperative') AS FamilyCooperationLevel,
+            CASE WHEN safety_concerns_noted IS NULL THEN 0 ELSE CAST(safety_concerns_noted AS INT) END AS SafetyConcernsNoted,
+            CASE WHEN follow_up_needed IS NULL THEN 0 ELSE CAST(follow_up_needed AS INT) END AS FollowUpNeeded,
+            follow_up_notes AS FollowUpNotes,
+            visit_outcome AS VisitOutcome
+        """;
+
+    private static void AppendWhereClause(StringBuilder where, int? residentId, string? visitType)
+    {
+        if (residentId.HasValue)
+            where.Append(" AND resident_id = @rid");
+        if (!string.IsNullOrWhiteSpace(visitType))
+            where.Append(" AND visit_type = @vtype");
+    }
+
+    private static void BindWhereParameters(DbCommand cmd, int? residentId, string? visitType)
+    {
+        if (residentId.HasValue)
+            cmd.Parameters.Add(new SqlParameter("@rid", SqlDbType.Int) { Value = residentId.Value });
+        if (!string.IsNullOrWhiteSpace(visitType))
+            cmd.Parameters.Add(new SqlParameter("@vtype", SqlDbType.NVarChar, 30) { Value = visitType.Trim() });
+    }
+
+    private static HomeVisitationListRowDto ReadRow(DbDataReader r)
+    {
+        return new HomeVisitationListRowDto
+        {
+            VisitationId = GetInt32Strict(r, "VisitationId"),
+            ResidentId = GetInt32Strict(r, "ResidentId"),
+            VisitDate = GetDateTimeNullable(r, "VisitDate"),
+            SocialWorker = GetStringNullable(r, "SocialWorker"),
+            VisitType = GetStringNullable(r, "VisitType") ?? "Routine Follow-Up",
+            LocationVisited = GetStringNullable(r, "LocationVisited"),
+            FamilyMembersPresent = GetStringNullable(r, "FamilyMembersPresent"),
+            Purpose = GetStringNullable(r, "Purpose"),
+            Observations = GetStringNullable(r, "Observations"),
+            FamilyCooperationLevel = GetStringNullable(r, "FamilyCooperationLevel") ?? "Cooperative",
+            SafetyConcernsNoted = GetInt32Loose(r, "SafetyConcernsNoted"),
+            FollowUpNeeded = GetInt32Loose(r, "FollowUpNeeded"),
+            FollowUpNotes = GetStringNullable(r, "FollowUpNotes"),
+            VisitOutcome = GetStringNullable(r, "VisitOutcome"),
+        };
+    }
+
+    private static int GetInt32Strict(DbDataReader r, string name)
+    {
+        var ord = r.GetOrdinal(name);
+        if (r.IsDBNull(ord)) return 0;
+        return Convert.ToInt32(r.GetValue(ord));
+    }
+
+    private static int GetInt32Loose(DbDataReader r, string name)
+    {
+        var ord = r.GetOrdinal(name);
+        if (r.IsDBNull(ord)) return 0;
+        var v = r.GetValue(ord);
+        if (v is bool b) return b ? 1 : 0;
+        return Convert.ToInt32(v);
+    }
+
+    private static DateTime? GetDateTimeNullable(DbDataReader r, string name)
+    {
+        var ord = r.GetOrdinal(name);
+        if (r.IsDBNull(ord)) return null;
+        var v = r.GetValue(ord);
+        if (v is DateTime dt) return dt;
+        if (v is string s && DateTime.TryParse(s, System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+            return parsed;
+        return null;
+    }
+
+    private static string? GetStringNullable(DbDataReader r, string name)
+    {
+        var ord = r.GetOrdinal(name);
+        if (r.IsDBNull(ord)) return null;
+        return Convert.ToString(r.GetValue(ord));
+    }
+
     // GET /api/homevisitations
     [HttpGet]
     [Authorize]
@@ -34,22 +128,47 @@ public class HomeVisitationsController : ControllerBase
             if (pageSize < 1) pageSize = 20;
             if (pageSize > 100) pageSize = 100;
 
-            var query = _db.HomeVisitations.AsQueryable();
+            var where = new StringBuilder("WHERE 1=1");
+            AppendWhereClause(where, residentId, visitType);
 
-            if (residentId.HasValue)
-                query = query.Where(v => v.ResidentId == residentId.Value);
+            await _db.Database.OpenConnectionAsync(HttpContext.RequestAborted);
+            try
+            {
+                var conn = _db.Database.GetDbConnection();
 
-            if (!string.IsNullOrWhiteSpace(visitType))
-                query = query.Where(v => v.VisitType == visitType);
+                int total;
+                await using (var countCmd = conn.CreateCommand())
+                {
+                    countCmd.CommandText = $"SELECT COUNT(*) FROM home_visitations {where}";
+                    BindWhereParameters(countCmd, residentId, visitType);
+                    var scalar = await countCmd.ExecuteScalarAsync(HttpContext.RequestAborted);
+                    total = Convert.ToInt32(scalar);
+                }
 
-            var total = await query.CountAsync();
-            var items = await query
-                .OrderByDescending(v => v.VisitDate)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+                var skip = (page - 1) * pageSize;
+                await using var listCmd = conn.CreateCommand();
+                listCmd.CommandText = $"""
+                    {HomeVisitationSelectColumns}
+                    FROM home_visitations
+                    {where}
+                    ORDER BY TRY_CONVERT(datetime2, visit_date) DESC, visitation_id DESC
+                    OFFSET @skip ROWS FETCH NEXT @take ROWS ONLY
+                    """;
+                BindWhereParameters(listCmd, residentId, visitType);
+                listCmd.Parameters.Add(new SqlParameter("@skip", SqlDbType.Int) { Value = skip });
+                listCmd.Parameters.Add(new SqlParameter("@take", SqlDbType.Int) { Value = pageSize });
 
-            return Ok(new { total, page, pageSize, items });
+                var items = new List<HomeVisitationListRowDto>();
+                await using var reader = await listCmd.ExecuteReaderAsync(HttpContext.RequestAborted);
+                while (await reader.ReadAsync(HttpContext.RequestAborted))
+                    items.Add(ReadRow(reader));
+
+                return Ok(new { total, page, pageSize, items });
+            }
+            finally
+            {
+                await _db.Database.CloseConnectionAsync();
+            }
         }
         catch (Exception ex)
         {
@@ -66,14 +185,28 @@ public class HomeVisitationsController : ControllerBase
     {
         try
         {
-            var visit = await _db.HomeVisitations
-                .Include(v => v.Resident)
-                .FirstOrDefaultAsync(v => v.VisitationId == id);
+            await _db.Database.OpenConnectionAsync(HttpContext.RequestAborted);
+            try
+            {
+                var conn = _db.Database.GetDbConnection();
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = $"""
+                    {HomeVisitationSelectColumns}
+                    FROM home_visitations
+                    WHERE visitation_id = @id
+                    """;
+                cmd.Parameters.Add(new SqlParameter("@id", SqlDbType.Int) { Value = id });
 
-            if (visit is null)
-                return NotFound(new { message = $"Home visitation {id} not found." });
+                await using var reader = await cmd.ExecuteReaderAsync(HttpContext.RequestAborted);
+                if (!await reader.ReadAsync(HttpContext.RequestAborted))
+                    return NotFound(new { message = $"Home visitation {id} not found." });
 
-            return Ok(visit);
+                return Ok(ReadRow(reader));
+            }
+            finally
+            {
+                await _db.Database.CloseConnectionAsync();
+            }
         }
         catch (Exception ex)
         {
