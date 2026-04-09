@@ -6,6 +6,7 @@ import AdminSidebar from './components/layout/AdminSidebar';
 import CaseManagerSidebar from './components/layout/CaseManagerSidebar';
 import CookieConsent from './components/ui/CookieConsent';
 import ProtectedRoute from './components/ui/ProtectedRoute';
+import ScrollToTop from './components/ui/ScrollToTop';
 
 import Home from './pages/public/Home';
 import DonatePage from './pages/public/DonatePage';
@@ -68,6 +69,7 @@ function CaseManagerLayout() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <AuthProvider>
         <Routes>
           <Route element={<PublicLayout />}>
