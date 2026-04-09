@@ -8,6 +8,7 @@ import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 
 const SUPPORTER_TYPES = ['Individual', 'Corporate', 'Foundation', 'Government', 'NGO', 'Church'];
+const RELATIONSHIP_TYPES = ['Local', 'International', 'Donor', 'PartnerOrganization'];
 const PAGE_SIZE = 20;
 
 interface Supporter {
@@ -72,6 +73,7 @@ function SupporterModal({ supporterId, onClose }: { supporterId: number; onClose
             <div className="detail-item"><span>Email</span><strong>{supporter.email || '—'}</strong></div>
             <div className="detail-item"><span>Phone</span><strong>{supporter.phone || '—'}</strong></div>
             <div className="detail-item"><span>Type</span><strong>{supporter.supporterType}</strong></div>
+            <div className="detail-item"><span>Relationship</span><strong>{supporter.relationshipType || '—'}</strong></div>
             <div className="detail-item"><span>Status</span><span className={`status-badge status-${supporter.status?.toLowerCase()}`}>{supporter.status}</span></div>
             <div className="detail-item"><span>Region</span><strong>{supporter.region || '—'}</strong></div>
             <div className="detail-item"><span>Country</span><strong>{supporter.country || '—'}</strong></div>
@@ -114,7 +116,14 @@ export default function Donors() {
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newSupporter, setNewSupporter] = useState({ displayName: '', email: '', supporterType: 'Individual', firstName: '', lastName: '' });
+  const [newSupporter, setNewSupporter] = useState({
+    displayName: '',
+    email: '',
+    supporterType: 'Individual',
+    relationshipType: 'Local',
+    firstName: '',
+    lastName: '',
+  });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Supporter | null>(null);
@@ -172,6 +181,7 @@ export default function Donors() {
           displayName: newSupporter.displayName,
           email: newSupporter.email,
           supporterType: newSupporter.supporterType,
+          relationshipType: newSupporter.relationshipType,
           firstName: newSupporter.firstName,
           lastName: newSupporter.lastName,
           status: 'Active',
@@ -179,7 +189,7 @@ export default function Donors() {
       });
       if (res.ok) {
         setShowAddForm(false);
-        setNewSupporter({ displayName: '', email: '', supporterType: 'Individual', firstName: '', lastName: '' });
+        setNewSupporter({ displayName: '', email: '', supporterType: 'Individual', relationshipType: 'Local', firstName: '', lastName: '' });
         fetchSupporters();
       } else {
         setFormError('Failed to create supporter.');
@@ -275,6 +285,12 @@ export default function Donors() {
               <label className="form-label">Supporter Type</label>
               <select className="form-select" value={newSupporter.supporterType} onChange={(e) => setNewSupporter({ ...newSupporter, supporterType: e.target.value })}>
                 {SUPPORTER_TYPES.map((t) => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Relationship Type</label>
+              <select className="form-select" value={newSupporter.relationshipType} onChange={(e) => setNewSupporter({ ...newSupporter, relationshipType: e.target.value })}>
+                {RELATIONSHIP_TYPES.map((t) => <option key={t}>{t}</option>)}
               </select>
             </div>
           </div>
