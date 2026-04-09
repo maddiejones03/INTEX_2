@@ -328,13 +328,8 @@ public class DonationsController : ControllerBase
             var supporter = await _db.Supporters.FirstOrDefaultAsync(s => s.Email == dto.DonorEmail);
             if (supporter is null)
             {
-                var maxSupporterId = await _db.Supporters.AnyAsync()
-                    ? await _db.Supporters.MaxAsync(s => s.SupporterId)
-                    : 0;
-
                 supporter = new Supporter
                 {
-                    SupporterId    = maxSupporterId + 1,
                     SupporterType  = "Individual",
                     DisplayName    = dto.DonorName,
                     FirstName      = dto.DonorName.Split(' ').FirstOrDefault(),
