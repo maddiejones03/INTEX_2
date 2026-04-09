@@ -247,13 +247,14 @@ button:focus-visible,
 .card-header h2 { font-size: 0.95rem; font-weight: 600; color: var(--gray-800); }
 .card-link { display: flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; color: var(--primary); font-weight: 500; }
 .card-link:hover { text-decoration: underline; }
-.safehouse-list { padding: 0.75rem 1.25rem; }
-.safehouse-item { padding: 0.75rem 0; border-bottom: 1px solid var(--gray-100); }
+/* Dashboard: match height/spacing of .resident-list / .resident-item (5 rows each) */
+.safehouse-list { padding: 0.5rem 1.25rem; }
+.safehouse-item { padding: 0.625rem 0; border-bottom: 1px solid var(--gray-100); }
 .safehouse-item:last-child { border-bottom: none; }
 .safehouse-name { font-size: 0.875rem; font-weight: 600; color: var(--gray-800); }
 .safehouse-location { font-size: 0.775rem; color: var(--gray-500); }
-.safehouse-capacity { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; font-size: 0.775rem; color: var(--gray-600); }
-.capacity-bar { flex: 1; height: 6px; background: var(--gray-200); border-radius: 3px; overflow: hidden; }
+.safehouse-capacity { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.125rem; font-size: 0.75rem; color: var(--gray-600); }
+.capacity-bar { flex: 1; height: 5px; background: var(--gray-200); border-radius: 3px; overflow: hidden; }
 .capacity-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
 .capacity-fill.good { background: var(--green); }
 .capacity-fill.warning { background: var(--amber); }

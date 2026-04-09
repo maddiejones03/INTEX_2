@@ -66,6 +66,16 @@ interface HomeVisitSummary {
   }[];
 }
 
+interface CaseConferenceRow {
+  conferenceId: number;
+  residentId: number;
+  conferenceDate: string;
+  conferenceType: string;
+  facilitator: string | null;
+  agenda: string | null;
+  status: string;
+}
+
 interface ReintegrationSummaryResponse {
   summary: {
     completed: number;
@@ -91,6 +101,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [overdueCount, setOverdueCount] = useState<number>(0);
   const [pendingCount, setPendingCount] = useState<number>(0);
+  const [caseConferenceUpcoming, setCaseConferenceUpcoming] = useState<CaseConferenceRow[]>([]);
+  const [caseConferenceTotal, setCaseConferenceTotal] = useState<number>(0);
   const watchlistRef = useRef<HTMLDivElement>(null);
 
   const scrollToWatchlist = () => {
@@ -103,13 +115,15 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [safehouseRes, donationRes, residentRes, processRes, homeVisitRes, reintegrationRes] = await Promise.all([
+        const [safehouseRes, donationRes, residentRes, processRes, homeVisitRes, reintegrationRes, conferenceRes] =
+          await Promise.all([
           fetch(`${API_BASE}/api/reports/residents-by-safehouse`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/reports/donations-by-month`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/residents?pageSize=100`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/processrecordings?pageSize=100`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/homevisitations?pageSize=100`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/reports/reintegration-success-rates`, { credentials: 'include' }),
+          fetch(`${API_BASE}/api/caseconferences?upcoming=true&pageSize=100`, { credentials: 'include' }),
         ]);
 
         if (safehouseRes.ok) {
@@ -144,6 +158,17 @@ export default function AdminDashboard() {
         if (reintegrationRes.ok) {
           const data = await reintegrationRes.json();
           setReintegrationSummary(data);
+        }
+
+        if (conferenceRes.ok) {
+          const data = (await conferenceRes.json()) as { total?: number; items?: CaseConferenceRow[] };
+          const items = data.items ?? [];
+          const filtered = items
+            .filter((c) => (c.status ?? '').toLowerCase() !== 'cancelled')
+            .slice()
+            .sort((a, b) => a.conferenceDate.localeCompare(b.conferenceDate));
+          setCaseConferenceUpcoming(filtered.slice(0, 5));
+          setCaseConferenceTotal(typeof data.total === 'number' ? data.total : filtered.length);
         }
 
         const watchlistRes = await fetch(
@@ -336,7 +361,7 @@ export default function AdminDashboard() {
                 <Link to="/admin/caseload" className="card-link">View all <ArrowRight size={14} /></Link>
               </div>
               <div className="safehouse-list">
-                {safehouses.map((sh) => {
+                {safehouses.slice(0, 5).map((sh) => {
                   const pct = sh.capacityGirls > 0
                     ? Math.round((sh.currentOccupancy / sh.capacityGirls) * 100)
                     : 0;
@@ -410,9 +435,57 @@ export default function AdminDashboard() {
           <div className="dashboard-row">
             <div className="dashboard-card">
               <div className="card-header">
-                <h2>Upcoming Case Conferences (Follow-Up Queue)</h2>
-                <Link to="/admin/visitation" className="card-link">Open queue <ArrowRight size={14} /></Link>
+                <h2>Scheduled case conferences</h2>
+                <Link to="/admin/visitation" className="card-link">
+                  View all ({caseConferenceTotal}) <ArrowRight size={14} />
+                </Link>
               </div>
+              <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0 0 0.75rem', padding: '0 1.25rem' }}>
+                From the case conferences table (next five by date).
+              </p>
+              <div className="conference-list">
+                {caseConferenceUpcoming.map((c) => {
+                  const d = new Date(
+                    c.conferenceDate.includes('T') ? c.conferenceDate : `${c.conferenceDate}T12:00:00`
+                  );
+                  return (
+                    <div key={c.conferenceId} className="conference-item">
+                      <div className="conference-date">
+                        <div className="conf-month">
+                          {d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
+                        </div>
+                        <div className="conf-day">{d.getDate()}</div>
+                      </div>
+                      <div>
+                        <div className="conference-resident">
+                          {residentCaseById.get(c.residentId) ?? `Resident #${c.residentId}`}
+                        </div>
+                        <div className="conference-agenda">
+                          {c.conferenceType}
+                          {c.facilitator ? ` · ${c.facilitator}` : ''}
+                          {c.agenda ? ` — ${c.agenda.slice(0, 80)}${c.agenda.length > 80 ? '…' : ''}` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {caseConferenceUpcoming.length === 0 && (
+                  <div className="empty-state">
+                    <AlertCircle size={20} />
+                    <p>No upcoming case conferences on file</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2>Visit follow-up reminders</h2>
+                <Link to="/admin/visitation" className="card-link">Open visits <ArrowRight size={14} /></Link>
+              </div>
+              <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0 0 0.75rem', padding: '0 1.25rem' }}>
+                Home visits flagged for follow-up (suggested review date: visit + 14 days).
+              </p>
               <div className="conference-list">
                 {followUpQueue.map((v) => {
                   const conferenceDate = new Date(v.visitDate);
@@ -439,7 +512,7 @@ export default function AdminDashboard() {
                 {followUpQueue.length === 0 && (
                   <div className="empty-state">
                     <AlertCircle size={20} />
-                    <p>No pending follow-up conferences</p>
+                    <p>No visits flagged for follow-up</p>
                   </div>
                 )}
               </div>
