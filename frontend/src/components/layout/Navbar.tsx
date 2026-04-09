@@ -97,8 +97,12 @@ export default function Navbar() {
           {isAuthenticated ? (
             <div className="profile-menu-wrapper">
               <button
+                type="button"
                 className="profile-trigger"
                 onClick={() => setProfileOpen(!profileOpen)}
+                aria-expanded={profileOpen}
+                aria-haspopup="menu"
+                aria-label="Account menu"
               >
                 <div className="avatar">
                   {authSession.username?.[0]?.toUpperCase() ?? 'U'}

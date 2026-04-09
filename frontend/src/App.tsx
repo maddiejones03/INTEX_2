@@ -40,10 +40,13 @@ function PublicLayout() {
 function AdminLayout() {
   return (
     <ProtectedRoute roles={['Admin']}>
+      <a href="#admin-main-content" className="skip-to-main">
+        Skip to main content
+      </a>
       <Navbar />
       <div className="admin-layout">
         <AdminSidebar />
-        <main className="admin-main">
+        <main id="admin-main-content" className="admin-main" tabIndex={-1}>
           <Outlet />
         </main>
       </div>
@@ -54,10 +57,13 @@ function AdminLayout() {
 function CaseManagerLayout() {
   return (
     <ProtectedRoute roles={['CaseManager']}>
+      <a href="#admin-main-content" className="skip-to-main">
+        Skip to main content
+      </a>
       <Navbar />
       <div className="admin-layout">
         <CaseManagerSidebar />
-        <main className="admin-main">
+        <main id="admin-main-content" className="admin-main" tabIndex={-1}>
           <Outlet />
         </main>
       </div>

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import { getApiBaseUrl } from '../../services/authApi';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const CASE_CATEGORIES = ['Trafficked', 'Physical Abuse', 'Sexual Abuse', 'Neglect', 'Psychological Abuse', 'Economic Abuse', 'Abandoned', 'CICL'];
 const CASE_STATUSES = ['Active', 'Reintegrated', 'Transferred', 'Runaway', 'Deceased', 'Closed'];
@@ -168,6 +169,7 @@ function ResidentModal({
 }
 
 export default function CaseloadInventory() {
+  useDocumentTitle('Residents');
   const location = useLocation();
   const readOnly = location.pathname.startsWith('/case-manager');
 
@@ -377,7 +379,7 @@ export default function CaseloadInventory() {
         <div className="inline-form-card">
           <div className="inline-form-header">
             <h3><Plus size={16} /> New Resident Record</h3>
-            <button className="btn-icon" onClick={() => setShowAddForm(false)}><X size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setShowAddForm(false)} aria-label="Close add resident form"><X size={16} aria-hidden /></button>
           </div>
           {formError && <div className="alert alert-error"><AlertCircle size={14} /> {formError}</div>}
           <div className="form-row">
@@ -439,11 +441,11 @@ export default function CaseloadInventory() {
       {/* Filters */}
       <div className="filter-bar">
         <div className="search-wrapper">
-          <Search size={16} className="search-icon" />
+          <Search size={16} className="search-icon" aria-hidden />
           <input className="search-input" placeholder="Search by case number…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
         <div className="filter-group">
-          <Filter size={14} />
+          <Filter size={14} aria-hidden />
           <select className="form-select" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
             <option value="All">All Status</option>
             {CASE_STATUSES.map((s) => <option key={s}>{s}</option>)}
@@ -477,16 +479,16 @@ export default function CaseloadInventory() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Case #</th>
-                <th>Internal Code</th>
-                <th>Sex</th>
-                <th>Category</th>
-                <th>Safe House</th>
-                <th>Social Worker</th>
-                <th>Admission</th>
-                <th>Risk</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th scope="col">Case #</th>
+                <th scope="col">Internal Code</th>
+                <th scope="col">Sex</th>
+                <th scope="col">Category</th>
+                <th scope="col">Safe House</th>
+                <th scope="col">Social Worker</th>
+                <th scope="col">Admission</th>
+                <th scope="col">Risk</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -503,11 +505,11 @@ export default function CaseloadInventory() {
                   <td><span className={`status-badge status-${r.caseStatus?.toLowerCase().replace(' ', '-')}`}>{r.caseStatus}</span></td>
                   <td>
                     <div className="action-btns">
-                      <button type="button" className="btn-icon" title="View" onClick={() => setSelectedId(r.residentId)}><Eye size={15} /></button>
+                      <button type="button" className="btn-icon" title="View" aria-label={`View resident ${r.caseControlNo}`} onClick={() => setSelectedId(r.residentId)}><Eye size={15} aria-hidden /></button>
                       {!readOnly && (
                         <>
-                          <button type="button" className="btn-icon" title="Edit"><Edit2 size={15} /></button>
-                          <button type="button" className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
+                          <button type="button" className="btn-icon" title="Edit" aria-label={`Edit resident ${r.caseControlNo}`} onClick={() => setSelectedId(r.residentId)}><Edit2 size={15} aria-hidden /></button>
+                          <button type="button" className="btn-icon btn-icon-danger" title="Delete" aria-label={`Delete resident ${r.caseControlNo}`} onClick={() => setDeleteTarget(r)}><Trash2 size={15} aria-hidden /></button>
                         </>
                       )}
                     </div>
@@ -523,9 +525,9 @@ export default function CaseloadInventory() {
 
         {totalPages > 1 && (
           <div className="pagination">
-            <button className="btn-icon" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}><ChevronLeft size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} aria-label="Previous page"><ChevronLeft size={16} aria-hidden /></button>
             <span>Page {page} of {totalPages}</span>
-            <button className="btn-icon" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}><ChevronRight size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} aria-label="Next page"><ChevronRight size={16} aria-hidden /></button>
           </div>
         )}
       </div>

@@ -4,6 +4,7 @@ import {
   Edit2, Trash2, X, Check, AlertCircle,
 } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 
@@ -278,6 +279,7 @@ function EditSupporterModal({ supporter, onClose, onSaved }: { supporter: Suppor
 }
 
 export default function Donors() {
+  useDocumentTitle('Donors & Contributions');
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -484,7 +486,7 @@ export default function Donors() {
         <div className="inline-form-card">
           <div className="inline-form-header">
             <h3><Plus size={16} /> Add New Donor</h3>
-            <button className="btn-icon" onClick={() => setShowAddForm(false)}><X size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setShowAddForm(false)} aria-label="Close add donor form"><X size={16} aria-hidden /></button>
           </div>
           {formError && <div className="alert alert-error"><AlertCircle size={14} />{formError}</div>}
           <div className="form-row">
@@ -526,11 +528,11 @@ export default function Donors() {
 
       <div className="filter-bar">
         <div className="search-wrapper">
-          <Search size={16} className="search-icon" />
+          <Search size={16} className="search-icon" aria-hidden />
           <input className="search-input" placeholder="Search by name or organization…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
         <div className="filter-group">
-          <Filter size={14} />
+          <Filter size={14} aria-hidden />
           <select className="form-select" value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(1); }}>
             <option value="All">All Types</option>
             {SUPPORTER_TYPES.map((t) => <option key={t}>{t}</option>)}
@@ -551,13 +553,21 @@ export default function Donors() {
           <table className="data-table">
             <thead>
               <tr>
-                <th className="sortable" onClick={() => handleSort('name')}>Name <SortIcon field="name" /></th>
-                <th>Type</th>
-                <th>Email</th>
-                <th>Region</th>
-                <th className="sortable" onClick={() => handleSort('date')}>First Donation <SortIcon field="date" /></th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th scope="col" className="sortable" aria-sort={sortField === 'name' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                  <button type="button" className="th-sort-btn" onClick={() => handleSort('name')} aria-label="Sort by name">
+                    Name <SortIcon field="name" />
+                  </button>
+                </th>
+                <th scope="col">Type</th>
+                <th scope="col">Email</th>
+                <th scope="col">Region</th>
+                <th scope="col" className="sortable" aria-sort={sortField === 'date' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                  <button type="button" className="th-sort-btn" onClick={() => handleSort('date')} aria-label="Sort by first donation date">
+                    First Donation <SortIcon field="date" />
+                  </button>
+                </th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -579,8 +589,8 @@ export default function Donors() {
                   <td><span className={`status-badge status-${s.status?.toLowerCase()}`}>{s.status}</span></td>
                   <td>
                     <div className="action-btns">
-                      <button className="btn-icon" title="Edit" onClick={() => setEditTarget(s)}><Edit2 size={15} /></button>
-                      <button type="button" className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(s)}><Trash2 size={15} /></button>
+                      <button type="button" className="btn-icon" title="Edit" aria-label={`Edit ${s.displayName}`} onClick={() => setEditTarget(s)}><Edit2 size={15} aria-hidden /></button>
+                      <button type="button" className="btn-icon btn-icon-danger" title="Delete" aria-label={`Delete ${s.displayName}`} onClick={() => setDeleteTarget(s)}><Trash2 size={15} aria-hidden /></button>
                     </div>
                   </td>
                 </tr>
@@ -594,9 +604,9 @@ export default function Donors() {
 
         {totalPages > 1 && (
           <div className="pagination">
-            <button className="btn-icon" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}><ChevronDown size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} aria-label="Previous page"><ChevronDown size={16} aria-hidden /></button>
             <span>Page {page} of {totalPages}</span>
-            <button className="btn-icon" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}><ChevronUp size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} aria-label="Next page"><ChevronUp size={16} aria-hidden /></button>
           </div>
         )}
       </div>
@@ -630,12 +640,12 @@ export default function Donors() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Contribution Type</th>
-                  <th>Count</th>
-                  <th>Monetary</th>
-                  <th>Estimated Value</th>
-                  <th>In-Kind Items</th>
-                  <th>Allocated</th>
+                  <th scope="col">Contribution Type</th>
+                  <th scope="col">Count</th>
+                  <th scope="col">Monetary</th>
+                  <th scope="col">Estimated Value</th>
+                  <th scope="col">In-Kind Items</th>
+                  <th scope="col">Allocated</th>
                 </tr>
               </thead>
               <tbody>
@@ -664,7 +674,7 @@ export default function Donors() {
         </div>
         <div className="filter-bar" style={{ marginBottom: '0.5rem' }}>
           <div className="filter-group">
-            <Filter size={14} />
+            <Filter size={14} aria-hidden />
             <select
               className="form-select"
               value={allocationSafehouseId}
@@ -695,12 +705,12 @@ export default function Donors() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Safehouse</th>
-                  <th>Program Area</th>
-                  <th>Contribution Type</th>
-                  <th>Donor</th>
-                  <th>Amount Allocated</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Safehouse</th>
+                  <th scope="col">Program Area</th>
+                  <th scope="col">Contribution Type</th>
+                  <th scope="col">Donor</th>
+                  <th scope="col">Amount Allocated</th>
                 </tr>
               </thead>
               <tbody>
@@ -720,12 +730,12 @@ export default function Donors() {
               </tbody>
             </table>
             <div className="pagination">
-              <button className="btn-icon" onClick={() => setAllocationPage(Math.max(1, allocationPage - 1))} disabled={allocationPage === 1}>
-                <ChevronDown size={16} />
+              <button type="button" className="btn-icon" onClick={() => setAllocationPage(Math.max(1, allocationPage - 1))} disabled={allocationPage === 1} aria-label="Previous allocation page">
+                <ChevronDown size={16} aria-hidden />
               </button>
               <span>Page {allocationPage} of {allocationTotalPages}</span>
-              <button className="btn-icon" onClick={() => setAllocationPage(Math.min(allocationTotalPages, allocationPage + 1))} disabled={allocationPage >= allocationTotalPages}>
-                <ChevronUp size={16} />
+              <button type="button" className="btn-icon" onClick={() => setAllocationPage(Math.min(allocationTotalPages, allocationPage + 1))} disabled={allocationPage >= allocationTotalPages} aria-label="Next allocation page">
+                <ChevronUp size={16} aria-hidden />
               </button>
             </div>
           </>
