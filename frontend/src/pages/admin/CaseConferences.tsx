@@ -277,7 +277,15 @@ export default function CaseConferences() {
                     <td><span className={`status-badge status-${c.status.toLowerCase()}`}>{c.status}</span></td>
                     <td className="table-secondary">{c.facilitator || '—'}</td>
                     <td>
-                      <button className="btn-icon btn-icon-danger" onClick={() => setDeleteTarget(c)}><Trash2 size={15} /></button>
+                      <button
+                        type="button"
+                        className="btn-icon btn-icon-danger"
+                        title="Delete"
+                        aria-label="Delete conference"
+                        onClick={() => setDeleteTarget(c)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </td>
                   </tr>
                 ))}

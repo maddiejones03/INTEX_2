@@ -364,7 +364,7 @@ export default function ProcessRecordingPage() {
                     <td>
                       <div className="action-btns">
                         <button className="btn-icon" onClick={() => setSelected(r)}><Eye size={15} /></button>
-                        <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
+                        <button type="button" className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
                       </div>
                     </td>
                   </tr>
