@@ -44,6 +44,10 @@ public class DonorRiskController : ControllerBase
                     d.GapRatio,
                     d.LastScoredAt,
                     d.SnoozeUntil,
+                    Email = _db.Supporters
+                        .Where(s => s.SupporterId == d.SupporterId)
+                        .Select(s => s.Email)
+                        .FirstOrDefault(),
                     // Parse the JSON string into a real array so React
                     // gets a proper array, not a raw string
                     RiskReasons = d.RiskReasonsJson != null

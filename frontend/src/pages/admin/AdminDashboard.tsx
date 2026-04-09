@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users, FolderOpen, Calendar,
@@ -87,6 +87,16 @@ export default function AdminDashboard() {
   const [homeVisits, setHomeVisits] = useState<HomeVisitSummary | null>(null);
   const [reintegrationSummary, setReintegrationSummary] = useState<ReintegrationSummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [overdueCount, setOverdueCount] = useState<number>(0);
+  const [pendingCount, setPendingCount] = useState<number>(0);
+  const watchlistRef = useRef<HTMLDivElement>(null);
+
+  const scrollToWatchlist = () => {
+    watchlistRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -132,6 +142,37 @@ export default function AdminDashboard() {
         if (reintegrationRes.ok) {
           const data = await reintegrationRes.json();
           setReintegrationSummary(data);
+        }
+
+        const watchlistRes = await fetch(
+          `${API_BASE}/api/donors/risk-watchlist?topN=50`,
+          { credentials: 'include' }
+        );
+        if (watchlistRes.ok) {
+          const watchlistData = await watchlistRes.json();
+          const watchlist = watchlistData?.watchlist ?? [];
+
+          console.log('Watchlist count:', watchlist.length);
+          console.log('First donor:', watchlist[0]);
+
+          const atRisk = watchlist.filter((d: any) =>
+            (d.riskTier === 'High' || d.riskTier === 'Medium') &&
+            !d.snoozeUntil
+          );
+
+          console.log('At risk count:', atRisk.length);
+
+          const overdue = atRisk.filter((d: any) => {
+            const scored = new Date(d.lastScoredAt);
+            const now = new Date();
+            const daysSince = Math.floor(
+              (now.getTime() - scored.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            return daysSince > 7;
+          }).length;
+
+          setPendingCount(atRisk.length);
+          setOverdueCount(overdue);
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
@@ -193,6 +234,87 @@ export default function AdminDashboard() {
                 <div className="metric-sub">{m.sub}</div>
               </Link>
             ))}
+            <div
+              className="metric-card"
+              onClick={scrollToWatchlist}
+              style={{
+                borderTop: overdueCount > 0
+                  ? '3px solid #dc2626'
+                  : pendingCount > 0
+                  ? '3px solid #f59e0b'
+                  : '3px solid #16a34a',
+                cursor: 'pointer',
+                transition: 'box-shadow 0.15s',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLDivElement).style.boxShadow =
+                  '0 4px 12px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '';
+              }}
+            >
+              <div
+                className="metric-icon"
+                style={{
+                  background: overdueCount > 0 ? '#fef2f2'
+                    : pendingCount > 0 ? '#fffbeb'
+                    : '#f0fdf4',
+                  color: overdueCount > 0 ? '#dc2626'
+                    : pendingCount > 0 ? '#d97706'
+                    : '#16a34a',
+                  width: 36, height: 36,
+                  borderRadius: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '0.75rem',
+                  fontSize: '16px',
+                }}
+              >
+                ✉
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                <div
+                  className="metric-value"
+                  style={{
+                    color: pendingCount > 0 ? '#d97706' : '#16a34a',
+                    fontSize: '1.75rem',
+                  }}
+                >
+                  {pendingCount}
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                  pending
+                </div>
+                <div style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>|</div>
+                <div
+                  className="metric-value"
+                  style={{
+                    color: overdueCount > 0 ? '#dc2626' : '#16a34a',
+                    fontSize: '1.75rem',
+                  }}
+                >
+                  {overdueCount}
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                  overdue
+                </div>
+              </div>
+
+              <div className="metric-label" style={{ marginTop: '0.25rem' }}>
+                Donor Outreach Status
+              </div>
+
+              <div className="metric-sub">
+                {overdueCount > 0
+                  ? `⚠️ ${overdueCount} donor${overdueCount > 1 ? 's' : ''} past 7-day window`
+                  : pendingCount > 0
+                  ? `${pendingCount} at-risk donor${pendingCount > 1 ? 's' : ''} awaiting contact`
+                  : '✓ All at-risk donors contacted'}
+              </div>
+            </div>
           </div>
 
           <div className="dashboard-row">
@@ -388,7 +510,9 @@ export default function AdminDashboard() {
             </div>
           </div>
            {/* Donor Risk Watchlist — ML Pipeline 1 */}
-           <DonorWatchlist topN={10} />
+           <div ref={watchlistRef}>
+             <DonorWatchlist topN={10} />
+           </div>
         </>
       )}
     </div>
