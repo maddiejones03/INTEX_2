@@ -53,11 +53,60 @@ function formatCurrency(value: number) {
   return `$${value}`;
 }
 
+function AnimatedNumber({ value, duration = 1500 }: { value: string; duration?: number }) {
+  const [display, setDisplay] = useState('');
+
+  useEffect(() => {
+    const prefix = value.match(/^[^0-9]*/)?.[0] ?? '';
+    const suffix = value.match(/[^0-9.]+$/)?.[0] ?? '';
+    const numStr = value.replace(prefix, '').replace(suffix, '');
+    const num = parseFloat(numStr.replace(/,/g, ''));
+
+    if (isNaN(num)) {
+      setDisplay(value);
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      const startTime = performance.now();
+
+      const tick = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(num * eased);
+
+        if (value.includes(',') && current >= 1000) {
+          setDisplay(prefix + current.toLocaleString('en-US') + suffix);
+        } else if (value.includes('.') && suffix === 'M') {
+          const decimal = (num * eased).toFixed(2);
+          setDisplay(prefix + decimal + suffix);
+        } else {
+          setDisplay(prefix + current + suffix);
+        }
+
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          setDisplay(value);
+        }
+      };
+
+      requestAnimationFrame(tick);
+    }, 100);
+
+    return () => clearTimeout(timeout);
+  }, [value, duration]);
+
+  return <>{display}</>;
+}
+
 export default function ImpactDashboard() {
   const location = useLocation();
   const [impact, setImpact] = useState<PublicImpactResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [highlightsLoaded, setHighlightsLoaded] = useState(false);
 
   useEffect(() => {
     if (location.hash === '#top') {
@@ -80,6 +129,7 @@ export default function ImpactDashboard() {
         }
         const data = (await res.json()) as PublicImpactResponse;
         setImpact(data);
+        setHighlightsLoaded(true);
       } catch (err) {
         if ((err as Error).name === 'AbortError') return;
         setError('Unable to load live impact metrics right now.');
@@ -174,16 +224,29 @@ export default function ImpactDashboard() {
 
         {/* Highlight cards */}
         <div className="impact-highlights-grid">
-          {impactHighlights.map((h) => (
-            <div key={h.label} className={`impact-highlight-card impact-card-${h.color}`}>
-              <div className={`impact-card-icon icon-${h.color}`}>
-                <h.icon size={20} />
-              </div>
-              <div className="impact-card-value">{h.value}</div>
-              <div className="impact-card-label">{h.label}</div>
-              <div className="impact-card-sub">{h.sub}</div>
-            </div>
-          ))}
+          {!highlightsLoaded
+            ? Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="impact-highlight-card">
+                  <div className="skeleton skeleton-value" />
+                  <div className="skeleton skeleton-label" />
+                  <div className="skeleton skeleton-sub" />
+                </div>
+              ))
+            : impactHighlights.map((h) => (
+                <div
+                  key={h.label}
+                  className={`impact-highlight-card impact-card-${h.color}`}
+                >
+                  <div className={`impact-card-icon icon-${h.color}`}>
+                    <h.icon size={20} />
+                  </div>
+                  <div className="impact-card-value">
+                    <AnimatedNumber value={h.value} />
+                  </div>
+                  <div className="impact-card-label">{h.label}</div>
+                  <div className="impact-card-sub">{h.sub}</div>
+                </div>
+              ))}
         </div>
 
         {/* Donation trends */}
