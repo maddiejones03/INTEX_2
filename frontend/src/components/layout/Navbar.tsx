@@ -12,7 +12,6 @@ export default function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const path = location.pathname;
-  const staffChrome = path.startsWith('/admin') || path.startsWith('/case-manager');
   const isAdminArea = path.startsWith('/admin');
   const isCaseManagerArea = path.startsWith('/case-manager');
 
@@ -33,6 +32,10 @@ export default function Navbar() {
     { to: '/impact', label: 'Our Impact' },
     { to: '/privacy', label: 'Privacy Policy' },
   ];
+  const primaryLinks = (isAdmin && !isCaseManagerArea)
+    ? [...publicLinks, { to: '/admin', label: 'Dashboard' }]
+    : publicLinks;
+  const showHeaderLinks = !isCaseManagerArea;
 
   return (
     <nav className="navbar">
@@ -51,13 +54,17 @@ export default function Navbar() {
           />
         </Link>
 
-        {!staffChrome && (
+        {showHeaderLinks && (
           <div className="navbar-links">
-            {publicLinks.map((l) => (
+            {primaryLinks.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
-                className={`navbar-link ${path === l.to ? 'active' : ''}`}
+                className={`navbar-link ${
+                  l.to === '/admin'
+                    ? (isAdminArea ? 'active' : '')
+                    : (path === l.to ? 'active' : '')
+                }`}
               >
                 {l.label}
               </Link>
@@ -83,7 +90,7 @@ export default function Navbar() {
           </div>
         )}
 
-        {isAdminArea && <span className="navbar-section-label">Admin portal</span>}
+        {isAdmin && <span className="navbar-section-label">Admin portal</span>}
         {isCaseManagerArea && <span className="navbar-section-label">Case manager portal</span>}
 
         <div className="navbar-actions">
@@ -162,9 +169,9 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="mobile-menu">
-          {!staffChrome && (
+          {showHeaderLinks && (
             <>
-              {publicLinks.map((l) => (
+              {primaryLinks.map((l) => (
                 <Link
                   key={l.to}
                   to={l.to}
