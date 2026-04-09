@@ -11,6 +11,7 @@
 IF OBJECT_ID('public_impact_snapshots', 'U') IS NOT NULL DROP TABLE public_impact_snapshots;
 IF OBJECT_ID('safehouse_monthly_metrics', 'U') IS NOT NULL DROP TABLE safehouse_monthly_metrics;
 IF OBJECT_ID('incident_reports', 'U') IS NOT NULL DROP TABLE incident_reports;
+IF OBJECT_ID('case_conferences', 'U') IS NOT NULL DROP TABLE case_conferences;
 IF OBJECT_ID('intervention_plans', 'U') IS NOT NULL DROP TABLE intervention_plans;
 IF OBJECT_ID('health_wellbeing_records', 'U') IS NOT NULL DROP TABLE health_wellbeing_records;
 IF OBJECT_ID('education_records', 'U') IS NOT NULL DROP TABLE education_records;
@@ -457,6 +458,30 @@ CREATE TABLE intervention_plans (
     created_at           DATETIME2     NOT NULL DEFAULT GETUTCDATE(),
     updated_at           DATETIME2     NOT NULL DEFAULT GETUTCDATE()
 );
+
+-- ============================================================
+-- CASE CONFERENCES
+-- ============================================================
+
+CREATE TABLE case_conferences (
+    conference_id     INT IDENTITY(1,1) PRIMARY KEY,
+    resident_id       INT NOT NULL REFERENCES residents(resident_id),
+    conference_date   DATE NOT NULL,
+    conference_type   NVARCHAR(30) NOT NULL
+                      CONSTRAINT chk_case_conf_type CHECK (conference_type IN (
+                          'Initial Assessment', 'Routine Follow-Up', 'Reintegration Review', 'Emergency', 'Case Closure'
+                      )),
+    facilitator       NVARCHAR(255),
+    agenda            NVARCHAR(MAX),
+    discussion_notes  NVARCHAR(MAX),
+    action_items      NVARCHAR(MAX),
+    status            NVARCHAR(20) NOT NULL DEFAULT 'Scheduled'
+                      CONSTRAINT chk_case_conf_status CHECK (status IN ('Scheduled', 'Completed', 'Cancelled')),
+    created_at        DATETIME2 NOT NULL DEFAULT GETUTCDATE()
+);
+
+CREATE INDEX idx_case_conf_resident ON case_conferences(resident_id);
+CREATE INDEX idx_case_conf_date     ON case_conferences(conference_date);
 
 -- ============================================================
 -- INCIDENT REPORTS

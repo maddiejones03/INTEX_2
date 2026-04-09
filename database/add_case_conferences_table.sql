@@ -1,3 +1,9 @@
+-- ============================================================================
+-- Case conferences (admin UI: /admin/case-conferences)
+-- Run once on Azure SQL (intex-db), e.g. Azure Data Studio / SSMS Query Editor.
+-- Safe to re-run: creates the table only if it does not exist.
+-- ============================================================================
+
 IF OBJECT_ID('dbo.case_conferences', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.case_conferences (

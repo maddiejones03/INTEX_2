@@ -28,6 +28,7 @@ interface CaseConference {
 export default function CaseConferences() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [conferences, setConferences] = useState<CaseConference[]>([]);
+  const [totalFromApi, setTotalFromApi] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -56,7 +57,8 @@ export default function CaseConferences() {
         return;
       }
       const data = await res.json();
-      setConferences(data.items ?? []);
+      setConferences(Array.isArray(data.items) ? data.items : []);
+      setTotalFromApi(typeof data.total === 'number' ? data.total : null);
     } catch (err) {
       console.error('Failed to fetch case conferences', err);
       setLoadError('Failed to fetch case conferences. Check API connectivity and your login session.');
@@ -158,7 +160,14 @@ export default function CaseConferences() {
       <div className="admin-page-header">
         <div>
           <h1>Case Conferences</h1>
-          <p>Schedule, track, and review case conference history by resident.</p>
+          <p>
+            Schedule, track, and review case conference history by resident.
+            {totalFromApi !== null && !loading && (
+              <span className="table-secondary" style={{ marginLeft: '0.5rem' }}>
+                ({totalFromApi} {totalFromApi === 1 ? 'record' : 'records'} from database)
+              </span>
+            )}
+          </p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>
           <Plus size={16} /> Schedule Conference

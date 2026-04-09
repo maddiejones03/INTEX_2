@@ -59,6 +59,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Donation>()
             .Ignore("PartnerId");
 
+        builder.Entity<CaseConference>()
+            .Property(c => c.ConferenceId)
+            .UseIdentityColumn();
+
         builder.Entity<ApplicationUser>()
             .HasOne(u => u.Supporter)
             .WithMany()
