@@ -347,7 +347,7 @@ export default function HomeVisitation() {
                   <td>
                     <div className="action-btns">
                       <button className="btn-icon" onClick={() => setSelectedVisit(v)}><Eye size={15} /></button>
-                      <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(v)}><Trash2 size={15} /></button>
+                      <button type="button" className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(v)}><Trash2 size={15} /></button>
                     </div>
                   </td>
                 </tr>
