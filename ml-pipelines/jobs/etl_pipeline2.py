@@ -1,5 +1,5 @@
 """
-etl_pipeline2.py — Pipeline 2: Donation-to-Outcome Correlation
+etl_pipeline2.py — Donation to Outcome Pipeline: Donation-to-Outcome Correlation
 Pulls donation_allocations and safehouse_monthly_metrics from Azure SQL,
 builds the lagged safehouse-month panel, and writes a modeling-ready table
 back to Azure SQL for train_pipeline2.py to consume.

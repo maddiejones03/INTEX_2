@@ -1,5 +1,5 @@
 """
-run_inference.py — Pipeline 1: Donor Lapse Risk
+run_inference.py — Donor Risk Score Pipeline: Donor Lapse Risk
 Loads the trained model.pkl, re-engineers features from live Azure SQL data,
 scores all active supporters, and writes results to the donor_risk_scores table.
 

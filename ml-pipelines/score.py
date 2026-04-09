@@ -21,7 +21,7 @@ OUTPUT_PATH = BASE_DIR / "donor_risk_scores.json"
 
 def load_model():
     if not MODEL_PATH.exists():
-        print("ERROR: model.pkl not found. Please run Pipeline1.ipynb first to train and save the model.")
+        print("ERROR: model.pkl not found. Please run donor_risk_score.ipynb first to train and save the model.")
         sys.exit(1)
     with open(MODEL_PATH, "rb") as f:
         return pickle.load(f)

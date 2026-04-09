@@ -1,5 +1,5 @@
 """
-Pipeline 2 — Donation-to-Outcome Feature Engineering
+Donation to Outcome Pipeline — Feature Engineering
 Builds the safehouse-month panel dataset by:
 1. Pivoting donation_allocations by program area per safehouse per month
 2. Lagging funding by 1 month (funding in T predicts outcomes in T+1)

@@ -1,5 +1,5 @@
 """
-etl_build_warehouse.py — Pipeline 1: Donor Lapse Risk
+etl_build_warehouse.py — Donor Risk Score Pipeline: Donor Lapse Risk
 Extracts supporters + donations from Azure SQL and engineers the exact same
 features as features.py (used during training). Writes a modeling-ready table
 back to Azure SQL for train_model.py to consume.
@@ -68,7 +68,7 @@ def extract() -> tuple[pd.DataFrame, pd.DataFrame]:
 # ─────────────────────────────────────────────────────────────────────────────
 # STEP 2: Feature engineering
 # This is an exact port of features.py — same logic, same column names.
-# Both training (Pipeline1.ipynb) and inference (run_inference.py) use this.
+# Both training (donor_risk_score.ipynb) and inference (run_inference.py) use this.
 # ─────────────────────────────────────────────────────────────────────────────
 
 def engineer_features(

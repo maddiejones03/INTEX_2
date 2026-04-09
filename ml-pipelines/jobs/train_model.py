@@ -1,5 +1,5 @@
 """
-train_model.py — Pipeline 1: Donor Lapse Risk
+train_model.py — Donor Risk Score Pipeline: Donor Lapse Risk
 Reads the modeling table built by etl_build_warehouse.py, trains both
 Logistic Regression (explanatory) and Gradient Boosting (predictive),
 and saves the Gradient Boosting model as model.pkl — matching what
@@ -86,7 +86,7 @@ def load_modeling_table() -> pd.DataFrame:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def prepare(df: pd.DataFrame):
-    """Split into X, y and then train/test — mirrors Pipeline1.ipynb exactly."""
+    """Split into X, y and then train/test — mirrors donor_risk_score.ipynb exactly."""
 
     feature_cols = NUMERIC_FEATURES + CATEGORICAL_FEATURES
     X = df[feature_cols].copy()
