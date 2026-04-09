@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Users, Mail, Home, Briefcase, AlertCircle } from 'lucide-react';
 import { getApiBaseUrl } from '../../services/authApi';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 type ResidentApi = {
   residentId: number;
@@ -26,6 +27,7 @@ type StaffRow = {
 };
 
 export default function StaffManagement() {
+  useDocumentTitle('Staff Management');
   const [staff, setStaff] = useState<StaffRow[]>([]);
   const [safehouses, setSafehouses] = useState<SafehouseApi[]>([]);
   const [loading, setLoading] = useState(true);
@@ -132,11 +134,11 @@ export default function StaffManagement() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Safe House</th>
-              <th>Caseload</th>
-              <th>Status</th>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Safe House</th>
+              <th scope="col">Caseload</th>
+              <th scope="col">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -181,12 +183,12 @@ export default function StaffManagement() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Name</th>
-              <th>Location</th>
-              <th>Capacity</th>
-              <th>Occupancy</th>
-              <th>Contact Person</th>
-              <th>Status</th>
+              <th scope="col">Name</th>
+              <th scope="col">Location</th>
+              <th scope="col">Capacity</th>
+              <th scope="col">Occupancy</th>
+              <th scope="col">Contact Person</th>
+              <th scope="col">Status</th>
             </tr>
           </thead>
           <tbody>

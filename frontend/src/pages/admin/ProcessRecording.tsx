@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Eye, Trash2, X, Check, AlertCircle, FileText } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import { getApiBaseUrl } from '../../services/authApi';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const API_BASE = getApiBaseUrl();
 
@@ -85,6 +86,7 @@ function RecordingModal({ rec, onClose }: { rec: ProcessRecording; onClose: () =
 }
 
 export default function ProcessRecordingPage() {
+  useDocumentTitle('Process Recording');
   const [recordings, setRecordings] = useState<ProcessRecording[]>([]);
   const [residents, setResidents] = useState<Resident[]>([]);
   const [total, setTotal] = useState(0);
@@ -246,7 +248,7 @@ export default function ProcessRecordingPage() {
         <div className="inline-form-card">
           <div className="inline-form-header">
             <h3><FileText size={16} /> New Process Recording</h3>
-            <button className="btn-icon" onClick={() => setShowAddForm(false)}><X size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setShowAddForm(false)} aria-label="Close add recording form"><X size={16} aria-hidden /></button>
           </div>
           {formError && <div className="alert alert-error"><AlertCircle size={14} /> {formError}</div>}
           <div className="form-row">
@@ -308,7 +310,7 @@ export default function ProcessRecordingPage() {
       {/* Filters */}
       <div className="filter-bar">
         <div className="search-wrapper">
-          <Search size={16} className="search-icon" />
+          <Search size={16} className="search-icon" aria-hidden />
           <input className="search-input" placeholder="Search by social worker…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <select className="form-select" value={filterResident} onChange={(e) => setFilterResident(e.target.value)}>
@@ -330,13 +332,13 @@ export default function ProcessRecordingPage() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Resident</th>
-                <th>Session Type</th>
-                <th>Social Worker</th>
-                <th>Emotional State</th>
-                <th>Follow-Up</th>
-                <th>Actions</th>
+                <th scope="col">Date</th>
+                <th scope="col">Resident</th>
+                <th scope="col">Session Type</th>
+                <th scope="col">Social Worker</th>
+                <th scope="col">Emotional State</th>
+                <th scope="col">Follow-Up</th>
+                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -363,8 +365,8 @@ export default function ProcessRecordingPage() {
                     </td>
                     <td>
                       <div className="action-btns">
-                        <button className="btn-icon" onClick={() => setSelected(r)}><Eye size={15} /></button>
-                        <button type="button" className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
+                        <button type="button" className="btn-icon" aria-label="View recording details" onClick={() => setSelected(r)}><Eye size={15} aria-hidden /></button>
+                        <button type="button" className="btn-icon btn-icon-danger" title="Delete" aria-label="Delete recording" onClick={() => setDeleteTarget(r)}><Trash2 size={15} aria-hidden /></button>
                       </div>
                     </td>
                   </tr>

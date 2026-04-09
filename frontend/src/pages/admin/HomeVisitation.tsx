@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import { getApiBaseUrl } from '../../services/authApi';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const API_BASE = getApiBaseUrl();
 
@@ -96,11 +97,17 @@ interface Resident {
 function VisitModal({ visit, onClose }: { visit: HomeVisit; onClose: () => void }) {
   const visitD = parseVisitDate(visit.visitDate);
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div
+        className="modal modal-lg"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="home-visit-modal-title"
+      >
         <div className="modal-header">
           <div>
-            <h2>Home Visit Record</h2>
+            <h2 id="home-visit-modal-title">Home Visit Record</h2>
             <p className="modal-subtitle">
               Resident #{visit.residentId} ·{' '}
               {visitD
@@ -113,7 +120,7 @@ function VisitModal({ visit, onClose }: { visit: HomeVisit; onClose: () => void 
                 : 'No date'}
             </p>
           </div>
-          <button className="modal-close" onClick={onClose}><X size={18} /></button>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Close dialog"><X size={18} aria-hidden /></button>
         </div>
         <div className="modal-body">
           <div className="detail-grid">
@@ -154,6 +161,7 @@ function VisitModal({ visit, onClose }: { visit: HomeVisit; onClose: () => void 
 }
 
 export default function HomeVisitation() {
+  useDocumentTitle('Home Visitation');
   const [visits, setVisits] = useState<HomeVisit[]>([]);
   const [residents, setResidents] = useState<Resident[]>([]);
   const [total, setTotal] = useState(0);
@@ -385,7 +393,7 @@ export default function HomeVisitation() {
         <div className="inline-form-card">
           <div className="inline-form-header">
             <h3><Home size={16} /> Log Home Visit</h3>
-            <button className="btn-icon" onClick={() => setShowAddForm(false)}><X size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setShowAddForm(false)} aria-label="Close log visit form"><X size={16} aria-hidden /></button>
           </div>
           {formError && <div className="alert alert-error"><AlertCircle size={14} /> {formError}</div>}
           <div className="form-row">
@@ -439,7 +447,7 @@ export default function HomeVisitation() {
       {/* Search and filter — applies to both tables */}
       <div className="filter-bar">
         <div className="search-wrapper">
-          <Search size={16} className="search-icon" />
+          <Search size={16} className="search-icon" aria-hidden />
           <input
             className="search-input"
             placeholder="Search worker, case no., resident ID…"
@@ -490,14 +498,14 @@ export default function HomeVisitation() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Status</th>
-                  <th>Visit date</th>
-                  <th>Resident</th>
-                  <th>Visit type</th>
-                  <th>Social worker</th>
-                  <th>Family cooperation</th>
-                  <th>Follow-up notes</th>
-                  <th>Actions</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Visit date</th>
+                  <th scope="col">Resident</th>
+                  <th scope="col">Visit type</th>
+                  <th scope="col">Social worker</th>
+                  <th scope="col">Family cooperation</th>
+                  <th scope="col">Follow-up notes</th>
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -540,16 +548,17 @@ export default function HomeVisitation() {
                       </td>
                       <td>
                         <div className="action-btns">
-                          <button type="button" className="btn-icon" title="View" onClick={() => setSelectedVisit(v)}>
-                            <Eye size={15} />
+                          <button type="button" className="btn-icon" title="View" aria-label={`View visit ${formatVisitDate(v.visitDate)}`} onClick={() => setSelectedVisit(v)}>
+                            <Eye size={15} aria-hidden />
                           </button>
                           <button
                             type="button"
                             className="btn-icon btn-icon-danger"
                             title="Delete"
+                            aria-label={`Delete visit ${formatVisitDate(v.visitDate)}`}
                             onClick={() => setDeleteTarget(v)}
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={15} aria-hidden />
                           </button>
                         </div>
                       </td>
@@ -612,13 +621,13 @@ export default function HomeVisitation() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Resident</th>
-                  <th>Visit type</th>
-                  <th>Social worker</th>
-                  <th>Family cooperation</th>
-                  <th>Follow-up</th>
-                  <th>Actions</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Resident</th>
+                  <th scope="col">Visit type</th>
+                  <th scope="col">Social worker</th>
+                  <th scope="col">Family cooperation</th>
+                  <th scope="col">Follow-up</th>
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -646,16 +655,17 @@ export default function HomeVisitation() {
                     </td>
                     <td>
                       <div className="action-btns">
-                        <button type="button" className="btn-icon" title="View" onClick={() => setSelectedVisit(v)}>
-                          <Eye size={15} />
+                        <button type="button" className="btn-icon" title="View" aria-label={`View visit ${formatVisitDate(v.visitDate)}`} onClick={() => setSelectedVisit(v)}>
+                          <Eye size={15} aria-hidden />
                         </button>
                         <button
                           type="button"
                           className="btn-icon btn-icon-danger"
                           title="Delete"
+                          aria-label={`Delete visit ${formatVisitDate(v.visitDate)}`}
                           onClick={() => setDeleteTarget(v)}
                         >
-                          <Trash2 size={15} />
+                          <Trash2 size={15} aria-hidden />
                         </button>
                       </div>
                     </td>

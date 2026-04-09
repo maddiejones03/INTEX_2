@@ -18,13 +18,14 @@ export default function CaseManagerSidebar() {
   return (
     <aside className={`admin-sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-inner">
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" aria-label="Case manager">
           {navItems.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               className={`sidebar-link ${isActive(item) ? 'active' : ''}`}
               title={collapsed ? item.label : undefined}
+              aria-current={isActive(item) ? 'page' : undefined}
             >
               <item.icon size={18} />
               {!collapsed && <span>{item.label}</span>}
