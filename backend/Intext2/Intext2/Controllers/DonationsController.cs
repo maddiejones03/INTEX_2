@@ -192,7 +192,7 @@ public class DonationsController : ControllerBase
                     RelationshipType = "Donor",
                     Email            = dto.DonorEmail,
                     Status           = "Active",
-                    CreatedAt        = DateOnly.FromDateTime(DateTime.UtcNow),
+                    CreatedAt        = DateTime.UtcNow.ToString("yyyy-MM-dd"),
                     FirstDonationDate = DateOnly.FromDateTime(DateTime.UtcNow),
                     AcquisitionChannel = "Direct",
                 };
