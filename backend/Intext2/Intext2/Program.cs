@@ -227,7 +227,7 @@ static async Task LinkDemoPortalDataAsync(
                     RelationshipType = "Donor",
                     Email            = donorEmail,
                     Status           = "Active",
-                    CreatedAt        = DateTime.UtcNow.ToString("o"),
+                    CreatedAt = DateTime.UtcNow.ToString("yyyy-MM-dd"),
                 };
                 db.Supporters.Add(supporter);
                 await db.SaveChangesAsync();

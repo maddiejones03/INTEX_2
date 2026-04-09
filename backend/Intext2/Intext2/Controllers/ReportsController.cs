@@ -240,7 +240,7 @@ public class ReportsController : ControllerBase
                 .ToListAsync();
 
             var donationRows = await _db.Donations
-                .Where(d => d.Amount.HasValue)
+                .Where(d => d.Amount.HasValue || d.EstimatedValue.HasValue)
                 .ToListAsync();
             var donationsByMonth = donationRows
                 .GroupBy(d => new { d.DonationDate.Year, d.DonationDate.Month })
@@ -248,7 +248,11 @@ public class ReportsController : ControllerBase
                 {
                     Year        = g.Key.Year,
                     Month       = g.Key.Month,
-                    TotalAmount = g.Sum(x => x.Amount ?? 0),
+                    Monetary    = g.Where(x => x.DonationType == "Monetary").Sum(x => x.Amount ?? x.EstimatedValue ?? 0),
+                    InKind      = g.Where(x => x.DonationType == "InKind").Sum(x => x.EstimatedValue ?? x.Amount ?? 0),
+                    Volunteer   = g.Where(x => x.DonationType == "Time" || x.DonationType == "Volunteer")
+                                   .Sum(x => x.EstimatedValue ?? x.Amount ?? 0),
+                    TotalAmount = g.Sum(x => x.Amount ?? x.EstimatedValue ?? 0),
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
                 .ToList();
@@ -261,8 +265,49 @@ public class ReportsController : ControllerBase
                     s.City,
                     s.CapacityGirls,
                     ActiveResidents = s.Residents.Count(r => r.CaseStatus == "Active"),
+                    ReintegratedResidents = s.Residents.Count(r => r.ReintegrationStatus == "Completed"),
                 })
                 .ToListAsync();
+
+            // Outcome aggregates built from real resident statuses.
+            var residentsForOutcomes = await _db.Residents
+                .Select(r => new { r.ReintegrationStatus, r.ReintegrationType, r.DateOfAdmission })
+                .ToListAsync();
+
+            var outcomeByCategory = residentsForOutcomes
+                .GroupBy(r => string.IsNullOrWhiteSpace(r.ReintegrationType) ? "General" : r.ReintegrationType!)
+                .Select(g => new
+                {
+                    Category     = g.Key,
+                    Reintegrated = g.Count(x => string.Equals(x.ReintegrationStatus, "Completed", StringComparison.OrdinalIgnoreCase)),
+                    InProgress   = g.Count(x => string.Equals(x.ReintegrationStatus, "In Progress", StringComparison.OrdinalIgnoreCase)
+                                             || string.Equals(x.ReintegrationStatus, "Not Started", StringComparison.OrdinalIgnoreCase)
+                                             || string.Equals(x.ReintegrationStatus, "On Hold", StringComparison.OrdinalIgnoreCase)),
+                    Transferred  = g.Count(x => string.Equals(x.ReintegrationStatus, "Transferred", StringComparison.OrdinalIgnoreCase)
+                                             || string.Equals(x.ReintegrationStatus, "Closed", StringComparison.OrdinalIgnoreCase)),
+                })
+                .OrderByDescending(x => x.Reintegrated + x.InProgress + x.Transferred)
+                .ToList();
+
+            var outcomeByYear = residentsForOutcomes
+                .Select(r => new
+                {
+                    Year = r.DateOfAdmission?.Year ?? 0,
+                    r.ReintegrationStatus,
+                    r.ReintegrationType,
+                })
+                .Where(x => x.Year > 0)
+                .GroupBy(x => x.Year)
+                .Select(g => new
+                {
+                    Year         = g.Key,
+                    Reintegrated = g.Count(x => string.Equals(x.ReintegrationStatus, "Completed", StringComparison.OrdinalIgnoreCase)),
+                    Transferred  = g.Count(x => string.Equals(x.ReintegrationStatus, "Transferred", StringComparison.OrdinalIgnoreCase)
+                                             || string.Equals(x.ReintegrationStatus, "Closed", StringComparison.OrdinalIgnoreCase)),
+                    Independent  = g.Count(x => string.Equals(x.ReintegrationType, "Independent Living", StringComparison.OrdinalIgnoreCase)),
+                })
+                .OrderBy(x => x.Year)
+                .ToList();
 
             return Ok(new
             {
@@ -277,6 +322,8 @@ public class ReportsController : ControllerBase
                 caseByCategory,
                 donationsByMonth,
                 safehouses,
+                outcomeByCategory,
+                outcomeByYear,
             });
         }
         catch (Exception ex)

@@ -1,15 +1,10 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Heart, Shield, BookOpen, Users, ArrowRight,
-  TrendingUp, Home as HomeIcon, Star, ChevronRight, Quote, Sprout, Leaf,
+  TrendingUp, Home as HomeIcon, Star, ChevronRight, Quote, Leaf,
 } from 'lucide-react';
-
-const stats = [
-  { value: '1,200+', label: 'Survivors Served', desc: 'Since our founding in 2008' },
-  { value: '3', label: 'Safe Houses', desc: 'Across Metro Manila' },
-  { value: '94%', label: 'Reintegration Rate', desc: 'Successfully returned to families or communities' },
-  { value: '$8.2M', label: 'Annual Budget', desc: 'Fully donor-funded' },
-];
+import { getApiBaseUrl } from '../../services/authApi';
 
 const programs: Array<{
   icon: typeof Shield;
@@ -132,13 +127,52 @@ const partners = [
   'SM Foundation',
 ];
 
-const growthPillars = [
-  { title: 'Growth', text: 'Healing is a process we nurture every day.' },
-  { title: 'Renewal', text: 'Residents rebuild confidence, purpose, and belonging.' },
-  { title: 'Future', text: 'Each step forward opens new life opportunities.' },
-];
+type PublicImpactResponse = {
+  totalResidents: number;
+  totalSafehouses: number;
+  reintegrationRate: number;
+  totalDonationsPhp: number;
+};
+
+function formatCurrency(value: number) {
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+  return `$${Math.round(value)}`;
+}
 
 export default function Home() {
+  const [impact, setImpact] = useState<PublicImpactResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/reports/public-impact`, {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as PublicImpactResponse;
+        if (!cancelled) setImpact(data);
+      } catch {
+        // Keep page usable if API is unavailable.
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stats = useMemo(
+    () => [
+      { value: impact ? impact.totalResidents.toLocaleString() : '—', label: 'Survivors Served', desc: 'From live resident records' },
+      { value: impact ? String(impact.totalSafehouses) : '—', label: 'Safe Houses', desc: 'Currently active in the database' },
+      { value: impact ? `${impact.reintegrationRate}%` : '—', label: 'Reintegration Rate', desc: 'Successfully returned to families or communities' },
+      { value: impact ? formatCurrency(impact.totalDonationsPhp) : '—', label: 'Donations Tracked', desc: 'Aggregated from donation records' },
+    ],
+    [impact]
+  );
+
   return (
     <div className="page-home">
       {/* Hero */}
@@ -190,22 +224,6 @@ export default function Home() {
           <div className="mission-values">
             {['Dignity', 'Safety', 'Healing', 'Empowerment', 'Community'].map((v) => (
               <span key={v} className="value-chip"><Leaf size={13} /> {v}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="botanical-strip">
-        <div className="container">
-          <div className="botanical-grid">
-            {growthPillars.map((p) => (
-              <div key={p.title} className="botanical-item">
-                <Sprout size={18} className="botanical-icon" />
-                <div>
-                  <strong>{p.title}</strong>
-                  <p>{p.text}</p>
-                </div>
-              </div>
             ))}
           </div>
         </div>
@@ -306,11 +324,15 @@ export default function Home() {
             </div>
             <div className="impact-teaser-visual">
               <div className="impact-number-card">
-                <div className="impact-big-number">94<span>%</span></div>
+                <div className="impact-big-number">
+                  {impact ? `${impact.reintegrationRate}` : '—'}<span>%</span>
+                </div>
                 <div>Reintegration Success Rate</div>
               </div>
               <div className="impact-number-card">
-                <div className="impact-big-number">1,200<span>+</span></div>
+                <div className="impact-big-number">
+                  {impact ? impact.totalResidents.toLocaleString() : '—'}
+                </div>
                 <div>Lives Transformed</div>
               </div>
             </div>
@@ -357,7 +379,7 @@ export default function Home() {
       </section>
 
       {/* Partners */}
-      <section className="section section-alt">
+      <section className="section section-alt section-partners">
         <div className="container">
           <div className="section-label">Our Partners</div>
           <h2 className="section-title">Together we do more</h2>

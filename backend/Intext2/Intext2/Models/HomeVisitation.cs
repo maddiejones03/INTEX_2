@@ -43,10 +43,10 @@ public class HomeVisitation
     public string FamilyCooperationLevel { get; set; } = "Cooperative";
 
     [Column("safety_concerns_noted")]
-    public bool SafetyConcernsNoted { get; set; } = false;
+    public int? SafetyConcernsNoted { get; set; } = 0;
 
     [Column("follow_up_needed")]
-    public bool FollowUpNeeded { get; set; } = false;
+    public int? FollowUpNeeded { get; set; } = 0;
 
     [Column("follow_up_notes")]
     public string? FollowUpNotes { get; set; }
@@ -54,6 +54,12 @@ public class HomeVisitation
     [MaxLength(25)]
     [Column("visit_outcome")]
     public string? VisitOutcome { get; set; }
+
+    [Column("cooperation_numeric")]
+    public int? CooperationNumeric { get; set; }
+
+    [Column("outcome_numeric")]
+    public double? OutcomeNumeric { get; set; }
 
     // Navigation
     [ForeignKey(nameof(ResidentId))]

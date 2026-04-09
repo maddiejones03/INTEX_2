@@ -9,6 +9,7 @@ import { getApiBaseUrl } from '../../services/authApi';
 
 const CASE_CATEGORIES = ['Trafficked', 'Physical Abuse', 'Sexual Abuse', 'Neglect', 'Psychological Abuse', 'Economic Abuse', 'Abandoned', 'CICL'];
 const CASE_STATUSES = ['Active', 'Reintegrated', 'Transferred', 'Runaway', 'Deceased', 'Closed'];
+const RISK_LEVELS = ['Low', 'Medium', 'High', 'Critical'];
 const PAGE_SIZE = 10;
 
 interface Resident {
@@ -173,10 +174,13 @@ export default function CaseloadInventory() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
   const [total, setTotal] = useState(0);
+  const [totalActiveResidents, setTotalActiveResidents] = useState(0);
+  const [totalHighRiskResidents, setTotalHighRiskResidents] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterCategory, setFilterCategory] = useState('All');
+  const [filterRiskLevel, setFilterRiskLevel] = useState('All');
   const [filterSafehouse, setFilterSafehouse] = useState('All');
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -203,20 +207,54 @@ export default function CaseloadInventory() {
       if (search) params.set('search', search);
       if (filterStatus !== 'All') params.set('caseStatus', filterStatus);
       if (filterCategory !== 'All') params.set('caseCategory', filterCategory);
+      if (filterRiskLevel !== 'All') params.set('currentRiskLevel', filterRiskLevel);
       if (filterSafehouse !== 'All') params.set('safehouseId', filterSafehouse);
 
-      const res = await fetch(`${getApiBaseUrl()}/api/residents?${params}`, { credentials: 'include' });
+      const activeParams = new URLSearchParams({
+        page: '1',
+        pageSize: '1',
+        caseStatus: 'Active',
+      });
+      const highRiskParams = new URLSearchParams({
+        page: '1',
+        pageSize: '1',
+        currentRiskLevel: 'High',
+      });
+      const criticalRiskParams = new URLSearchParams({
+        page: '1',
+        pageSize: '1',
+        currentRiskLevel: 'Critical',
+      });
+
+      const [res, activeRes, highRiskRes, criticalRiskRes] = await Promise.all([
+        fetch(`${getApiBaseUrl()}/api/residents?${params}`, { credentials: 'include' }),
+        fetch(`${getApiBaseUrl()}/api/residents?${activeParams}`, { credentials: 'include' }),
+        fetch(`${getApiBaseUrl()}/api/residents?${highRiskParams}`, { credentials: 'include' }),
+        fetch(`${getApiBaseUrl()}/api/residents?${criticalRiskParams}`, { credentials: 'include' }),
+      ]);
+
       if (res.ok) {
-        const data = await res.json();
+        const data: { items: Resident[]; total: number } = await res.json();
         setResidents(data.items);
         setTotal(data.total);
+      }
+
+      if (activeRes.ok) {
+        const activeData: { total: number } = await activeRes.json();
+        setTotalActiveResidents(activeData.total);
+      }
+
+      if (highRiskRes.ok && criticalRiskRes.ok) {
+        const highRiskData: { total: number } = await highRiskRes.json();
+        const criticalRiskData: { total: number } = await criticalRiskRes.json();
+        setTotalHighRiskResidents(highRiskData.total + criticalRiskData.total);
       }
     } catch (err) {
       console.error('Failed to fetch residents', err);
     } finally {
       setLoading(false);
     }
-  }, [page, search, filterStatus, filterCategory, filterSafehouse]);
+  }, [page, search, filterStatus, filterCategory, filterRiskLevel, filterSafehouse]);
 
   useEffect(() => { fetchResidents(); }, [fetchResidents]);
 
@@ -296,14 +334,11 @@ export default function CaseloadInventory() {
     }
   };
 
-  // Summary counts from current page — for accurate counts fetch all
-  const activeCount = residents.filter(r => r.caseStatus === 'Active').length;
-
   return (
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>{readOnly ? 'My caseload' : 'Caseload Inventory'}</h1>
+          <h1 className="residents-page-title">{readOnly ? 'My caseload' : 'Residents'}</h1>
           <p>
             {readOnly
               ? 'Residents assigned to you. Detail views omit sensitive socio-demographic fields available to admins.'
@@ -321,19 +356,19 @@ export default function CaseloadInventory() {
       <div className="metrics-grid metrics-grid-4">
         <div className="metric-card metric-card-blue">
           <div className="metric-value">{total}</div>
-          <div className="metric-label">Total Records</div>
+          <div className="metric-label">Total Residents (All Time)</div>
         </div>
         <div className="metric-card metric-card-green">
           <div className="metric-value">{safehouses.length}</div>
           <div className="metric-label">Safe Houses</div>
         </div>
         <div className="metric-card metric-card-amber">
-          <div className="metric-value">{activeCount}</div>
-          <div className="metric-label">Active (this page)</div>
+          <div className="metric-value">{totalActiveResidents}</div>
+          <div className="metric-label">Current Residents</div>
         </div>
         <div className="metric-card metric-card-purple">
-          <div className="metric-value">{totalPages}</div>
-          <div className="metric-label">Pages</div>
+          <div className="metric-value">{totalHighRiskResidents}</div>
+          <div className="metric-label">High Risk Residents</div>
         </div>
       </div>
 
@@ -416,6 +451,10 @@ export default function CaseloadInventory() {
           <select className="form-select" value={filterCategory} onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}>
             <option value="All">All Categories</option>
             {CASE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+          </select>
+          <select className="form-select" value={filterRiskLevel} onChange={(e) => { setFilterRiskLevel(e.target.value); setPage(1); }}>
+            <option value="All">All Risk Levels</option>
+            {RISK_LEVELS.map((r) => <option key={r}>{r}</option>)}
           </select>
           <select
             className="form-select"

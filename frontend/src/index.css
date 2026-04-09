@@ -112,7 +112,7 @@ ul { list-style: none; }
 }
 .navbar-logo { display: block; height: 52px; width: auto; max-width: 200px; object-fit: contain; }
 .navbar-links { display: flex; gap: 0.25rem; flex: 1; }
-.navbar-link { padding: 0.45rem 0.9rem; border-radius: var(--radius); font-size: 0.95rem; color: rgba(255,255,255,0.92); transition: all 0.15s; }
+.navbar-link { padding: 0.45rem 0.9rem; border-radius: var(--radius); font-size: 0.95rem; color: rgba(255,255,255,0.92); transition: all 0.15s; white-space: nowrap; }
 .navbar-link:hover, .navbar-link.active { color: #fff; background: rgba(255,255,255,0.12); }
 .navbar-section-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.5); flex: 1; }
 .navbar-actions { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; }
@@ -136,7 +136,7 @@ ul { list-style: none; }
 /* === ADMIN SIDEBAR === */
 .admin-layout { display: flex; min-height: calc(100vh - var(--navbar-height)); }
 .admin-main { flex: 1; overflow-x: hidden; }
-.admin-sidebar { width: 220px; background: #fff; border-right: 1px solid var(--gray-200); flex-shrink: 0; display: flex; flex-direction: column; transition: width 0.2s ease; }
+.admin-sidebar { width: 248px; background: #fff; border-right: 1px solid var(--gray-200); flex-shrink: 0; display: flex; flex-direction: column; transition: width 0.2s ease; }
 .admin-sidebar.collapsed { width: 56px; }
 .sidebar-inner { display: flex; flex-direction: column; height: 100%; padding: 1rem 0; }
 .sidebar-nav { display: flex; flex-direction: column; gap: 0.125rem; padding: 0 0.5rem; flex: 1; }
@@ -153,6 +153,7 @@ ul { list-style: none; }
 .admin-page { padding: 2rem; max-width: 1200px; }
 .admin-page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.75rem; gap: 1rem; flex-wrap: wrap; }
 .admin-page-header h1 { font-size: 1.5rem; font-weight: 700; color: var(--gray-900); }
+.residents-page-title { font-size: 2rem; line-height: 1.15; }
 .admin-page-header p { font-size: 0.9rem; color: var(--gray-500); margin-top: 0.25rem; }
 .header-date { display: flex; align-items: center; gap: 0.4rem; font-size: 0.825rem; color: var(--gray-500); white-space: nowrap; padding-top: 0.25rem; }
 
@@ -266,7 +267,7 @@ ul { list-style: none; }
 .field-error { font-size: 0.775rem; color: #ef4444; }
 .input-wrapper { position: relative; display: block; width: 100%; }
 .input-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--gray-400); pointer-events: none; }
-input.form-input { padding-left: 2.25rem; }
+.input-wrapper input.form-input { padding-left: 2.25rem; }
 .password-toggle { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--gray-400); cursor: pointer; padding: 0.125rem; }
 .form-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
 .form-actions { display: flex; justify-content: flex-end; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--gray-100); margin-top: 0.5rem; }
@@ -461,11 +462,12 @@ input.form-input { padding-left: 2.25rem; }
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-image: url('/hero-image.jpeg');
+  background-image: url('/hero-image.jpeg?v=4');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.24;
+  opacity: 0.42;
+  filter: saturate(1.25) contrast(1.08) brightness(1.04);
   pointer-events: none;
 }
 .hero-content {
@@ -509,9 +511,9 @@ input.form-input { padding-left: 2.25rem; }
   letter-spacing: -0.015em;
   white-space: nowrap;
   text-shadow:
-    0 0 1px rgba(255, 255, 255, 0.35),
-    0 1px 2px rgba(47, 95, 67, 0.22),
-    0 2px 16px rgba(0, 0, 0, 0.12);
+    0 1px 2px rgba(18, 40, 28, 0.55),
+    0 4px 14px rgba(0, 0, 0, 0.4),
+    0 8px 28px rgba(0, 0, 0, 0.25);
   animation: heroTitlePopIn 0.78s cubic-bezier(0.33, 1, 0.68, 1) both;
 }
 @keyframes heroTitlePopIn {
@@ -684,6 +686,10 @@ input.form-input { padding-left: 2.25rem; }
 .testimonial-author strong { display: block; font-size: 0.875rem; color: var(--gray-800); }
 .testimonial-author span { font-size: 0.775rem; color: var(--gray-500); }
 .section-donate { background: var(--gray-100); }
+.section-partners {
+  background: #f7fbf8;
+  border-top: 1px solid #dce9e1;
+}
 .donate-icon { color: var(--rose); margin-bottom: 1rem; }
 .donate-amounts { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.625rem; margin: 1.5rem 0; }
 .donate-amt-btn { min-width: 80px; }

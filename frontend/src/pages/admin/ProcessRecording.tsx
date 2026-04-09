@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Plus, Eye, Trash2, X, Check, AlertCircle, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, Plus, Eye, Trash2, X, Check, AlertCircle, FileText } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
+import { getApiBaseUrl } from '../../services/authApi';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
+const API_BASE = getApiBaseUrl();
 
 const EMOTIONAL_STATES = ['Anxious', 'Angry', 'Withdrawn', 'Sad', 'Stable', 'Engaged', 'Hopeful', 'Distressed', 'Calm', 'Mixed'];
 const INTERVENTIONS = ['Trauma-Informed Care', 'Cognitive Behavioral Therapy', 'Narrative Therapy', 'Art Therapy', 'Play Therapy', 'Solution-Focused Therapy', 'Strengths-Based Approach', 'Psychoeducation', 'Relaxation Techniques', 'Family Systems Therapy'];
@@ -20,15 +21,19 @@ interface ProcessRecording {
   sessionNarrative: string;
   interventionsApplied: string;
   followUpActions: string;
-  progressNoted: boolean;
-  concernsFlagged: boolean;
-  referralMade: boolean;
+  progressNoted: boolean | number;
+  concernsFlagged: boolean | number;
+  referralMade: boolean | number;
   interventionsList: string;
 }
 
 interface Resident {
   residentId: number;
   caseControlNo: string;
+}
+
+function asBool(value: boolean | number | null | undefined): boolean {
+  return typeof value === 'boolean' ? value : (value ?? 0) !== 0;
 }
 
 function RecordingModal({ rec, onClose }: { rec: ProcessRecording; onClose: () => void }) {
@@ -49,9 +54,9 @@ function RecordingModal({ rec, onClose }: { rec: ProcessRecording; onClose: () =
             <div className="detail-item"><span>Emotional State (Start)</span><strong>{rec.emotionalStateObserved || '—'}</strong></div>
             <div className="detail-item"><span>Emotional State (End)</span><strong>{rec.emotionalStateEnd || '—'}</strong></div>
             <div className="detail-item"><span>Duration</span><strong>{rec.sessionDurationMinutes ? `${rec.sessionDurationMinutes} min` : '—'}</strong></div>
-            <div className="detail-item"><span>Progress Noted</span><strong>{rec.progressNoted ? 'Yes' : 'No'}</strong></div>
-            <div className="detail-item"><span>Concerns Flagged</span><strong>{rec.concernsFlagged ? 'Yes' : 'No'}</strong></div>
-            <div className="detail-item"><span>Referral Made</span><strong>{rec.referralMade ? 'Yes' : 'No'}</strong></div>
+            <div className="detail-item"><span>Progress Noted</span><strong>{asBool(rec.progressNoted) ? 'Yes' : 'No'}</strong></div>
+            <div className="detail-item"><span>Concerns Flagged</span><strong>{asBool(rec.concernsFlagged) ? 'Yes' : 'No'}</strong></div>
+            <div className="detail-item"><span>Referral Made</span><strong>{asBool(rec.referralMade) ? 'Yes' : 'No'}</strong></div>
           </div>
           {rec.sessionNarrative && (
             <div className="narrative-section">
@@ -84,11 +89,11 @@ export default function ProcessRecordingPage() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [filterResident, setFilterResident] = useState('All');
   const [selected, setSelected] = useState<ProcessRecording | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [expandedResident, setExpandedResident] = useState<number | null>(null);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ProcessRecording | null>(null);
@@ -105,6 +110,7 @@ export default function ProcessRecordingPage() {
 
   const fetchRecordings = useCallback(async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const params = new URLSearchParams({ page: '1', pageSize: String(PAGE_SIZE) });
       if (filterResident !== 'All') params.set('residentId', filterResident);
@@ -112,11 +118,15 @@ export default function ProcessRecordingPage() {
       const res = await fetch(`${API_BASE}/api/processrecordings?${params}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-        setRecordings(data.items);
-        setTotal(data.total);
+        setRecordings(data.items ?? []);
+        setTotal(data.total ?? 0);
+      } else {
+        const text = await res.text();
+        setLoadError(text || `Failed to load process recordings (${res.status})`);
       }
     } catch (err) {
       console.error('Failed to fetch recordings', err);
+      setLoadError('Failed to fetch process recordings. Check API connectivity and your login session.');
     } finally {
       setLoading(false);
     }
@@ -142,8 +152,11 @@ export default function ProcessRecordingPage() {
 
   useEffect(() => {
     fetch(`${API_BASE}/api/residents?pageSize=100`, { credentials: 'include' })
-      .then(r => r.json())
-      .then(data => setResidents(data.items))
+      .then(async (r) => {
+        if (!r.ok) return;
+        const data = await r.json();
+        setResidents(data.items ?? []);
+      })
       .catch(() => {});
   }, []);
 
@@ -152,15 +165,7 @@ export default function ProcessRecordingPage() {
     return (r.socialWorker?.toLowerCase().includes(q) || String(r.residentId).includes(q));
   });
 
-  // Group by resident
-  const grouped = filtered.reduce<Record<number, { caseNo: string; records: ProcessRecording[] }>>((acc, r) => {
-    if (!acc[r.residentId]) {
-      const resident = residents.find(res => res.residentId === r.residentId);
-      acc[r.residentId] = { caseNo: resident?.caseControlNo ?? `Resident #${r.residentId}`, records: [] };
-    }
-    acc[r.residentId].records.push(r);
-    return acc;
-  }, {});
+  const sortedFiltered = [...filtered].sort((a, b) => b.sessionDate.localeCompare(a.sessionDate));
 
   const toggleIntervention = (i: string) => {
     const cur = newRec.interventionsApplied;
@@ -227,7 +232,7 @@ export default function ProcessRecordingPage() {
           <div className="metric-label">Total Sessions Recorded</div>
         </div>
         <div className="metric-card metric-card-green">
-          <div className="metric-value">{Object.keys(grouped).length}</div>
+          <div className="metric-value">{new Set(recordings.map((r) => r.residentId)).size}</div>
           <div className="metric-label">Residents with Records</div>
         </div>
         <div className="metric-card metric-card-purple">
@@ -316,49 +321,62 @@ export default function ProcessRecordingPage() {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '2rem' }}>Loading recordings...</div>
       ) : (
-        <div className="accordion-list">
-          {Object.entries(grouped).map(([rid, group]) => {
-            const resId = +rid;
-            const isOpen = expandedResident === resId;
-            return (
-              <div key={rid} className="accordion-item">
-                <button className="accordion-header" onClick={() => setExpandedResident(isOpen ? null : resId)}>
-                  <div className="accordion-title">
-                    <FileText size={16} />
-                    <span>{group.caseNo}</span>
-                    <span className="accordion-count">{group.records.length} session{group.records.length !== 1 ? 's' : ''}</span>
-                  </div>
-                  {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-                {isOpen && (
-                  <div className="accordion-body">
-                    {group.records
-                      .sort((a, b) => b.sessionDate.localeCompare(a.sessionDate))
-                      .map((r) => (
-                        <div key={r.recordingId} className="session-record">
-                          <div className="session-record-header">
-                            <div>
-                              <span className="session-date">{new Date(r.sessionDate).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                              <span className={`type-badge type-${r.sessionType === 'Individual' ? 'blue' : 'purple'}`} style={{ marginLeft: '0.5rem' }}>{r.sessionType}</span>
-                            </div>
-                            <div className="session-meta">
-                              <span>{r.socialWorker}</span>
-                              <span className="session-emotional">{r.emotionalStateObserved}</span>
-                              <button className="btn-icon" onClick={() => setSelected(r)}><Eye size={15} /></button>
-                              <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
-                            </div>
-                          </div>
-                          <p className="session-preview">{r.sessionNarrative?.slice(0, 150)}{(r.sessionNarrative?.length ?? 0) > 150 ? '…' : ''}</p>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          {Object.keys(grouped).length === 0 && (
-            <div className="empty-state-full"><AlertCircle size={24} /><p>No process recordings found.</p></div>
+        <div className="table-card">
+          {loadError && (
+            <div className="alert alert-error" style={{ margin: '1rem' }}>
+              <AlertCircle size={14} /> {loadError}
+            </div>
           )}
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Resident</th>
+                <th>Session Type</th>
+                <th>Social Worker</th>
+                <th>Emotional State</th>
+                <th>Follow-Up</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedFiltered.map((r) => {
+                const caseNo = residents.find((res) => res.residentId === r.residentId)?.caseControlNo ?? `#${r.residentId}`;
+                const hasFollowUp = !!r.followUpActions?.trim();
+                return (
+                  <tr key={r.recordingId}>
+                    <td className="table-secondary">
+                      {new Date(r.sessionDate).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <div className="table-name">{caseNo}</div>
+                    </td>
+                    <td>
+                      <span className={`type-badge type-${r.sessionType === 'Individual' ? 'blue' : 'purple'}`}>
+                        {r.sessionType}
+                      </span>
+                    </td>
+                    <td className="table-secondary">{r.socialWorker || '—'}</td>
+                    <td className="table-secondary">{r.emotionalStateObserved || '—'}</td>
+                    <td className="table-secondary">
+                      {hasFollowUp ? <span className="safety-flag">⚠ Needed</span> : <span className="safety-none">None</span>}
+                    </td>
+                    <td>
+                      <div className="action-btns">
+                        <button className="btn-icon" onClick={() => setSelected(r)}><Eye size={15} /></button>
+                        <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {sortedFiltered.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="empty-row"><AlertCircle size={16} /> No process recordings found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
 

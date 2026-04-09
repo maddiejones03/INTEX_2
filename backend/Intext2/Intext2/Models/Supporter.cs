@@ -60,10 +60,10 @@ public class Supporter
     public string Status { get; set; } = "Active";
 
     [Column("created_at")]
-    public string CreatedAt { get; set; } = DateTime.UtcNow.ToString("yyyy-MM-dd");
+    public string? CreatedAt { get; set; }
 
     [Column("first_donation_date")]
-    public string? FirstDonationDate { get; set; }
+    public DateOnly? FirstDonationDate { get; set; }
 
     [MaxLength(30)]
     [Column("acquisition_channel")]
