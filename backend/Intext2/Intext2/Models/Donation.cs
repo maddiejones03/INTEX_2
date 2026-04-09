@@ -23,7 +23,7 @@ public class Donation
     public DateOnly DonationDate { get; set; }
 
     [Column("is_recurring")]
-    public bool IsRecurring { get; set; } = false;
+    public int? IsRecurring { get; set; } = 0;
 
     [MaxLength(200)]
     [Column("campaign_name")]
