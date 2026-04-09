@@ -3,7 +3,7 @@ import type { FormEvent, KeyboardEvent } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { signInWithPortal, type AuthPortal } from '../../services/authApi';
-import { Eye, EyeOff, Heart, AlertCircle, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Lock, Mail } from 'lucide-react';
 
 const PORTAL_OPTIONS: { value: AuthPortal; label: string; description: string }[] = [
   { value: 'Admin', label: 'Admin', description: 'Full organization tools' },
@@ -67,7 +67,7 @@ export default function Login() {
       <div className="login-card">
         <div className="login-header">
           <div className="login-logo">
-            <Heart size={28} fill="currentColor" />
+            <img src="/LayaLogo.png" alt="Laya Foundation" style={{ width: 56, height: 56, objectFit: "contain" }} />
           </div>
           <h1>Laya Foundation</h1>
           <p>Sign in to your portal</p>
