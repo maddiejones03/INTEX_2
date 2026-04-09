@@ -24,6 +24,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<HealthWellbeingRecord>  HealthWellbeingRecords  { get; set; }
     public DbSet<InterventionPlan>       InterventionPlans       { get; set; }
     public DbSet<IncidentReport>         IncidentReports         { get; set; }
+    public DbSet<CaseConference>         CaseConferences         { get; set; }
     public DbSet<SafehouseMonthlyMetric> SafehouseMonthlyMetrics { get; set; }
     public DbSet<PublicImpactSnapshot>   PublicImpactSnapshots   { get; set; }
     public DbSet<ResidentEarlyWarning>   ResidentEarlyWarnings   { get; set; }

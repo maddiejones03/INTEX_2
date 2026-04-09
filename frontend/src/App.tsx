@@ -18,6 +18,7 @@ import Donors from './pages/admin/Donors';
 import CaseloadInventory from './pages/admin/CaseloadInventory';
 import ProcessRecording from './pages/admin/ProcessRecording';
 import HomeVisitation from './pages/admin/HomeVisitation';
+import CaseConferences from './pages/admin/CaseConferences';
 import Reports from './pages/admin/Reports';
 import StaffManagement from './pages/admin/StaffManagement';
 import EarlyWarning from './pages/admin/EarlyWarning';
@@ -98,6 +99,7 @@ export default function App() {
             <Route path="caseload" element={<CaseloadInventory />} />
             <Route path="process-recording" element={<ProcessRecording />} />
             <Route path="visitation" element={<HomeVisitation />} />
+            <Route path="case-conferences" element={<CaseConferences />} />
             <Route path="reports" element={<Reports />} />
             <Route path="staff" element={<StaffManagement />} />
             <Route path="early-warning" element={<EarlyWarning />} />
