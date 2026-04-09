@@ -35,24 +35,35 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(builder);
 
-        // Unique index: safehouse_monthly_metrics (safehouse_id, month_start)
         builder.Entity<SafehouseMonthlyMetric>()
             .HasIndex(m => new { m.SafehouseId, m.MonthStart })
             .IsUnique();
 
-        // Unique index: public_impact_snapshots (snapshot_date)
         builder.Entity<PublicImpactSnapshot>()
             .HasIndex(s => s.SnapshotDate)
             .IsUnique();
 
-        // Unique index: residents (case_control_no)
         builder.Entity<Resident>()
             .HasIndex(r => r.CaseControlNo)
             .IsUnique();
 
-        // Unique index: safehouses (safehouse_code)
+        builder.Entity<Resident>()
+            .HasIndex(r => r.CaseManagerId);
+
         builder.Entity<Safehouse>()
             .HasIndex(s => s.SafehouseCode)
             .IsUnique();
+
+        // The DB has no PartnerId column on donations — ignore the shadow FK
+        builder.Entity<Donation>()
+            .Ignore("PartnerId");
+
+        builder.Entity<ApplicationUser>()
+            .HasOne(u => u.Supporter)
+            .WithMany()
+            .HasForeignKey(u => u.SupporterId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+
     }
 }

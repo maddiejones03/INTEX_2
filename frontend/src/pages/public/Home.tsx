@@ -150,9 +150,9 @@ export default function Home() {
             <p className="hero-tagline">A refuge for those who need it most</p>
           </div>
           <div className="hero-actions">
-            <a href="#donate" className="btn btn-accent btn-lg">
+            <Link to="/donate" className="btn btn-accent btn-lg">
               Support Our Mission <ArrowRight size={18} />
-            </a>
+            </Link>
             <Link to="/impact" className="btn btn-outline-light btn-lg">
               See Our Impact
             </Link>
@@ -344,20 +344,15 @@ export default function Home() {
       {/* Donate CTA */}
       <section className="section section-donate" id="donate">
         <div className="container container-narrow text-center">
-          <Heart size={40} fill="currentColor" className="donate-icon" />
+          <img src="/LayaLogo.png" alt="Laya Foundation" className="donate-icon" style={{ width: 64, height: 64, objectFit: 'contain' }} />
           <h2 className="section-title">Make a difference today</h2>
           <p className="section-body">
             Your support directly funds shelter, therapy, education, and reintegration services.
-            100% of donations go directly to our programs.
+            Give money, volunteer your time, or donate goods — every contribution matters.
           </p>
-          <div className="donate-amounts">
-            {['$500', '$1,000', '$5,000', '$10,000', 'Custom'].map((amt) => (
-              <button key={amt} className="btn btn-outline donate-amt-btn">{amt}</button>
-            ))}
-          </div>
-          <button className="btn btn-accent btn-lg">
+          <Link to="/donate" className="btn btn-accent btn-lg" style={{ marginTop: '1.5rem' }}>
             Donate Now <ArrowRight size={18} />
-          </button>
+          </Link>
         </div>
       </section>
 

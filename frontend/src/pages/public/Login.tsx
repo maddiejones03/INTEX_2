@@ -1,9 +1,15 @@
 import { useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, KeyboardEvent } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { loginUser } from '../../services/authApi';
-import { Eye, EyeOff, Heart, AlertCircle, Lock, Mail } from 'lucide-react';
+import { signInWithPortal, type AuthPortal } from '../../services/authApi';
+import { Eye, EyeOff, AlertCircle, Lock, Mail } from 'lucide-react';
+
+const PORTAL_OPTIONS: { value: AuthPortal; label: string; description: string }[] = [
+  { value: 'Admin', label: 'Admin', description: 'Full organization tools' },
+  { value: 'CaseManager', label: 'Case manager', description: 'Assigned caseload' },
+  { value: 'Donor', label: 'Donor', description: 'Your giving history' },
+];
 
 export default function Login() {
   const { refreshAuthSession, isLoading } = useAuth();
@@ -11,12 +17,22 @@ export default function Login() {
   const location = useLocation();
   const from = (location.state as { from?: Location })?.from?.pathname || '/admin';
 
+  const [portal, setPortal] = useState<AuthPortal>('Admin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState({ email: false, password: false });
+
+  const onPortalButtonKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const i = PORTAL_OPTIONS.findIndex((p) => p.value === portal);
+    const delta = e.key === 'ArrowDown' ? 1 : -1;
+    const next = (i + delta + PORTAL_OPTIONS.length) % PORTAL_OPTIONS.length;
+    setPortal(PORTAL_OPTIONS[next].value);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -27,9 +43,18 @@ export default function Login() {
 
     setSubmitting(true);
     try {
-      await loginUser(email.trim(), password);
+      await signInWithPortal(email.trim(), password, portal);
       await refreshAuthSession();
-      navigate(from, { replace: true });
+
+      if (portal === 'Admin') {
+        const dest = from.startsWith('/admin') ? from : '/admin';
+        navigate(dest, { replace: true });
+      } else if (portal === 'CaseManager') {
+        const dest = from.startsWith('/case-manager') ? from : '/case-manager/caseload';
+        navigate(dest, { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed.');
     } finally {
@@ -42,13 +67,40 @@ export default function Login() {
       <div className="login-card">
         <div className="login-header">
           <div className="login-logo">
-            <Heart size={28} fill="currentColor" />
+            <img src="/LayaLogo.png" alt="Laya Foundation" style={{ width: 56, height: 56, objectFit: "contain" }} />
           </div>
           <h1>Laya Foundation</h1>
-          <p>Staff &amp; Admin Portal</p>
+          <p>Sign in to your portal</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form" noValidate>
+          <div className="form-group">
+            <span id="portal-label" className="form-label">
+              Sign in as
+            </span>
+            <div
+              className="portal-segment"
+              role="radiogroup"
+              aria-labelledby="portal-label"
+            >
+              {PORTAL_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={portal === opt.value}
+                  className={`portal-segment-btn${portal === opt.value ? ' portal-segment-btn--active' : ''}`}
+                  onClick={() => setPortal(opt.value)}
+                  onKeyDown={onPortalButtonKeyDown}
+                  disabled={submitting || isLoading}
+                >
+                  <span className="portal-segment-btn-label">{opt.label}</span>
+                  <span className="portal-segment-btn-hint">{opt.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {error && (
             <div className="alert alert-error" role="alert">
               <AlertCircle size={16} />

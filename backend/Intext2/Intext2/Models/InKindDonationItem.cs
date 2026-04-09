@@ -8,6 +8,7 @@ public class InKindDonationItem
 {
     [Key]
     [Column("item_id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int ItemId { get; set; }
 
     [Column("donation_id")]
@@ -31,7 +32,7 @@ public class InKindDonationItem
     public string? UnitOfMeasure { get; set; }
 
     [Column("estimated_unit_value")]
-    public decimal? EstimatedUnitValue { get; set; }
+    public double? EstimatedUnitValue { get; set; }
 
     [MaxLength(100)]
     [Column("intended_use")]

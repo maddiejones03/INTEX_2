@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Search, Plus, Filter, AlertCircle, Eye, Edit2, Trash2,
   ChevronLeft, ChevronRight, X, Check,
 } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
+import { getApiBaseUrl } from '../../services/authApi';
 
 const CASE_CATEGORIES = ['Trafficked', 'Physical Abuse', 'Sexual Abuse', 'Neglect', 'Psychological Abuse', 'Economic Abuse', 'Abandoned', 'CICL'];
 const CASE_STATUSES = ['Active', 'Reintegrated', 'Transferred', 'Runaway', 'Deceased', 'Closed'];
@@ -47,25 +47,36 @@ interface ResidentDetail {
   dateOfAdmission: string;
   reintegrationStatus: string;
   assignedSocialWorker: string;
-  religion: string;
-  placeOfBirth: string;
-  referralSource: string;
-  familyIs4ps: boolean;
-  familySoloParent: boolean;
-  familyIndigenous: boolean;
-  familyInformalSettler: boolean;
-  isPwd: boolean;
-  pwdType: string;
-  notes_restricted: number;
+  religion?: string;
+  placeOfBirth?: string;
+  referralSource?: string;
+  familyIs4ps?: boolean;
+  familySoloParent?: boolean;
+  familyIndigenous?: boolean;
+  familyInformalSettler?: boolean;
+  isPwd?: boolean;
+  pwdType?: string;
+  notes_restricted?: number;
   safehouse?: { name: string; city: string };
+  safehouseName?: string;
+  safehouseCity?: string;
+  caseManagerView?: boolean;
 }
 
-function ResidentModal({ residentId, onClose }: { residentId: number; onClose: () => void }) {
+function ResidentModal({
+  residentId,
+  onClose,
+  caseManagerUi,
+}: {
+  residentId: number;
+  onClose: () => void;
+  caseManagerUi: boolean;
+}) {
   const [resident, setResident] = useState<ResidentDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/residents/${residentId}`, { credentials: 'include' })
+    fetch(`${getApiBaseUrl()}/api/residents/${residentId}`, { credentials: 'include' })
       .then(r => r.json())
       .then(data => { setResident(data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -81,13 +92,24 @@ function ResidentModal({ residentId, onClose }: { residentId: number; onClose: (
 
   if (!resident) return null;
 
+  const shLabel =
+    resident.safehouse?.name ??
+    resident.safehouseName ??
+    `Safehouse ${resident.safehouseId}`;
+  const cm = resident.caseManagerView || caseManagerUi;
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
             <h2>{resident.caseControlNo}</h2>
-            <p className="modal-subtitle">{resident.internalCode} · {resident.safehouse?.name ?? `Safehouse ${resident.safehouseId}`}</p>
+            <p className="modal-subtitle">{resident.internalCode} · {shLabel}</p>
+            {cm && (
+              <p className="login-hint" style={{ marginTop: '0.35rem' }}>
+                Case manager view — limited fields by design.
+              </p>
+            )}
           </div>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
@@ -98,8 +120,12 @@ function ResidentModal({ residentId, onClose }: { residentId: number; onClose: (
               <div className="detail-grid">
                 <div className="detail-item"><span>Date of Birth</span><strong>{resident.dateOfBirth ? new Date(resident.dateOfBirth).toLocaleDateString() : '—'}</strong></div>
                 <div className="detail-item"><span>Sex</span><strong>{resident.sex}</strong></div>
-                <div className="detail-item"><span>Place of Birth</span><strong>{resident.placeOfBirth || '—'}</strong></div>
-                <div className="detail-item"><span>Religion</span><strong>{resident.religion || '—'}</strong></div>
+                {!cm && (
+                  <>
+                    <div className="detail-item"><span>Place of Birth</span><strong>{resident.placeOfBirth || '—'}</strong></div>
+                    <div className="detail-item"><span>Religion</span><strong>{resident.religion || '—'}</strong></div>
+                  </>
+                )}
               </div>
             </section>
             <section className="modal-section">
@@ -109,20 +135,24 @@ function ResidentModal({ residentId, onClose }: { residentId: number; onClose: (
                 <div className="detail-item"><span>Status</span><span className={`status-badge status-${resident.caseStatus?.toLowerCase().replace(' ', '-')}`}>{resident.caseStatus}</span></div>
                 <div className="detail-item"><span>Risk Level</span><strong>{resident.currentRiskLevel || '—'}</strong></div>
                 <div className="detail-item"><span>Admission Date</span><strong>{resident.dateOfAdmission ? new Date(resident.dateOfAdmission).toLocaleDateString() : '—'}</strong></div>
-                <div className="detail-item"><span>Referral Source</span><strong>{resident.referralSource || '—'}</strong></div>
+                {!cm && (
+                  <div className="detail-item"><span>Referral Source</span><strong>{resident.referralSource || '—'}</strong></div>
+                )}
                 <div className="detail-item"><span>Social Worker</span><strong>{resident.assignedSocialWorker || '—'}</strong></div>
               </div>
             </section>
-            <section className="modal-section">
-              <h3>Socio-Demographic Profile</h3>
-              <div className="flag-list">
-                <div className={`flag-item ${resident.familyIs4ps ? 'flag-yes' : 'flag-no'}`}>{resident.familyIs4ps ? '✓' : '✗'} 4Ps Beneficiary</div>
-                <div className={`flag-item ${resident.familySoloParent ? 'flag-yes' : 'flag-no'}`}>{resident.familySoloParent ? '✓' : '✗'} Solo Parent Household</div>
-                <div className={`flag-item ${resident.familyIndigenous ? 'flag-yes' : 'flag-no'}`}>{resident.familyIndigenous ? '✓' : '✗'} Indigenous Group</div>
-                <div className={`flag-item ${resident.familyInformalSettler ? 'flag-yes' : 'flag-no'}`}>{resident.familyInformalSettler ? '✓' : '✗'} Informal Settler</div>
-                <div className={`flag-item ${resident.isPwd ? 'flag-yes' : 'flag-no'}`}>{resident.isPwd ? '✓' : '✗'} Person with Disability {resident.pwdType ? `(${resident.pwdType})` : ''}</div>
-              </div>
-            </section>
+            {!cm && (
+              <section className="modal-section">
+                <h3>Socio-Demographic Profile</h3>
+                <div className="flag-list">
+                  <div className={`flag-item ${resident.familyIs4ps ? 'flag-yes' : 'flag-no'}`}>{resident.familyIs4ps ? '✓' : '✗'} 4Ps Beneficiary</div>
+                  <div className={`flag-item ${resident.familySoloParent ? 'flag-yes' : 'flag-no'}`}>{resident.familySoloParent ? '✓' : '✗'} Solo Parent Household</div>
+                  <div className={`flag-item ${resident.familyIndigenous ? 'flag-yes' : 'flag-no'}`}>{resident.familyIndigenous ? '✓' : '✗'} Indigenous Group</div>
+                  <div className={`flag-item ${resident.familyInformalSettler ? 'flag-yes' : 'flag-no'}`}>{resident.familyInformalSettler ? '✓' : '✗'} Informal Settler</div>
+                  <div className={`flag-item ${resident.isPwd ? 'flag-yes' : 'flag-no'}`}>{resident.isPwd ? '✓' : '✗'} Person with Disability {resident.pwdType ? `(${resident.pwdType})` : ''}</div>
+                </div>
+              </section>
+            )}
             <section className="modal-section">
               <h3>Reintegration</h3>
               <div className="detail-grid">
@@ -137,6 +167,9 @@ function ResidentModal({ residentId, onClose }: { residentId: number; onClose: (
 }
 
 export default function CaseloadInventory() {
+  const location = useLocation();
+  const readOnly = location.pathname.startsWith('/case-manager');
+
   const [residents, setResidents] = useState<Resident[]>([]);
   const [safehouses, setSafehouses] = useState<Safehouse[]>([]);
   const [total, setTotal] = useState(0);
@@ -172,7 +205,7 @@ export default function CaseloadInventory() {
       if (filterCategory !== 'All') params.set('caseCategory', filterCategory);
       if (filterSafehouse !== 'All') params.set('safehouseId', filterSafehouse);
 
-      const res = await fetch(`${API_BASE}/api/residents?${params}`, { credentials: 'include' });
+      const res = await fetch(`${getApiBaseUrl()}/api/residents?${params}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setResidents(data.items);
@@ -188,11 +221,15 @@ export default function CaseloadInventory() {
   useEffect(() => { fetchResidents(); }, [fetchResidents]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/reports/residents-by-safehouse`, { credentials: 'include' })
+    if (readOnly) {
+      setSafehouses([]);
+      return;
+    }
+    fetch(`${getApiBaseUrl()}/api/reports/residents-by-safehouse`, { credentials: 'include' })
       .then(r => r.json())
       .then(data => setSafehouses(data.map((s: { safehouseId: number; name: string; city: string }) => ({ safehouseId: s.safehouseId, name: s.name, city: s.city }))))
       .catch(() => {});
-  }, []);
+  }, [readOnly]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
@@ -204,7 +241,7 @@ export default function CaseloadInventory() {
     setSaving(true);
     setFormError('');
     try {
-      const res = await fetch(`${API_BASE}/api/residents`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/residents`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -246,7 +283,7 @@ export default function CaseloadInventory() {
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await fetch(`${API_BASE}/api/residents/${deleteTarget.residentId}`, {
+      await fetch(`${getApiBaseUrl()}/api/residents/${deleteTarget.residentId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -266,12 +303,18 @@ export default function CaseloadInventory() {
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>Caseload Inventory</h1>
-          <p>Manage and track all resident records across safe houses.</p>
+          <h1>{readOnly ? 'My caseload' : 'Caseload Inventory'}</h1>
+          <p>
+            {readOnly
+              ? 'Residents assigned to you. Detail views omit sensitive socio-demographic fields available to admins.'
+              : 'Manage and track all resident records across safe houses.'}
+          </p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>
-          <Plus size={16} /> New Resident
-        </button>
+        {!readOnly && (
+          <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>
+            <Plus size={16} /> New Resident
+          </button>
+        )}
       </div>
 
       {/* Summary */}
@@ -295,7 +338,7 @@ export default function CaseloadInventory() {
       </div>
 
       {/* Add form */}
-      {showAddForm && (
+      {!readOnly && showAddForm && (
         <div className="inline-form-card">
           <div className="inline-form-header">
             <h3><Plus size={16} /> New Resident Record</h3>
@@ -374,7 +417,12 @@ export default function CaseloadInventory() {
             <option value="All">All Categories</option>
             {CASE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
           </select>
-          <select className="form-select" value={filterSafehouse} onChange={(e) => { setFilterSafehouse(e.target.value); setPage(1); }}>
+          <select
+            className="form-select"
+            value={filterSafehouse}
+            onChange={(e) => { setFilterSafehouse(e.target.value); setPage(1); }}
+            disabled={readOnly && safehouses.length === 0}
+          >
             <option value="All">All Safe Houses</option>
             {safehouses.map((sh) => <option key={sh.safehouseId} value={sh.safehouseId}>{sh.name}</option>)}
           </select>
@@ -416,9 +464,13 @@ export default function CaseloadInventory() {
                   <td><span className={`status-badge status-${r.caseStatus?.toLowerCase().replace(' ', '-')}`}>{r.caseStatus}</span></td>
                   <td>
                     <div className="action-btns">
-                      <button className="btn-icon" title="View" onClick={() => setSelectedId(r.residentId)}><Eye size={15} /></button>
-                      <button className="btn-icon" title="Edit"><Edit2 size={15} /></button>
-                      <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
+                      <button type="button" className="btn-icon" title="View" onClick={() => setSelectedId(r.residentId)}><Eye size={15} /></button>
+                      {!readOnly && (
+                        <>
+                          <button type="button" className="btn-icon" title="Edit"><Edit2 size={15} /></button>
+                          <button type="button" className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -439,7 +491,13 @@ export default function CaseloadInventory() {
         )}
       </div>
 
-      {selectedId !== null && <ResidentModal residentId={selectedId} onClose={() => setSelectedId(null)} />}
+      {selectedId !== null && (
+        <ResidentModal
+          residentId={selectedId}
+          onClose={() => setSelectedId(null)}
+          caseManagerUi={readOnly}
+        />
+      )}
       <ConfirmDeleteModal
         isOpen={deleteTarget !== null}
         onConfirm={handleDelete}

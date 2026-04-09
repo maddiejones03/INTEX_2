@@ -97,14 +97,14 @@ public class SupportersController : ControllerBase
         try
         {
             model.SupporterId = 0;
-            model.CreatedAt   = DateTime.UtcNow.ToString("o");
+            model.CreatedAt   = DateTime.UtcNow.ToString("yyyy-MM-dd");
             _db.Supporters.Add(model);
             await _db.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = model.SupporterId }, model);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = "Failed to create supporter.", detail = ex.Message });
+            return StatusCode(500, new { message = "Failed to create supporter.", detail = ex.Message, inner = ex.InnerException?.Message, innerInner = ex.InnerException?.InnerException?.Message });
         }
     }
 
