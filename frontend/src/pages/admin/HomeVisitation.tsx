@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Eye, Trash2, X, Check, AlertCircle, Home, Search } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
+import { getApiBaseUrl } from '../../services/authApi';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
+const API_BASE = getApiBaseUrl();
 
 const VISIT_TYPES = ['Initial Assessment', 'Routine Follow-Up', 'Reintegration Assessment', 'Post-Placement Monitoring', 'Emergency'];
 const COOPERATION_LEVELS = ['High', 'Moderate', 'Low', 'Uncooperative'];
@@ -19,12 +20,17 @@ interface HomeVisit {
   purpose: string;
   observations: string;
   familyCooperationLevel: string;
-  safetyConcerosNoted: boolean;
-  followUpNeeded: boolean;
+  safetyConcernsNoted: boolean | number;
+  followUpNeeded: boolean | number;
   followUpNotes: string;
   visitOutcome: string;
   cooperationNumeric: number;
   outcomeNumeric: number;
+}
+
+function asBool(value: boolean | number | null | undefined): boolean {
+  if (typeof value === 'boolean') return value;
+  return (value ?? 0) !== 0;
 }
 
 interface Resident {
@@ -50,8 +56,8 @@ function VisitModal({ visit, onClose }: { visit: HomeVisit; onClose: () => void 
             <div className="detail-item"><span>Location</span><strong>{visit.locationVisited || '—'}</strong></div>
             <div className="detail-item"><span>Family Members Present</span><strong>{visit.familyMembersPresent || '—'}</strong></div>
             <div className="detail-item"><span>Family Cooperation</span><span className={`cooperation-badge coop-${visit.familyCooperationLevel?.toLowerCase()}`}>{visit.familyCooperationLevel}</span></div>
-            <div className="detail-item"><span>Safety Concerns</span><strong>{visit.safetyConcerosNoted ? 'Yes' : 'None'}</strong></div>
-            <div className="detail-item"><span>Follow-Up Needed</span><strong>{visit.followUpNeeded ? 'Yes' : 'No'}</strong></div>
+            <div className="detail-item"><span>Safety Concerns</span><strong>{asBool(visit.safetyConcernsNoted) ? 'Yes' : 'None'}</strong></div>
+            <div className="detail-item"><span>Follow-Up Needed</span><strong>{asBool(visit.followUpNeeded) ? 'Yes' : 'No'}</strong></div>
             <div className="detail-item"><span>Visit Outcome</span><strong>{visit.visitOutcome || '—'}</strong></div>
           </div>
           {visit.purpose && (
@@ -83,6 +89,7 @@ export default function HomeVisitation() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('All');
   const [selectedVisit, setSelectedVisit] = useState<HomeVisit | null>(null);
@@ -103,6 +110,7 @@ export default function HomeVisitation() {
 
   const fetchVisits = useCallback(async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const params = new URLSearchParams({ page: '1', pageSize: String(PAGE_SIZE) });
       if (filterType !== 'All') params.set('visitType', filterType);
@@ -110,11 +118,15 @@ export default function HomeVisitation() {
       const res = await fetch(`${API_BASE}/api/homevisitations?${params}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-        setVisits(data.items);
-        setTotal(data.total);
+        setVisits(data.items ?? []);
+        setTotal(data.total ?? 0);
+      } else {
+        const text = await res.text();
+        setLoadError(text || `Failed to load home visitations (${res.status})`);
       }
     } catch (err) {
       console.error('Failed to fetch visits', err);
+      setLoadError('Failed to fetch home visitations. Check API connectivity and your login session.');
     } finally {
       setLoading(false);
     }
@@ -140,8 +152,11 @@ export default function HomeVisitation() {
 
   useEffect(() => {
     fetch(`${API_BASE}/api/residents?pageSize=100`, { credentials: 'include' })
-      .then(r => r.json())
-      .then(data => setResidents(data.items))
+      .then(async (r) => {
+        if (!r.ok) return;
+        const data = await r.json();
+        setResidents(data.items ?? []);
+      })
       .catch(() => {});
   }, []);
 
@@ -175,7 +190,7 @@ export default function HomeVisitation() {
           familyCooperationLevel: newVisit.familyCooperationLevel,
           followUpNotes: newVisit.followUpNotes,
           purpose: newVisit.purpose,
-          followUpNeeded: !!newVisit.followUpNotes,
+          followUpNeeded: newVisit.followUpNotes.trim() ? 1 : 0,
         }),
       });
       if (res.ok) {
@@ -220,7 +235,7 @@ export default function HomeVisitation() {
           <div className="metric-label">Residents Visited</div>
         </div>
         <div className="metric-card metric-card-purple">
-          <div className="metric-value">{visits.filter(v => v.followUpNeeded).length}</div>
+          <div className="metric-value">{visits.filter(v => asBool(v.followUpNeeded)).length}</div>
           <div className="metric-label">Follow-Ups Needed</div>
         </div>
       </div>
@@ -296,6 +311,11 @@ export default function HomeVisitation() {
 
       {/* Visits table */}
       <div className="table-card">
+        {loadError && (
+          <div className="alert alert-error" style={{ margin: '1rem' }}>
+            <AlertCircle size={14} /> {loadError}
+          </div>
+        )}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '2rem' }}>Loading visits...</div>
         ) : (
@@ -323,7 +343,7 @@ export default function HomeVisitation() {
                   <td><span className="category-chip">{v.visitType}</span></td>
                   <td className="table-secondary">{v.socialWorker || '—'}</td>
                   <td><span className={`cooperation-badge coop-${v.familyCooperationLevel?.toLowerCase()}`}>{v.familyCooperationLevel}</span></td>
-                  <td className="table-secondary">{v.followUpNeeded ? <span className="safety-flag">⚠ Needed</span> : <span className="safety-none">None</span>}</td>
+                  <td className="table-secondary">{asBool(v.followUpNeeded) ? <span className="safety-flag">⚠ Needed</span> : <span className="safety-none">None</span>}</td>
                   <td>
                     <div className="action-btns">
                       <button className="btn-icon" onClick={() => setSelectedVisit(v)}><Eye size={15} /></button>
