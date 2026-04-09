@@ -463,7 +463,6 @@ export default function Donors() {
                   <td><span className={`status-badge status-${s.status?.toLowerCase()}`}>{s.status}</span></td>
                   <td>
                     <div className="action-btns">
-                      <button className="btn-icon" title="View" onClick={() => setSelectedId(s.supporterId)}><Eye size={15} /></button>
                       <button className="btn-icon" title="Edit" onClick={() => setEditTarget(s)}><Edit2 size={15} /></button>
                       <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(s)}><Trash2 size={15} /></button>
                     </div>
