@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, TrendingDown, TrendingUp, Minus, Clock } from 'lucide-react';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine,
-} from 'recharts';
+import { AlertCircle, Clock } from 'lucide-react';
 import { apiFetch } from '../../services/apiClient';
 import type { ResidentEarlyWarning, RiskAlert } from '../../types/index';
 
@@ -31,10 +27,48 @@ const RISK_COLORS: Record<string, string> = {
 
 const SEVERITY_ORDER: Record<string, number> = { High: 0, Medium: 1, Low: 2 };
 
-function TrendIcon({ direction }: { direction: string | null }) {
-  if (direction === 'Improving') return <TrendingUp size={14} className="trend-icon trend-improving" />;
-  if (direction === 'Declining') return <TrendingDown size={14} className="trend-icon trend-declining" />;
-  return <Minus size={14} className="trend-icon trend-stable" />;
+const FACTOR_LABELS: Record<string, string> = {
+  cooperation_slope:         'Family cooperation has been declining recently',
+  cooperation_mean:          'Family cooperation levels have been consistently low',
+  health_slope:       'Health scores have been declining over recent months',
+  health_mean:        'Health scores have been consistently below average',
+  session_count_mean:    'Session attendance has been low or irregular',
+  concerns_mean:      'Concerns have been frequently flagged during sessions',
+  emotional_imp_mean: 'Sessions show little emotional improvement',
+  attendance_mean:    'School attendance has been low',
+  safety_mean:        'Safety concerns have been noted during home visits',
+  ri_count:           'Recent incidents have been reported',
+  risk_numeric:       'Resident has an elevated initial risk classification',
+  pct_concerns_mean:        'A high percentage of sessions have flagged concerns',
+
+};
+
+function factorLabel(key: string | null): string {
+  if (!key) return '';
+  return FACTOR_LABELS[key] ?? key.replace(/_/g, ' ');
+}
+
+function likelihoodLabel(prob: number | null): string {
+  if (prob == null) return '—';
+  const pct = Math.round(prob * 100);
+  const label = pct >= 65 ? 'Very Likely' : pct >= 40 ? 'Likely' : 'Unlikely';
+  return `${pct}% — ${label}`;
+}
+
+function formatAlertType(type: string): string {
+  return type.replace(/([A-Z])/g, ' $1').trim();
+}
+
+function cleanDetail(detail: string): string {
+  return detail
+    .replace(/\s*\(slope=[^)]+\)/gi, '')
+    .replace(/\s*\(slope\s*[^)]+\)/gi, '')
+    .replace(/severity\s*>=\s*Medium/gi, 'medium or high severity')
+    .replace(/(\d+)\s+incident\(s\)/gi, (_, n) => `${n} ${n === '1' ? 'incident' : 'incidents'}`)
+    .replace(/\bCooperation declining\b/g, 'Family cooperation declining')
+    .replace(/\b(High|Critical|Medium|Low)\b(?= risk level)/g, (m) => m.toLowerCase())
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 function RiskBadge({ category }: { category: string | null }) {
@@ -47,16 +81,6 @@ function SeverityBadge({ severity }: { severity: string }) {
   return <span className={`badge badge-${color}`}>{severity}</span>;
 }
 
-// Slope-based sparkline: generate fake monthly points from current score + slope
-function buildSparklineData(row: ResidentEarlyWarning) {
-  const base = row.currentCooperationScore ?? 2;
-  const slope = row.cooperationSlopeAll ?? 0;
-  return Array.from({ length: 6 }, (_, i) => ({
-    month: `M${i + 1}`,
-    score: parseFloat(Math.max(1, Math.min(4, base + slope * (i - 5))).toFixed(2)),
-  }));
-}
-
 // ---- Main Component ----
 export default function EarlyWarning() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
@@ -64,8 +88,8 @@ export default function EarlyWarning() {
   const [alerts, setAlerts] = useState<RiskAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [trendFilter, setTrendFilter] = useState('');
   const [riskFilter, setRiskFilter] = useState('');
+  const [lowRiskExpanded, setLowRiskExpanded] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -88,16 +112,12 @@ export default function EarlyWarning() {
   }, []);
 
   const filteredResidents = residents.filter((r) => {
-    if (trendFilter && r.trendDirection !== trendFilter) return false;
     if (riskFilter && r.riskCategory !== riskFilter) return false;
     return true;
   });
 
   const alertCount = (sev: string) =>
     (dashboard?.alertCounts ?? []).find((a) => a.severity === sev)?.count ?? 0;
-
-  const trendCount = (dir: string) =>
-    (dashboard?.trendCounts ?? []).find((t) => t.trendDirection === dir)?.count ?? 0;
 
   if (loading) {
     return (
@@ -126,7 +146,7 @@ export default function EarlyWarning() {
       <div className="admin-page-header">
         <div>
           <h1>Early Warning System</h1>
-          <p>ML-powered regression risk detection and cooperation trend monitoring.</p>
+          <p>Rule-based alerts and risk assessments to help prioritise resident attention.</p>
         </div>
         <div className="header-date">
           <Clock size={14} />
@@ -134,7 +154,7 @@ export default function EarlyWarning() {
         </div>
       </div>
 
-      {/* ── Panel 1: Alert Summary ── */}
+      {/* ── Alert Summary Cards ── */}
       <div className="metrics-grid">
         <div className="metric-card metric-card-rose">
           <div className="metric-icon icon-rose"><AlertCircle size={20} /></div>
@@ -148,26 +168,17 @@ export default function EarlyWarning() {
           <div className="metric-label">Medium Severity Alerts</div>
           <div className="metric-sub">Monitor closely</div>
         </div>
-        <div className="metric-card metric-card-green">
-          <div className="metric-icon icon-green"><AlertCircle size={20} /></div>
-          <div className="metric-value">{alertCount('Low')}</div>
-          <div className="metric-label">Low Severity Alerts</div>
-          <div className="metric-sub">Informational</div>
-        </div>
-        <div className="metric-card metric-card-blue">
-          <div className="metric-icon icon-blue"><TrendingDown size={20} /></div>
-          <div className="metric-value">{trendCount('Declining')}</div>
-          <div className="metric-label">Declining Cooperation</div>
-          <div className="metric-sub">Slope &lt; −0.05/month</div>
-        </div>
       </div>
 
-      {/* Alert table */}
+      {/* ── Active Alerts Table ── */}
       {alerts.length > 0 && (
         <div className="dashboard-card" style={{ marginBottom: '1.5rem' }}>
           <div className="card-header">
             <h2>Active Alerts</h2>
           </div>
+          <p style={{ padding: '0 1.5rem 1rem', color: 'var(--gray-500)', fontSize: '0.875rem' }}>
+            Real-time flags for residents showing signs of risk or declining progress.
+          </p>
           <div className="table-wrapper">
             <table className="data-table">
               <thead>
@@ -175,20 +186,16 @@ export default function EarlyWarning() {
                   <th>Resident ID</th>
                   <th>Alert Type</th>
                   <th>Severity</th>
-                  <th>Current Risk</th>
                   <th>Detail</th>
-                  <th>Computed</th>
                 </tr>
               </thead>
               <tbody>
                 {alerts.map((a) => (
                   <tr key={a.alertId}>
-                    <td>#{a.residentId}</td>
-                    <td>{a.alertType}</td>
+                    <td>{a.residentId}</td>
+                    <td>{formatAlertType(a.alertType)}</td>
                     <td><SeverityBadge severity={a.severity} /></td>
-                    <td>{a.currentRiskLevel ?? '—'}</td>
-                    <td>{a.detail}</td>
-                    <td>{a.computedAt ? new Date(a.computedAt).toLocaleDateString() : '—'}</td>
+                    <td>{cleanDetail(a.detail)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -197,148 +204,91 @@ export default function EarlyWarning() {
         </div>
       )}
 
-      {/* ── Panel 2: Regression Risk Scores ── */}
-      <div className="dashboard-card" style={{ marginBottom: '1.5rem' }}>
+      {/* ── Resident Risk Assessment ── */}
+      <div className="dashboard-card">
         <div className="card-header">
-          <h2>Regression Risk Scores</h2>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <select
-              className="filter-select"
-              value={riskFilter}
-              onChange={(e) => setRiskFilter(e.target.value)}
-            >
-              <option value="">All risk categories</option>
-              <option value="Critical">Critical</option>
-              <option value="High">High</option>
-              <option value="Moderate">Moderate</option>
-              <option value="Low">Low</option>
-            </select>
-            <select
-              className="filter-select"
-              value={trendFilter}
-              onChange={(e) => setTrendFilter(e.target.value)}
-            >
-              <option value="">All trends</option>
-              <option value="Declining">Declining</option>
-              <option value="Stable">Stable</option>
-              <option value="Improving">Improving</option>
-            </select>
-          </div>
+          <h2>Resident Risk Assessment</h2>
+          <select
+            className="filter-select"
+            value={riskFilter}
+            onChange={(e) => setRiskFilter(e.target.value)}
+          >
+            <option value="">All risk levels</option>
+            <option value="Critical">Critical</option>
+            <option value="High">High</option>
+            <option value="Moderate">Moderate</option>
+            <option value="Low">Low</option>
+          </select>
         </div>
+        <p style={{ padding: '0 1.5rem 1rem', color: 'var(--gray-500)', fontSize: '0.875rem' }}>
+          Likelihood of a resident's risk level worsening, based on recent family cooperation, health, counseling sessions, and incident trends.
+        </p>
         <div className="table-wrapper">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Resident</th>
-                <th>Risk Category</th>
-                <th>Probability</th>
-                <th>Cooperation Trend</th>
-                <th>Top Risk Factors</th>
-                <th>Model</th>
+                <th>Resident ID</th>
+                <th>Risk Level</th>
+                <th>Likelihood</th>
+                <th>Key Concerns</th>
               </tr>
             </thead>
             <tbody>
-              {filteredResidents.map((r) => (
-                <tr key={r.residentId}>
-                  <td>#{r.residentId}</td>
-                  <td><RiskBadge category={r.riskCategory} /></td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <div className="prob-bar-track">
-                        <div
-                          className="prob-bar-fill"
-                          style={{ width: `${((r.riskRegressionProbability ?? 0) * 100).toFixed(0)}%` }}
-                        />
-                      </div>
-                      <span className="prob-label">
-                        {r.riskRegressionProbability != null
-                          ? `${(r.riskRegressionProbability * 100).toFixed(0)}%`
-                          : '—'}
-                      </span>
-                    </div>
-                  </td>
-                  <td style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                    <TrendIcon direction={r.trendDirection} />
-                    {r.trendDirection ?? '—'}
-                  </td>
-                  <td>
-                    <div className="factor-list">
-                      {[r.topRiskFactor1, r.topRiskFactor2, r.topRiskFactor3]
-                        .filter(Boolean)
-                        .map((f) => <span key={f} className="factor-tag">{f}</span>)}
-                    </div>
-                  </td>
-                  <td>{r.modelName ?? '—'}</td>
-                </tr>
-              ))}
-              {filteredResidents.length === 0 && (
-                <tr><td colSpan={6} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No residents match the selected filters.</td></tr>
-              )}
+              {(() => {
+                const elevated = filteredResidents.filter(r => r.riskCategory !== 'Low');
+                const lowRisk  = filteredResidents.filter(r => r.riskCategory === 'Low');
+
+                return (
+                  <>
+                    {elevated.map((r) => {
+                      const factors = [r.topRiskFactor1, r.topRiskFactor2, r.topRiskFactor3].filter(Boolean);
+                      return (
+                        <tr key={r.residentId}>
+                          <td>{r.residentId}</td>
+                          <td><RiskBadge category={r.riskCategory} /></td>
+                          <td>{likelihoodLabel(r.riskRegressionProbability)}</td>
+                          <td>
+                            <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.85rem', lineHeight: '1.6', listStyle: 'disc' }}>
+                              {factors.map((f) => <li key={f}>{factorLabel(f)}</li>)}
+                            </ul>
+                          </td>
+                        </tr>
+                      );
+                    })}
+
+                    {lowRisk.length > 0 && (
+                      <>
+                        <tr
+                          onClick={() => setLowRiskExpanded(x => !x)}
+                          style={{ cursor: 'pointer', background: 'var(--gray-50)' }}
+                        >
+                          <td colSpan={4} style={{ padding: '0.65rem 1rem', color: 'var(--gray-500)', fontStyle: 'italic' }}>
+                            {lowRiskExpanded ? '▾' : '▸'} {lowRisk.length} Low Risk Resident{lowRisk.length !== 1 ? 's' : ''} — click to {lowRiskExpanded ? 'collapse' : 'expand'}
+                          </td>
+                        </tr>
+                        {lowRiskExpanded && lowRisk.map((r) => (
+                          <tr key={r.residentId} style={{ background: 'var(--gray-50)' }}>
+                            <td>{r.residentId}</td>
+                            <td><RiskBadge category={r.riskCategory} /></td>
+                            <td>{likelihoodLabel(r.riskRegressionProbability)}</td>
+                            <td style={{ color: 'var(--gray-400)', fontSize: '0.85rem' }}>No significant concerns</td>
+                          </tr>
+                        ))}
+                      </>
+                    )}
+
+                    {filteredResidents.length === 0 && (
+                      <tr>
+                        <td colSpan={4} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                          No residents match the selected filters.
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })()}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* ── Panel 3: Cooperation Trajectories ── */}
-      <div className="dashboard-card">
-        <div className="card-header">
-          <h2>Cooperation Trajectories</h2>
-          <span className="card-sub">OKR target: +0.5 pts/quarter upward trend</span>
-        </div>
-        <div className="trajectory-grid">
-          {residents
-            .filter((r) => r.currentCooperationScore != null)
-            .sort((a, b) => (a.cooperationSlope3m ?? 0) - (b.cooperationSlope3m ?? 0))
-            .map((r) => {
-              const data = buildSparklineData(r);
-              const lineColor =
-                r.trendDirection === 'Improving' ? '#22c55e' :
-                r.trendDirection === 'Declining' ? '#ef4444' : '#f59e0b';
-
-              return (
-                <div key={r.residentId} className="trajectory-card">
-                  <div className="trajectory-header">
-                    <span className="trajectory-title">Resident #{r.residentId}</span>
-                    <TrendIcon direction={r.trendDirection} />
-                  </div>
-                  <div className="trajectory-meta">
-                    Slope (3m): <strong>{r.cooperationSlope3m?.toFixed(3) ?? '—'}</strong>
-                    &nbsp;·&nbsp;
-                    Score: <strong>{r.currentCooperationScore?.toFixed(1) ?? '—'}</strong>
-                  </div>
-                  <ResponsiveContainer width="100%" height={80}>
-                    <LineChart data={data} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="month" tick={{ fontSize: 9 }} />
-                      <YAxis domain={[1, 4]} tick={{ fontSize: 9 }} />
-                      <Tooltip
-                        contentStyle={{ fontSize: '11px' }}
-                        formatter={(v) => [v != null ? Number(v).toFixed(2) : '', 'Cooperation']}
-                      />
-                      {/* OKR reference: target slope of +0.5/quarter ≈ +0.167/month */}
-                      <ReferenceLine
-                        stroke="#94a3b8"
-                        strokeDasharray="4 2"
-                        segment={[
-                          { x: 'M1', y: Math.max(1, (r.currentCooperationScore ?? 2) - 5 * 0.167) },
-                          { x: 'M6', y: Math.min(4, (r.currentCooperationScore ?? 2) + 0 * 0.167) },
-                        ]}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="score"
-                        stroke={lineColor}
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              );
-            })}
-          {residents.filter((r) => r.currentCooperationScore != null).length === 0 && (
-            <p style={{ color: 'var(--text-muted)' }}>No trajectory data available yet. Run the batch pipeline to generate scores.</p>
-          )}
         </div>
       </div>
     </div>

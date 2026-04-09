@@ -203,6 +203,7 @@ def write_posting_schedule(winners: pd.DataFrame) -> None:
             );
         """
 
+        winners = winners.rename(columns={"_schedule_date": "schedule_date"})
         now = datetime.utcnow().isoformat()
 
         def _bit(val):
@@ -212,7 +213,7 @@ def write_posting_schedule(winners: pd.DataFrame) -> None:
 
         rows = [
             (
-                r._schedule_date,
+                r.schedule_date,
                 str(r.platform) if pd.notna(r.platform) else None,
                 str(r.day_of_week),
                 int(r.post_hour) if pd.notna(r.post_hour) else None,
@@ -256,7 +257,7 @@ def run_inference():
     print(f"\n{'Date':12s} {'Platform':12s} {'Type':20s} {'Hour':>5s} {'Pred Referrals':>15s}")
     print("-" * 68)
     for r in winners.itertuples(index=False):
-        print(f"{r._schedule_date:12s} {str(r.platform):12s} {str(r.post_type):20s} "
+        print(f"{r.schedule_date:12s} {str(r.platform):12s} {str(r.post_type):20s} "
               f"{int(r.post_hour) if pd.notna(r.post_hour) else 0:5d} {r.predicted_referrals:15.2f}")
 
 
