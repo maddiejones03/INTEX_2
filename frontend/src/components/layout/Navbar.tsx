@@ -90,7 +90,6 @@ export default function Navbar() {
           </div>
         )}
 
-        {isAdmin && <span className="navbar-section-label">Admin portal</span>}
         {isCaseManagerArea && <span className="navbar-section-label">Case manager portal</span>}
 
         <div className="navbar-actions">
