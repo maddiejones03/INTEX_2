@@ -9,6 +9,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
 
 const SUPPORTER_TYPES = ['Individual', 'Corporate', 'Foundation', 'Government', 'NGO', 'Church'];
 const RELATIONSHIP_TYPES = ['Local', 'International', 'Donor', 'PartnerOrganization'];
+const STATUS_OPTIONS = ['Active', 'Inactive'];
 const PAGE_SIZE = 20;
 
 interface Supporter {
@@ -104,6 +105,124 @@ function SupporterModal({ supporterId, onClose }: { supporterId: number; onClose
   );
 }
 
+function EditSupporterModal({ supporter, onClose, onSaved }: { supporter: Supporter; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    displayName: supporter.displayName || '',
+    firstName: supporter.firstName || '',
+    lastName: supporter.lastName || '',
+    organizationName: supporter.organizationName || '',
+    email: supporter.email || '',
+    phone: supporter.phone || '',
+    supporterType: supporter.supporterType || 'Individual',
+    relationshipType: supporter.relationshipType || 'Local',
+    region: supporter.region || '',
+    country: supporter.country || '',
+    status: supporter.status || 'Active',
+    acquisitionChannel: supporter.acquisitionChannel || '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    if (!form.displayName.trim()) { setError('Display name is required.'); return; }
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/supporters/${supporter.supporterId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...form,
+          supporterId: supporter.supporterId,
+          createdAt: supporter.createdAt,
+          firstDonationDate: supporter.firstDonationDate,
+        }),
+      });
+      if (res.ok) { onSaved(); onClose(); }
+      else { setError('Failed to update supporter.'); }
+    } catch {
+      setError('Failed to update supporter.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 600 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Edit Supporter</h2>
+          <button className="modal-close" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="modal-body">
+          {error && <div className="alert alert-error"><AlertCircle size={14} />{error}</div>}
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Display Name *</label>
+              <input className="form-input" value={form.displayName} onChange={e => setForm({ ...form, displayName: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">First Name</label>
+              <input className="form-input" value={form.firstName} onChange={e => setForm({ ...form, firstName: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Last Name</label>
+              <input className="form-input" value={form.lastName} onChange={e => setForm({ ...form, lastName: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Organization Name</label>
+              <input className="form-input" value={form.organizationName} onChange={e => setForm({ ...form, organizationName: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input className="form-input" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Phone</label>
+              <input className="form-input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Supporter Type</label>
+              <select className="form-select" value={form.supporterType} onChange={e => setForm({ ...form, supporterType: e.target.value })}>
+                {SUPPORTER_TYPES.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Relationship Type</label>
+              <select className="form-select" value={form.relationshipType} onChange={e => setForm({ ...form, relationshipType: e.target.value })}>
+                {RELATIONSHIP_TYPES.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Region</label>
+              <input className="form-input" value={form.region} onChange={e => setForm({ ...form, region: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Country</label>
+              <input className="form-input" value={form.country} onChange={e => setForm({ ...form, country: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Status</label>
+              <select className="form-select" value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+                {STATUS_OPTIONS.map(t => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Acquisition Channel</label>
+              <input className="form-input" value={form.acquisitionChannel} onChange={e => setForm({ ...form, acquisitionChannel: e.target.value })} />
+            </div>
+          </div>
+        </div>
+        <div className="modal-footer" style={{ padding: '1rem 1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving}><Check size={14} /> {saving ? 'Saving...' : 'Save Changes'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Donors() {
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [total, setTotal] = useState(0);
@@ -115,14 +234,10 @@ export default function Donors() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [editTarget, setEditTarget] = useState<Supporter | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newSupporter, setNewSupporter] = useState({
-    displayName: '',
-    email: '',
-    supporterType: 'Individual',
-    relationshipType: 'Local',
-    firstName: '',
-    lastName: '',
+    displayName: '', email: '', supporterType: 'Individual', relationshipType: 'Local', firstName: '', lastName: '',
   });
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -135,7 +250,6 @@ export default function Donors() {
       if (search) params.set('search', search);
       if (filterType !== 'All') params.set('supporterType', filterType);
       if (filterStatus !== 'All') params.set('status', filterStatus);
-
       const res = await fetch(`${API_BASE}/api/supporters?${params}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
@@ -166,10 +280,7 @@ export default function Donors() {
   });
 
   const handleAdd = async () => {
-    if (!newSupporter.displayName.trim()) {
-      setFormError('Display name is required.');
-      return;
-    }
+    if (!newSupporter.displayName.trim()) { setFormError('Display name is required.'); return; }
     setSaving(true);
     setFormError('');
     try {
@@ -218,9 +329,7 @@ export default function Donors() {
   };
 
   const SortIcon = ({ field }: { field: typeof sortField }) =>
-    sortField === field
-      ? sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />
-      : null;
+    sortField === field ? sortDir === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} /> : null;
 
   const activeCount = supporters.filter(s => s.status === 'Active').length;
 
@@ -236,7 +345,6 @@ export default function Donors() {
         </button>
       </div>
 
-      {/* Summary */}
       <div className="metrics-grid metrics-grid-4">
         <div className="metric-card metric-card-blue">
           <div className="metric-value">{total}</div>
@@ -256,7 +364,6 @@ export default function Donors() {
         </div>
       </div>
 
-      {/* Add form */}
       {showAddForm && (
         <div className="inline-form-card">
           <div className="inline-form-header">
@@ -301,7 +408,6 @@ export default function Donors() {
         </div>
       )}
 
-      {/* Filters */}
       <div className="filter-bar">
         <div className="search-wrapper">
           <Search size={16} className="search-icon" />
@@ -322,7 +428,6 @@ export default function Donors() {
         <span className="results-count">{total} result{total !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* Table */}
       <div className="table-card">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '2rem' }}>Loading supporters...</div>
@@ -359,7 +464,7 @@ export default function Donors() {
                   <td>
                     <div className="action-btns">
                       <button className="btn-icon" title="View" onClick={() => setSelectedId(s.supporterId)}><Eye size={15} /></button>
-                      <button className="btn-icon" title="Edit"><Edit2 size={15} /></button>
+                      <button className="btn-icon" title="Edit" onClick={() => setEditTarget(s)}><Edit2 size={15} /></button>
                       <button className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(s)}><Trash2 size={15} /></button>
                     </div>
                   </td>
@@ -382,6 +487,7 @@ export default function Donors() {
       </div>
 
       {selectedId !== null && <SupporterModal supporterId={selectedId} onClose={() => setSelectedId(null)} />}
+      {editTarget !== null && <EditSupporterModal supporter={editTarget} onClose={() => setEditTarget(null)} onSaved={fetchSupporters} />}
       <ConfirmDeleteModal
         isOpen={deleteTarget !== null}
         onConfirm={handleDelete}
