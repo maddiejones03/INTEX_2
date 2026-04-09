@@ -112,7 +112,7 @@ ul { list-style: none; }
 }
 .navbar-logo { display: block; height: 52px; width: auto; max-width: 200px; object-fit: contain; }
 .navbar-links { display: flex; gap: 0.25rem; flex: 1; }
-.navbar-link { padding: 0.45rem 0.9rem; border-radius: var(--radius); font-size: 0.95rem; color: rgba(255,255,255,0.92); transition: all 0.15s; }
+.navbar-link { padding: 0.45rem 0.9rem; border-radius: var(--radius); font-size: 0.95rem; color: rgba(255,255,255,0.92); transition: all 0.15s; white-space: nowrap; }
 .navbar-link:hover, .navbar-link.active { color: #fff; background: rgba(255,255,255,0.12); }
 .navbar-section-label { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.5); flex: 1; }
 .navbar-actions { display: flex; align-items: center; gap: 0.75rem; margin-left: auto; }
