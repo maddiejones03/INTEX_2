@@ -861,7 +861,7 @@ button:focus-visible,
 
 /* === IMPACT PAGE === */
 .page-impact { padding-bottom: 4rem; }
-.impact-hero { background: var(--primary); color: #fff; padding: 4rem 0 3rem; text-align: center; margin-bottom: 2.5rem; }
+.impact-hero { background: var(--accent); color: #fff; padding: 4rem 0 3rem; text-align: center; margin-bottom: 2.5rem; }
 .impact-hero h1 { font-size: 2.25rem; font-weight: 700; color: #fff; margin-bottom: 0.75rem; font-family: var(--font-display); }
 .impact-hero p { font-size: 1rem; color: rgba(255,255,255,0.75); max-width: 560px; margin: 0 auto; }
 .impact-highlights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 2.5rem; }
@@ -1035,9 +1035,10 @@ button:focus-visible,
 
 /* === DONATE PAGE === */
 .page-donate { padding-bottom: 4rem; }
-.donate-hero { background: var(--accent); color: #fff; padding: 4rem 0 3rem; text-align: center; margin-bottom: 2.5rem; }
-.donate-hero h1 { font-size: 2.25rem; font-weight: 700; color: #fff; margin-bottom: 0.75rem; font-family: var(--font-display); }
-.donate-hero p { font-size: 1rem; color: rgba(255,255,255,0.75); max-width: 560px; margin: 0 auto; }
+.donate-hero { background: var(--primary); color: var(--accent); padding: 4rem 0 3rem; text-align: center; margin-bottom: 2.5rem; }
+.donate-hero .section-label.light { color: var(--accent); opacity: 0.92; }
+.donate-hero h1 { font-size: 2.25rem; font-weight: 700; color: var(--accent); margin-bottom: 0.75rem; font-family: var(--font-display); }
+.donate-hero p { font-size: 1rem; color: var(--accent); opacity: 0.88; max-width: 560px; margin: 0 auto; }
 
 .donate-section-heading { font-size: 1.5rem; font-weight: 700; color: var(--gray-900); text-align: center; margin-bottom: 0.35rem; font-family: var(--font-display); }
 .donate-section-sub { font-size: 0.95rem; color: var(--gray-500); text-align: center; margin-bottom: 2rem; }
