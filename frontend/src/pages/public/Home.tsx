@@ -1,15 +1,10 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Heart, Shield, BookOpen, Users, ArrowRight,
   TrendingUp, Home as HomeIcon, Star, ChevronRight, Quote, Leaf,
 } from 'lucide-react';
-
-const stats = [
-  { value: '1,200+', label: 'Survivors Served', desc: 'Since our founding in 2008' },
-  { value: '3', label: 'Safe Houses', desc: 'Across Metro Manila' },
-  { value: '94%', label: 'Reintegration Rate', desc: 'Successfully returned to families or communities' },
-  { value: '$8.2M', label: 'Annual Budget', desc: 'Fully donor-funded' },
-];
+import { getApiBaseUrl } from '../../services/authApi';
 
 const programs: Array<{
   icon: typeof Shield;
@@ -132,7 +127,52 @@ const partners = [
   'SM Foundation',
 ];
 
+type PublicImpactResponse = {
+  totalResidents: number;
+  totalSafehouses: number;
+  reintegrationRate: number;
+  totalDonationsPhp: number;
+};
+
+function formatCurrency(value: number) {
+  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+  return `$${Math.round(value)}`;
+}
+
 export default function Home() {
+  const [impact, setImpact] = useState<PublicImpactResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/reports/public-impact`, {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as PublicImpactResponse;
+        if (!cancelled) setImpact(data);
+      } catch {
+        // Keep page usable if API is unavailable.
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stats = useMemo(
+    () => [
+      { value: impact ? impact.totalResidents.toLocaleString() : '—', label: 'Survivors Served', desc: 'From live resident records' },
+      { value: impact ? String(impact.totalSafehouses) : '—', label: 'Safe Houses', desc: 'Currently active in the database' },
+      { value: impact ? `${impact.reintegrationRate}%` : '—', label: 'Reintegration Rate', desc: 'Successfully returned to families or communities' },
+      { value: impact ? formatCurrency(impact.totalDonationsPhp) : '—', label: 'Donations Tracked', desc: 'Aggregated from donation records' },
+    ],
+    [impact]
+  );
+
   return (
     <div className="page-home">
       {/* Hero */}
@@ -284,11 +324,15 @@ export default function Home() {
             </div>
             <div className="impact-teaser-visual">
               <div className="impact-number-card">
-                <div className="impact-big-number">94<span>%</span></div>
+                <div className="impact-big-number">
+                  {impact ? `${impact.reintegrationRate}` : '—'}<span>%</span>
+                </div>
                 <div>Reintegration Success Rate</div>
               </div>
               <div className="impact-number-card">
-                <div className="impact-big-number">1,200<span>+</span></div>
+                <div className="impact-big-number">
+                  {impact ? impact.totalResidents.toLocaleString() : '—'}
+                </div>
                 <div>Lives Transformed</div>
               </div>
             </div>
