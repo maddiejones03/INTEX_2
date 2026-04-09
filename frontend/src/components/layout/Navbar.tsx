@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { logoutUser } from '../../services/authApi';
-import { Menu, X, ChevronDown, LogOut, User } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut, User, Heart, FolderOpen } from 'lucide-react';
 
 export default function Navbar() {
   const { isAuthenticated, authSession, refreshAuthSession } = useAuth();
@@ -11,7 +11,14 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  const isAdmin = location.pathname.startsWith('/admin');
+  const path = location.pathname;
+  const staffChrome = path.startsWith('/admin') || path.startsWith('/case-manager');
+  const isAdminArea = path.startsWith('/admin');
+  const isCaseManagerArea = path.startsWith('/case-manager');
+
+  const isAdmin = authSession.roles.includes('Admin');
+  const isCaseManager = authSession.roles.includes('CaseManager');
+  const isDonor = authSession.roles.includes('Donor');
 
   const handleLogout = async () => {
     await logoutUser();
@@ -44,23 +51,40 @@ export default function Navbar() {
           />
         </Link>
 
-        {!isAdmin && (
+        {!staffChrome && (
           <div className="navbar-links">
             {publicLinks.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
-                className={`navbar-link ${location.pathname === l.to ? 'active' : ''}`}
+                className={`navbar-link ${path === l.to ? 'active' : ''}`}
               >
                 {l.label}
               </Link>
             ))}
+            {isAuthenticated && isDonor && (
+              <Link
+                to="/donor/donations"
+                className={`navbar-link ${path === '/donor/donations' ? 'active' : ''}`}
+              >
+                <Heart size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                My donations
+              </Link>
+            )}
+            {isAuthenticated && isCaseManager && (
+              <Link
+                to="/case-manager/caseload"
+                className={`navbar-link ${path.startsWith('/case-manager') ? 'active' : ''}`}
+              >
+                <FolderOpen size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                My caseload
+              </Link>
+            )}
           </div>
         )}
 
-        {isAdmin && (
-          <span className="navbar-section-label">Admin Portal</span>
-        )}
+        {isAdminArea && <span className="navbar-section-label">Admin portal</span>}
+        {isCaseManagerArea && <span className="navbar-section-label">Case manager portal</span>}
 
         <div className="navbar-actions">
           {isAuthenticated ? (
@@ -83,17 +107,37 @@ export default function Navbar() {
                     </div>
                     <div>
                       <div className="profile-dropdown-name">{authSession.username}</div>
-                      <div className="profile-dropdown-role">{authSession.roles[0] ?? 'User'}</div>
+                      <div className="profile-dropdown-role">{authSession.roles.join(', ')}</div>
                     </div>
                   </div>
                   <div className="profile-dropdown-divider" />
-                  <Link
-                    to="/admin"
-                    className="profile-dropdown-item"
-                    onClick={() => setProfileOpen(false)}
-                  >
-                    <User size={14} /> Dashboard
-                  </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="profile-dropdown-item"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      <User size={14} /> Admin dashboard
+                    </Link>
+                  )}
+                  {isCaseManager && (
+                    <Link
+                      to="/case-manager/caseload"
+                      className="profile-dropdown-item"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      <FolderOpen size={14} /> My caseload
+                    </Link>
+                  )}
+                  {isDonor && (
+                    <Link
+                      to="/donor/donations"
+                      className="profile-dropdown-item"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      <Heart size={14} /> My donations
+                    </Link>
+                  )}
                   <button className="profile-dropdown-item danger" onClick={handleLogout}>
                     <LogOut size={14} /> Sign Out
                   </button>
@@ -102,7 +146,7 @@ export default function Navbar() {
             </div>
           ) : (
             <Link to="/login" className="btn btn-primary btn-sm">
-              Staff Login
+              Portal login
             </Link>
           )}
 
@@ -118,19 +162,41 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="mobile-menu">
-          {publicLinks.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              className="mobile-menu-link"
-              onClick={() => setMobileOpen(false)}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {!staffChrome && (
+            <>
+              {publicLinks.map((l) => (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  className="mobile-menu-link"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {l.label}
+                </Link>
+              ))}
+              {isAuthenticated && isDonor && (
+                <Link
+                  to="/donor/donations"
+                  className="mobile-menu-link"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  My donations
+                </Link>
+              )}
+              {isAuthenticated && isCaseManager && (
+                <Link
+                  to="/case-manager/caseload"
+                  className="mobile-menu-link"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  My caseload
+                </Link>
+              )}
+            </>
+          )}
           {!isAuthenticated && (
             <Link to="/login" className="mobile-menu-link" onClick={() => setMobileOpen(false)}>
-              Staff Login
+              Portal login
             </Link>
           )}
           {isAuthenticated && (

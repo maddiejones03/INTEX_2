@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import AdminSidebar from './components/layout/AdminSidebar';
+import CaseManagerSidebar from './components/layout/CaseManagerSidebar';
 import CookieConsent from './components/ui/CookieConsent';
 import ProtectedRoute from './components/ui/ProtectedRoute';
 
@@ -21,6 +22,7 @@ import Reports from './pages/admin/Reports';
 import StaffManagement from './pages/admin/StaffManagement';
 import EarlyWarning from './pages/admin/EarlyWarning';
 import PostingSchedule from './pages/admin/PostingSchedule';
+import MyDonations from './pages/donor/MyDonations';
 
 function PublicLayout() {
   return (
@@ -37,10 +39,24 @@ function PublicLayout() {
 
 function AdminLayout() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute roles={['Admin']}>
       <Navbar />
       <div className="admin-layout">
         <AdminSidebar />
+        <main className="admin-main">
+          <Outlet />
+        </main>
+      </div>
+    </ProtectedRoute>
+  );
+}
+
+function CaseManagerLayout() {
+  return (
+    <ProtectedRoute roles={['CaseManager']}>
+      <Navbar />
+      <div className="admin-layout">
+        <CaseManagerSidebar />
         <main className="admin-main">
           <Outlet />
         </main>
@@ -59,9 +75,22 @@ export default function App() {
             <Route path="/donate" element={<DonatePage />} />
             <Route path="/impact" element={<ImpactDashboard />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route
+              path="/donor/donations"
+              element={
+                <ProtectedRoute roles={['Donor']}>
+                  <MyDonations />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
           <Route path="/login" element={<Login />} />
+
+          <Route path="/case-manager" element={<CaseManagerLayout />}>
+            <Route index element={<Navigate to="caseload" replace />} />
+            <Route path="caseload" element={<CaseloadInventory />} />
+          </Route>
 
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />

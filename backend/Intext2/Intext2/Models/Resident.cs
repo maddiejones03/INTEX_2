@@ -52,6 +52,7 @@ public class Resident
     [Column("case_category")]
     public string CaseCategory { get; set; } = string.Empty;
 
+    // Azure SQL stores these as int (nullable), not bit
     [Column("sub_cat_orphaned")]
     public int? SubCatOrphaned { get; set; } = 0;
 
@@ -134,22 +135,29 @@ public class Resident
     [Column("referring_agency_person")]
     public string? ReferringAgencyPerson { get; set; }
 
+    // Azure SQL stores these date columns as nvarchar (from CSV import)
     [Column("date_colb_registered")]
-    public DateOnly? DateColbRegistered { get; set; }
+    public string? DateColbRegistered { get; set; }
 
     [Column("date_colb_obtained")]
-    public DateOnly? DateColbObtained { get; set; }
+    public string? DateColbObtained { get; set; }
 
     [MaxLength(255)]
     [Column("assigned_social_worker")]
     public string? AssignedSocialWorker { get; set; }
 
+    /// <summary>ASP.NET Identity user id of the case manager assigned to this resident.</summary>
+    [MaxLength(450)]
+    [Column("case_manager_id")]
+    public string? CaseManagerId { get; set; }
+
     [MaxLength(255)]
     [Column("initial_case_assessment")]
     public string? InitialCaseAssessment { get; set; }
 
+    // Azure SQL stores these date columns as nvarchar (from CSV import)
     [Column("date_case_study_prepared")]
-    public DateOnly? DateCaseStudyPrepared { get; set; }
+    public string? DateCaseStudyPrepared { get; set; }
 
     [MaxLength(50)]
     [Column("reintegration_type")]
@@ -169,19 +177,21 @@ public class Resident
     [Column("current_risk_level")]
     public string CurrentRiskLevel { get; set; } = "Medium";
 
+    // Azure SQL stores these date columns as nvarchar (from CSV import)
     [Column("date_enrolled")]
-    public DateOnly? DateEnrolled { get; set; }
+    public string? DateEnrolled { get; set; }
 
     [Column("date_closed")]
-    public DateOnly? DateClosed { get; set; }
+    public string? DateClosed { get; set; }
 
     [Column("created_at")]
     public DateTime? CreatedAt { get; set; }
 
+    // Azure SQL stores this as float
     [Column("notes_restricted")]
     public double? NotesRestricted { get; set; }
 
-        [Column("age_upon_admission_months")]
+    [Column("age_upon_admission_months")]
     public int? AgeUponAdmissionMonths { get; set; }
 
     [Column("present_age_months")]

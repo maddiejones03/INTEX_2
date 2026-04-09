@@ -56,17 +56,27 @@ builder.Services.AddAuthorization(options =>
 });
 
 // ----------------------------------------------------------------
-// CORS
+// CORS (credentials + cookies require explicit origins; see Cors:AllowedOrigins for extras)
 // ----------------------------------------------------------------
+var defaultCorsOrigins = new[]
+{
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://jolly-moss-00018721e.1.azurestaticapps.net",
+    "https://jolly-moss-00018721e.5.azurestaticapps.net",
+};
+var extraCorsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var corsOrigins = defaultCorsOrigins
+    .Concat(extraCorsOrigins)
+    .Where(static o => !string.IsNullOrWhiteSpace(o))
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:3000",
-                "http://localhost:5173",
-                "https://jolly-moss-00018721e.1.azurestaticapps.net"
-              )
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -100,7 +110,7 @@ var app = builder.Build();
 // ----------------------------------------------------------------
 // Seed roles and default admin on startup
 // ----------------------------------------------------------------
-await SeedAsync(app);
+try { await SeedAsync(app); } catch (Exception ex) { app.Logger.LogError(ex, "Seeding failed — app will continue."); }
 
 if (app.Environment.IsDevelopment())
 {
@@ -114,13 +124,20 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseSecurityHeaders();
-app.UseHttpsRedirection();
+// Avoid redirecting http://localhost:5030 → https (breaks CORS preflight for SPA on :5173)
+if (!app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
+
+// CORS must run after UseRouting and before auth for endpoint routing + preflight OPTIONS.
+app.UseRouting();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Map Identity API endpoints (register, login, etc.)
-app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>();
+app.MapGroup("/api/auth")
+    .RequireCors("AllowFrontend")
+    .MapIdentityApi<ApplicationUser>();
 
 app.MapControllers();
 app.Run();
@@ -136,7 +153,7 @@ static async Task SeedAsync(WebApplication app)
     var logger        = app.Logger;
 
     // Roles
-    foreach (var role in new[] { AuthRoles.Admin, AuthRoles.Customer })
+    foreach (var role in new[] { AuthRoles.Admin, AuthRoles.CaseManager, AuthRoles.Donor })
     {
         if (!await roleManager.RoleExistsAsync(role))
         {
@@ -145,42 +162,149 @@ static async Task SeedAsync(WebApplication app)
         }
     }
 
-    // Admin user from config
-    var config        = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-    var adminSection  = config.GetSection("GenerateDefaultIdentityAdmin");
-    var adminEmail    = adminSection["Email"];
-    var adminPassword = adminSection["Password"];
-
-    if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword))
+    // Migrate legacy "Customer" role to "Donor"
+    if (await roleManager.RoleExistsAsync(AuthRoles.LegacyCustomer))
     {
-        var existing = await userManager.FindByEmailAsync(adminEmail);
-        if (existing is null)
+        var usersInCustomer = await userManager.GetUsersInRoleAsync(AuthRoles.LegacyCustomer);
+        foreach (var u in usersInCustomer)
         {
-            var admin = new ApplicationUser
-            {
-                UserName  = adminEmail,
-                Email     = adminEmail,
-                FirstName = "Admin",
-                LastName  = "User",
-                IsActive  = true,
-                EmailConfirmed = true,
-            };
-
-            var result = await userManager.CreateAsync(admin, adminPassword);
-            if (result.Succeeded)
-            {
-                await userManager.AddToRoleAsync(admin, AuthRoles.Admin);
-                logger.LogInformation("Seeded admin user: {Email}", adminEmail);
-            }
-            else
-            {
-                foreach (var err in result.Errors)
-                    logger.LogError("Seed error: {Code} — {Description}", err.Code, err.Description);
-            }
+            if (!await userManager.IsInRoleAsync(u, AuthRoles.Donor))
+                await userManager.AddToRoleAsync(u, AuthRoles.Donor);
+            await userManager.RemoveFromRoleAsync(u, AuthRoles.LegacyCustomer);
         }
-        else if (!await userManager.IsInRoleAsync(existing, AuthRoles.Admin))
+
+        var legacy = await roleManager.FindByNameAsync(AuthRoles.LegacyCustomer);
+        if (legacy is not null)
+            await roleManager.DeleteAsync(legacy);
+        logger.LogInformation("Migrated role {From} to {To}", AuthRoles.LegacyCustomer, AuthRoles.Donor);
+    }
+
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+    await SeedIdentityUserIfConfigured(
+        userManager, logger,
+        config.GetSection("GenerateDefaultIdentityAdmin"),
+        AuthRoles.Admin, "Admin", "User");
+
+    await SeedIdentityUserIfConfigured(
+        userManager, logger,
+        config.GetSection("GenerateDefaultCaseManager"),
+        AuthRoles.CaseManager, "Case", "Manager");
+
+    await SeedIdentityUserIfConfigured(
+        userManager, logger,
+        config.GetSection("GenerateDefaultDonor"),
+        AuthRoles.Donor, "Demo", "Donor");
+
+    await LinkDemoPortalDataAsync(scope, config, userManager, logger);
+}
+
+static async Task LinkDemoPortalDataAsync(
+    IServiceScope scope,
+    IConfiguration config,
+    UserManager<ApplicationUser> userManager,
+    ILogger logger)
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    var donorEmail = config["GenerateDefaultDonor:Email"];
+    if (!string.IsNullOrWhiteSpace(donorEmail))
+    {
+        donorEmail = donorEmail.Trim();
+        var donorUser = await userManager.FindByEmailAsync(donorEmail);
+        if (donorUser is not null && donorUser.SupporterId is null)
         {
-            await userManager.AddToRoleAsync(existing, AuthRoles.Admin);
+            var supporter = await db.Supporters
+                .FirstOrDefaultAsync(s => s.Email != null && s.Email.ToLower() == donorEmail.ToLowerInvariant());
+            if (supporter is null)
+            {
+                supporter = new Supporter
+                {
+                    SupporterType    = "Individual",
+                    DisplayName      = $"{donorUser.FirstName} {donorUser.LastName}".Trim(),
+                    FirstName        = donorUser.FirstName,
+                    LastName         = donorUser.LastName,
+                    RelationshipType = "Donor",
+                    Email            = donorEmail,
+                    Status           = "Active",
+                    CreatedAt        = DateTime.UtcNow.ToString("o"),
+                };
+                db.Supporters.Add(supporter);
+                await db.SaveChangesAsync();
+                logger.LogInformation("Created demo Supporter row for donor {Email}", donorEmail);
+            }
+
+            donorUser.SupporterId = supporter.SupporterId;
+            await userManager.UpdateAsync(donorUser);
+            logger.LogInformation("Linked donor login to supporter_id {Id}", supporter.SupporterId);
         }
     }
+
+    var cmEmail = config["GenerateDefaultCaseManager:Email"];
+    if (!string.IsNullOrWhiteSpace(cmEmail))
+    {
+        cmEmail = cmEmail.Trim();
+        var cmUser = await userManager.FindByEmailAsync(cmEmail);
+        if (cmUser is not null)
+        {
+            var batch = await db.Residents
+                .Where(r => r.CaseManagerId == null)
+                .OrderBy(r => r.ResidentId)
+                .Take(25)
+                .ToListAsync();
+            foreach (var r in batch)
+                r.CaseManagerId = cmUser.Id;
+            if (batch.Count > 0)
+            {
+                await db.SaveChangesAsync();
+                logger.LogInformation("Assigned {N} residents to case manager {Email}", batch.Count, cmEmail);
+            }
+        }
+    }
+}
+
+static async Task SeedIdentityUserIfConfigured(
+    UserManager<ApplicationUser> userManager,
+    ILogger logger,
+    IConfigurationSection section,
+    string role,
+    string firstName,
+    string lastName)
+{
+    var email    = section["Email"];
+    var password = section["Password"];
+
+    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+        return;
+
+    var existing = await userManager.FindByEmailAsync(email);
+    if (existing is null)
+    {
+        var user = new ApplicationUser
+        {
+            UserName       = email,
+            Email          = email,
+            FirstName      = firstName,
+            LastName       = lastName,
+            IsActive       = true,
+            EmailConfirmed = true,
+        };
+
+        var result = await userManager.CreateAsync(user, password);
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(user, role);
+            logger.LogInformation("Seeded {Role} user: {Email}", role, email);
+        }
+        else
+        {
+            foreach (var err in result.Errors)
+                logger.LogError("Seed error ({Role}): {Code} — {Description}", role, err.Code, err.Description);
+        }
+
+        return;
+    }
+
+    if (!await userManager.IsInRoleAsync(existing, role))
+        await userManager.AddToRoleAsync(existing, role);
 }

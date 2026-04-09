@@ -14,23 +14,26 @@ public class ReportsController : ControllerBase
 
     // GET /api/reports/donations-by-month
     [HttpGet("donations-by-month")]
-    [Authorize]
+    [Authorize(Roles = AuthRoles.Admin)]
     public async Task<IActionResult> DonationsByMonth()
     {
         try
         {
-            var data = await _db.Donations
+            var rows = await _db.Donations
                 .Where(d => d.Amount.HasValue)
+                .ToListAsync();
+
+            var data = rows
                 .GroupBy(d => new { d.DonationDate.Year, d.DonationDate.Month })
                 .Select(g => new
                 {
-                    Year         = g.Key.Year,
-                    Month        = g.Key.Month,
-                    TotalAmount  = g.Sum(d => d.Amount ?? 0),
+                    Year          = g.Key.Year,
+                    Month         = g.Key.Month,
+                    TotalAmount   = g.Sum(x => x.Amount ?? 0),
                     DonationCount = g.Count(),
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
-                .ToListAsync();
+                .ToList();
 
             return Ok(data);
         }
@@ -42,7 +45,7 @@ public class ReportsController : ControllerBase
 
     // GET /api/reports/residents-by-safehouse
     [HttpGet("residents-by-safehouse")]
-    [Authorize]
+    [Authorize(Roles = AuthRoles.Admin)]
     public async Task<IActionResult> ResidentsBySafehouse()
     {
         try
@@ -72,26 +75,28 @@ public class ReportsController : ControllerBase
 
     // GET /api/reports/avg-health-scores
     [HttpGet("avg-health-scores")]
-    [Authorize]
+    [Authorize(Roles = AuthRoles.Admin)]
     public async Task<IActionResult> AvgHealthScores()
     {
         try
         {
-            var data = await _db.HealthWellbeingRecords
+            var rows = await _db.HealthWellbeingRecords.ToListAsync();
+
+            var data = rows
                 .GroupBy(h => new { h.RecordDate.Year, h.RecordDate.Month })
                 .Select(g => new
                 {
-                    Year                = g.Key.Year,
-                    Month               = g.Key.Month,
-                    AvgGeneralHealth    = g.Average(h => (double?)h.GeneralHealthScore),
-                    AvgNutrition        = g.Average(h => (double?)h.NutritionScore),
-                    AvgSleepQuality     = g.Average(h => (double?)h.SleepQualityScore),
-                    AvgEnergyLevel      = g.Average(h => (double?)h.EnergyLevelScore),
-                    AvgBmi              = g.Average(h => (double?)h.Bmi),
-                    RecordCount         = g.Count(),
+                    Year             = g.Key.Year,
+                    Month            = g.Key.Month,
+                    AvgGeneralHealth = g.Average(x => (double?)x.GeneralHealthScore),
+                    AvgNutrition     = g.Average(x => (double?)x.NutritionScore),
+                    AvgSleepQuality  = g.Average(x => (double?)x.SleepQualityScore),
+                    AvgEnergyLevel   = g.Average(x => (double?)x.EnergyLevelScore),
+                    AvgBmi           = g.Average(x => (double?)x.Bmi),
+                    RecordCount      = g.Count(),
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
-                .ToListAsync();
+                .ToList();
 
             return Ok(data);
         }
@@ -103,7 +108,7 @@ public class ReportsController : ControllerBase
 
     // GET /api/reports/avg-education-scores
     [HttpGet("avg-education-scores")]
-    [Authorize]
+    [Authorize(Roles = AuthRoles.Admin)]
     public async Task<IActionResult> AvgEducationScores()
     {
         try
@@ -131,7 +136,7 @@ public class ReportsController : ControllerBase
 
     // GET /api/reports/reintegration-success-rates
     [HttpGet("reintegration-success-rates")]
-    [Authorize]
+    [Authorize(Roles = AuthRoles.Admin)]
     public async Task<IActionResult> ReintegrationSuccessRates()
     {
         try
@@ -171,7 +176,7 @@ public class ReportsController : ControllerBase
 
     // GET /api/reports/social-media-performance
     [HttpGet("social-media-performance")]
-    [Authorize]
+    [Authorize(Roles = AuthRoles.Admin)]
     public async Task<IActionResult> SocialMediaPerformance()
     {
         try
@@ -234,17 +239,19 @@ public class ReportsController : ControllerBase
                 .Select(g => new { Category = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-            var donationsByMonth = await _db.Donations
+            var donationRows = await _db.Donations
                 .Where(d => d.Amount.HasValue)
+                .ToListAsync();
+            var donationsByMonth = donationRows
                 .GroupBy(d => new { d.DonationDate.Year, d.DonationDate.Month })
                 .Select(g => new
                 {
                     Year        = g.Key.Year,
                     Month       = g.Key.Month,
-                    TotalAmount = g.Sum(d => d.Amount ?? 0),
+                    TotalAmount = g.Sum(x => x.Amount ?? 0),
                 })
                 .OrderBy(x => x.Year).ThenBy(x => x.Month)
-                .ToListAsync();
+                .ToList();
 
             var safehouses = await _db.Safehouses
                 .Where(s => s.Status == "Active")
@@ -280,7 +287,7 @@ public class ReportsController : ControllerBase
 
     // GET /api/reports/program-impact
     [HttpGet("program-impact")]
-    [Authorize]
+    [Authorize(Roles = AuthRoles.Admin)]
     public IActionResult ProgramImpact()
     {
         try

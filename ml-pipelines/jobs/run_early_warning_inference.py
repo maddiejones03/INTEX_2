@@ -405,21 +405,32 @@ def write_resident_early_warning(df: pd.DataFrame) -> None:
             );
         """
 
+        def _f(v):
+            """Convert NaN/None floats to None for SQL."""
+            if v is None:
+                return None
+            try:
+                return None if (isinstance(v, float) and np.isnan(v)) else v
+            except Exception:
+                return v
+
         now = datetime.utcnow().isoformat()
         rows = [
             (
                 int(r.resident_id),
-                r.trend_direction, float(r.cooperation_slope_3m), float(r.cooperation_slope_all),
-                float(r.current_cooperation_score) if r.current_cooperation_score is not None else None,
-                int(r.total_visits),
-                float(r.pct_favorable_outcomes), float(r.pct_safety_concerns),
-                float(r.risk_regression_probability), r.risk_category,
-                r.top_risk_factor_1, r.top_risk_factor_2, r.top_risk_factor_3,
-                r.model_name, now,
+                _f(r.trend_direction), _f(r.cooperation_slope_3m), _f(r.cooperation_slope_all),
+                _f(r.current_cooperation_score),
+                int(r.total_visits) if _f(r.total_visits) is not None else 0,
+                _f(r.pct_favorable_outcomes), _f(r.pct_safety_concerns),
+                _f(r.risk_regression_probability), _f(r.risk_category),
+                _f(r.top_risk_factor_1), _f(r.top_risk_factor_2), _f(r.top_risk_factor_3),
+                _f(r.model_name), now,
             )
             for r in df.itertuples(index=False)
         ]
+        cursor.execute(f"SET IDENTITY_INSERT [{RESIDENT_EW_TABLE}] ON")
         cursor.executemany(merge_sql, rows)
+        cursor.execute(f"SET IDENTITY_INSERT [{RESIDENT_EW_TABLE}] OFF")
         conn.commit()
     print(f"[EW] {len(rows)} rows written to [{RESIDENT_EW_TABLE}].")
 
@@ -505,6 +516,8 @@ def run_inference():
         scores.drop(columns=[], errors="ignore"),
         on="resident_id", how="outer",
     )
+    merged = merged.dropna(subset=["resident_id"])
+    merged["resident_id"] = merged["resident_id"].astype(int)
 
     print("[EW] Writing to Azure SQL...")
     write_resident_early_warning(merged)

@@ -344,13 +344,13 @@ export default function Home() {
       {/* Donate CTA */}
       <section className="section section-donate" id="donate">
         <div className="container container-narrow text-center">
-          <Heart size={40} fill="currentColor" className="donate-icon" />
+          <img src="/LayaLogo.png" alt="Laya Foundation" className="donate-icon" style={{ width: 64, height: 64, objectFit: 'contain' }} />
           <h2 className="section-title">Make a difference today</h2>
           <p className="section-body">
             Your support directly funds shelter, therapy, education, and reintegration services.
             Give money, volunteer your time, or donate goods — every contribution matters.
           </p>
-          <Link to="/donate" className="btn btn-accent btn-lg">
+          <Link to="/donate" className="btn btn-accent btn-lg" style={{ marginTop: '1.5rem' }}>
             Donate Now <ArrowRight size={18} />
           </Link>
         </div>

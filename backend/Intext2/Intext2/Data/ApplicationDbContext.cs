@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Intext2.Models;
 
 namespace Intext2.Data;
@@ -36,25 +35,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(builder);
 
-        var dateOnlyConverter = new ValueConverter<DateOnly, string>(
-            d => d.ToString("yyyy-MM-dd"),
-            s => DateOnly.Parse(s));
-
-        var nullableDateOnlyConverter = new ValueConverter<DateOnly?, string?>(
-            d => d.HasValue ? d.Value.ToString("yyyy-MM-dd") : null,
-            s => s != null ? DateOnly.Parse(s) : null);
-
-        foreach (var entityType in builder.Model.GetEntityTypes())
-        {
-            foreach (var property in entityType.GetProperties())
-            {
-                if (property.ClrType == typeof(DateOnly))
-                    property.SetValueConverter(dateOnlyConverter);
-                else if (property.ClrType == typeof(DateOnly?))
-                    property.SetValueConverter(nullableDateOnlyConverter);
-            }
-        }
-
         builder.Entity<SafehouseMonthlyMetric>()
             .HasIndex(m => new { m.SafehouseId, m.MonthStart })
             .IsUnique();
@@ -67,6 +47,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .HasIndex(r => r.CaseControlNo)
             .IsUnique();
 
+        builder.Entity<Resident>()
+            .HasIndex(r => r.CaseManagerId);
+
         builder.Entity<Safehouse>()
             .HasIndex(s => s.SafehouseCode)
             .IsUnique();
@@ -74,5 +57,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         // The DB has no PartnerId column on donations — ignore the shadow FK
         builder.Entity<Donation>()
             .Ignore("PartnerId");
+
+        builder.Entity<ApplicationUser>()
+            .HasOne(u => u.Supporter)
+            .WithMany()
+            .HasForeignKey(u => u.SupporterId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+
     }
 }

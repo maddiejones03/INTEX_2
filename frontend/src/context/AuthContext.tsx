@@ -11,8 +11,10 @@ import type { AuthSession } from '../types/AuthSession';
 
 const anonymousSession: AuthSession = {
   isAuthenticated: false,
+  userId: null,
   username: null,
   email: null,
+  supporterId: null,
   roles: [],
 };
 
@@ -20,7 +22,7 @@ interface AuthContextType {
   authSession: AuthSession;
   isAuthenticated: boolean;
   isLoading: boolean;
-  refreshAuthSession: () => Promise<void>;
+  refreshAuthSession: () => Promise<AuthSession>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,12 +31,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [authSession, setAuthSession] = useState<AuthSession>(anonymousSession);
   const [isLoading, setIsLoading] = useState(true);
 
-  const refreshAuthSession = useCallback(async () => {
+  const refreshAuthSession = useCallback(async (): Promise<AuthSession> => {
     try {
       const session = await getAuthSession();
-      setAuthSession(session);
+      const merged: AuthSession = {
+        ...anonymousSession,
+        ...session,
+        roles: session.roles ?? [],
+        userId: session.userId ?? null,
+        supporterId: session.supporterId ?? null,
+      };
+      setAuthSession(merged);
+      return merged;
     } catch {
       setAuthSession(anonymousSession);
+      return anonymousSession;
     } finally {
       setIsLoading(false);
     }
