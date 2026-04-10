@@ -44,10 +44,10 @@ public class HomeVisitation
     public string FamilyCooperationLevel { get; set; } = "Cooperative";
 
     [Column("safety_concerns_noted")]
-    public bool SafetyConcernsNoted { get; set; }
+    public int? SafetyConcernsNoted { get; set; }
 
     [Column("follow_up_needed")]
-    public bool FollowUpNeeded { get; set; }
+    public int? FollowUpNeeded { get; set; }
 
     [Column("follow_up_notes")]
     public string? FollowUpNotes { get; set; }
