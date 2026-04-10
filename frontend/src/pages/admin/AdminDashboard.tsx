@@ -89,6 +89,7 @@ export default function AdminDashboard() {
   const [homeVisits, setHomeVisits] = useState<HomeVisitSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingCount, setPendingCount] = useState<number>(0);
+  const [overdueCount, setOverdueCount] = useState<number>(0);
   const [reintegrationSummary, setReintegrationSummary] = useState<ReintegrationSummaryResponse | null>(null);
   const watchlistRef = useRef<HTMLDivElement>(null);
 
@@ -160,6 +161,17 @@ export default function AdminDashboard() {
           );
 
           setPendingCount(atRisk.length);
+
+          const now = Date.now();
+          const daysRemaining = (lastScoredAt: string) => {
+            const scored = new Date(lastScoredAt).getTime();
+            const daysSince = Math.floor((now - scored) / (1000 * 60 * 60 * 24));
+            return 7 - daysSince;
+          };
+          const overdue = atRisk.filter(
+            (d: any) => d.lastScoredAt && daysRemaining(d.lastScoredAt) < 0
+          );
+          setOverdueCount(overdue.length);
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
@@ -192,10 +204,6 @@ export default function AdminDashboard() {
     { icon: Users, label: 'Active Residents', value: activeResidents, sub: `${totalOccupied}/${totalCapacity} capacity`, color: 'blue', to: '/admin/caseload' },
     { icon: CheckCircle, label: 'Total Residents', value: residentSummary?.total ?? '—', sub: 'All time', color: 'green', to: '/admin/caseload' },
   ];
-  const metricsAfterOutreach = [
-    { icon: FolderOpen, label: 'Recent Sessions', value: recentProcess.length, sub: 'Latest process recordings', color: 'amber', to: '/admin/process-recording' },
-  ];
-
   return (
     <div className="admin-page">
       <div className="admin-page-header">
@@ -265,14 +273,55 @@ export default function AdminDashboard() {
                   : 'No donors waiting on the risk watchlist'}
               </div>
             </div>
-            {metricsAfterOutreach.map((m) => (
-              <Link key={m.label} to={m.to} className={`metric-card metric-card-${m.color}`}>
-                <div className={`metric-icon icon-${m.color}`}><m.icon size={20} /></div>
-                <div className="metric-value">{m.value}</div>
-                <div className="metric-label">{m.label}</div>
-                <div className="metric-sub">{m.sub}</div>
-              </Link>
-            ))}
+            <div
+              className="metric-card"
+              onClick={scrollToWatchlist}
+              style={{
+                borderTop: overdueCount > 0
+                  ? '3px solid #dc2626'
+                  : '3px solid #16a34a',
+                cursor: 'pointer',
+                transition: 'box-shadow 0.15s',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLDivElement).style.boxShadow =
+                  '0 4px 12px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '';
+              }}
+            >
+              <div
+                style={{
+                  background: overdueCount > 0 ? '#fef2f2' : '#f0fdf4',
+                  color: overdueCount > 0 ? '#dc2626' : '#16a34a',
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '0.75rem',
+                  fontSize: '16px',
+                }}
+              >
+                ✉
+              </div>
+              <div
+                className="metric-value"
+                style={{
+                  color: overdueCount > 0 ? '#dc2626' : '#16a34a',
+                }}
+              >
+                {overdueCount}
+              </div>
+              <div className="metric-label">Overdue outreach</div>
+              <div className="metric-sub">
+                {overdueCount === 0
+                  ? 'No donors past 7-day window ✓'
+                  : `${overdueCount} donor${overdueCount > 1 ? 's' : ''} past 7-day window`}
+              </div>
+            </div>
           </div>
 
           <div className="dashboard-row">
