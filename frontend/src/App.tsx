@@ -12,6 +12,7 @@ import Home from './pages/public/Home';
 import DonatePage from './pages/public/DonatePage';
 import ImpactDashboard from './pages/public/ImpactDashboard';
 import Login from './pages/public/Login';
+import Register from './pages/public/Register';
 import PrivacyPolicy from './pages/public/PrivacyPolicy';
 
 import AdminDashboard from './pages/admin/AdminDashboard';
