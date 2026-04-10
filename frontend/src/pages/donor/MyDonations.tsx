@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, AlertCircle, ArrowRight } from 'lucide-react';
 import { getApiBaseUrl } from '../../services/authApi';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 interface DonationRow {
   donationId: number;
@@ -14,6 +15,7 @@ interface DonationRow {
 }
 
 export default function MyDonations() {
+  useDocumentTitle('My donations', 'public');
   const [items, setItems] = useState<DonationRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);

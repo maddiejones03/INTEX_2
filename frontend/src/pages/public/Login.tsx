@@ -3,6 +3,8 @@ import type { FormEvent, KeyboardEvent } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { signInWithPortal, type AuthPortal } from '../../services/authApi';
+import CookieConsent from '../../components/ui/CookieConsent';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { Eye, EyeOff, AlertCircle, Lock, Mail } from 'lucide-react';
 
 const PORTAL_OPTIONS: { value: AuthPortal; label: string; description: string }[] = [
@@ -12,6 +14,7 @@ const PORTAL_OPTIONS: { value: AuthPortal; label: string; description: string }[
 ];
 
 export default function Login() {
+  useDocumentTitle('Sign in', 'public');
   const { refreshAuthSession, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,7 +56,8 @@ export default function Login() {
         const dest = from.startsWith('/case-manager') ? from : '/case-manager/caseload';
         navigate(dest, { replace: true });
       } else {
-        navigate('/', { replace: true });
+        const donorDest = from.startsWith('/donor') ? from : '/donor/donations';
+        navigate(donorDest, { replace: true });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed.');
@@ -169,10 +173,15 @@ export default function Login() {
 
         <div className="login-footer">
           <Link to="/">← Back to public site</Link>
+          <span className="login-footer-sep" aria-hidden>
+            ·
+          </span>
+          <Link to="/privacy">Privacy policy</Link>
         </div>
       </div>
 
       <div className="login-bg-pattern" />
+      <CookieConsent />
     </div>
   );
 }
