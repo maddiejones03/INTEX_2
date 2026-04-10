@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, AlertCircle, ArrowRight } from 'lucide-react';
 import { getApiBaseUrl } from '../../services/authApi';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 interface DonationRow {
   donationId: number;
@@ -14,6 +15,7 @@ interface DonationRow {
 }
 
 export default function MyDonations() {
+  useDocumentTitle('My donations', 'public');
   const [items, setItems] = useState<DonationRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -56,7 +58,7 @@ export default function MyDonations() {
         <header className="my-donations-header">
           <div className="my-donations-header-text">
             <h1 className="section-title" style={{ marginBottom: '0.5rem' }}>
-              Your giving history
+              Your Giving History
             </h1>
             <p className="section-body" style={{ marginBottom: 0 }}>
               Thank you for supporting Laya Foundation. Below is a record of donations tied to your account.

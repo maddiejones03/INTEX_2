@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, Clock } from 'lucide-react';
 import { apiFetch } from '../../services/apiClient';
 import type { ResidentEarlyWarning, RiskAlert } from '../../types/index';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 // ---- Types for API responses ----
 interface DashboardResponse {
@@ -90,13 +91,14 @@ interface KrCompliance {
 
 // ---- Main Component ----
 export default function EarlyWarning() {
-  const [dashboard, setDashboard]     = useState<DashboardResponse | null>(null);
-  const [residents, setResidents]     = useState<ResidentEarlyWarning[]>([]);
-  const [alerts, setAlerts]           = useState<RiskAlert[]>([]);
+  useDocumentTitle('Early Warning');
+  const [dashboard, setDashboard]       = useState<DashboardResponse | null>(null);
+  const [residents, setResidents]       = useState<ResidentEarlyWarning[]>([]);
+  const [alerts, setAlerts]             = useState<RiskAlert[]>([]);
   const [krCompliance, setKrCompliance] = useState<KrCompliance | null>(null);
-  const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState<string | null>(null);
-  const [riskFilter, setRiskFilter]   = useState('');
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState<string | null>(null);
+  const [riskFilter, setRiskFilter]     = useState('');
   const [lowRiskExpanded, setLowRiskExpanded] = useState(false);
 
   useEffect(() => {
@@ -229,10 +231,10 @@ export default function EarlyWarning() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Resident ID</th>
-                  <th>Alert Type</th>
-                  <th>Severity</th>
-                  <th>Detail</th>
+                  <th scope="col">Resident ID</th>
+                  <th scope="col">Alert Type</th>
+                  <th scope="col">Severity</th>
+                  <th scope="col">Detail</th>
                 </tr>
               </thead>
               <tbody>
@@ -273,10 +275,10 @@ export default function EarlyWarning() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Resident ID</th>
-                <th>Risk Level</th>
-                <th>Likelihood</th>
-                <th>Key Concerns</th>
+                <th scope="col">Resident ID</th>
+                <th scope="col">Risk Level</th>
+                <th scope="col">Likelihood</th>
+                <th scope="col">Key Concerns</th>
               </tr>
             </thead>
             <tbody>

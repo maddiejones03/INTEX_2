@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
-  Search, Plus, Filter, AlertCircle, Eye, Edit2, Trash2,
+  Search, Plus, Filter, AlertCircle, Edit2, Trash2,
   ChevronLeft, ChevronRight, X, Check,
 } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import { getApiBaseUrl } from '../../services/authApi';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const CASE_CATEGORIES = ['Trafficked', 'Physical Abuse', 'Sexual Abuse', 'Neglect', 'Psychological Abuse', 'Economic Abuse', 'Abandoned', 'CICL'];
 const CASE_STATUSES = ['Active', 'Reintegrated', 'Transferred', 'Runaway', 'Deceased', 'Closed'];
@@ -45,6 +46,7 @@ interface ResidentDetail {
   dateOfBirth: string;
   caseCategory: string;
   currentRiskLevel: string;
+  initialRiskLevel: string;
   dateOfAdmission: string;
   reintegrationStatus: string;
   assignedSocialWorker: string;
@@ -64,6 +66,7 @@ interface ResidentDetail {
   caseManagerView?: boolean;
 }
 
+// ── View-only modal (used by case managers) ───────────────────────────────────
 function ResidentModal({
   residentId,
   onClose,
@@ -167,7 +170,169 @@ function ResidentModal({
   );
 }
 
+// ── Edit modal (admins, wired to pencil button) ───────────────────────────────
+function EditResidentModal({
+  resident,
+  safehouses,
+  onClose,
+  onSaved,
+}: {
+  resident: Resident;
+  safehouses: Safehouse[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [form, setForm] = useState({
+    caseControlNo: resident.caseControlNo || '',
+    internalCode: resident.internalCode || '',
+    sex: resident.sex || 'F',
+    dateOfBirth: resident.dateOfBirth ? resident.dateOfBirth.split('T')[0] : '',
+    caseCategory: resident.caseCategory || 'Neglect',
+    caseStatus: resident.caseStatus || 'Active',
+    currentRiskLevel: resident.currentRiskLevel || 'Medium',
+    initialRiskLevel: resident.initialRiskLevel || 'Medium',
+    safehouseId: String(resident.safehouseId || ''),
+    assignedSocialWorker: resident.assignedSocialWorker || '',
+    reintegrationStatus: resident.reintegrationStatus || '',
+    dateOfAdmission: resident.dateOfAdmission ? resident.dateOfAdmission.split('T')[0] : '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    if (!form.caseControlNo.trim()) { setError('Case control number is required.'); return; }
+    if (!form.safehouseId) { setError('Safe house is required.'); return; }
+    setSaving(true);
+    setError('');
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/residents/${resident.residentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          residentId: resident.residentId,
+          caseControlNo: form.caseControlNo,
+          internalCode: form.internalCode,
+          sex: form.sex,
+          dateOfBirth: form.dateOfBirth || null,
+          caseCategory: form.caseCategory,
+          caseStatus: form.caseStatus,
+          currentRiskLevel: form.currentRiskLevel,
+          initialRiskLevel: form.initialRiskLevel,
+          safehouseId: Number(form.safehouseId),
+          assignedSocialWorker: form.assignedSocialWorker,
+          reintegrationStatus: form.reintegrationStatus,
+          dateOfAdmission: form.dateOfAdmission || null,
+          createdAt: resident.createdAt,
+        }),
+      });
+      if (res.ok) {
+        onSaved();
+        onClose();
+      } else {
+        let message = 'Failed to update resident.';
+        try {
+          const err = await res.json();
+          message = err?.message || err?.detail || message;
+        } catch { /* keep fallback */ }
+        setError(message);
+      }
+    } catch {
+      setError('Failed to update resident.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 640 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Edit Resident</h2>
+          <button className="modal-close" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="modal-body">
+          {error && <div className="alert alert-error"><AlertCircle size={14} /> {error}</div>}
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Case Control No. *</label>
+              <input className="form-input" value={form.caseControlNo} onChange={e => setForm({ ...form, caseControlNo: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Internal Code</label>
+              <input className="form-input" value={form.internalCode} onChange={e => setForm({ ...form, internalCode: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Date of Birth</label>
+              <input className="form-input" type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Sex</label>
+              <select className="form-select" value={form.sex} onChange={e => setForm({ ...form, sex: e.target.value })}>
+                <option value="F">Female</option>
+                <option value="M">Male</option>
+                <option value="O">Other</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Case Category</label>
+              <select className="form-select" value={form.caseCategory} onChange={e => setForm({ ...form, caseCategory: e.target.value })}>
+                {CASE_CATEGORIES.map(c => <option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Case Status</label>
+              <select className="form-select" value={form.caseStatus} onChange={e => setForm({ ...form, caseStatus: e.target.value })}>
+                {CASE_STATUSES.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Initial Risk Level</label>
+              <select className="form-select" value={form.initialRiskLevel} onChange={e => setForm({ ...form, initialRiskLevel: e.target.value })}>
+                {RISK_LEVELS.map(r => <option key={r}>{r}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Current Risk Level</label>
+              <select className="form-select" value={form.currentRiskLevel} onChange={e => setForm({ ...form, currentRiskLevel: e.target.value })}>
+                {RISK_LEVELS.map(r => <option key={r}>{r}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Safe House *</label>
+              <select className="form-select" value={form.safehouseId} onChange={e => setForm({ ...form, safehouseId: e.target.value })}>
+                <option value="">Select safehouse</option>
+                {safehouses.map(s => <option key={s.safehouseId} value={s.safehouseId}>{s.name}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Assigned Social Worker</label>
+              <input className="form-input" value={form.assignedSocialWorker} onChange={e => setForm({ ...form, assignedSocialWorker: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Reintegration Status</label>
+              <input className="form-input" value={form.reintegrationStatus} onChange={e => setForm({ ...form, reintegrationStatus: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Date of Admission</label>
+              <input className="form-input" type="date" value={form.dateOfAdmission} onChange={e => setForm({ ...form, dateOfAdmission: e.target.value })} />
+            </div>
+          </div>
+        </div>
+        <div className="modal-footer" style={{ padding: '1rem 1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
+            <Check size={14} /> {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function CaseloadInventory() {
+  useDocumentTitle('Residents');
   const location = useLocation();
   const readOnly = location.pathname.startsWith('/case-manager');
 
@@ -183,7 +348,8 @@ export default function CaseloadInventory() {
   const [filterRiskLevel, setFilterRiskLevel] = useState('All');
   const [filterSafehouse, setFilterSafehouse] = useState('All');
   const [page, setPage] = useState(1);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);    // view modal (case managers)
+  const [editTarget, setEditTarget] = useState<Resident | null>(null);  // edit modal (admins)
   const [showAddForm, setShowAddForm] = useState(false);
   const [newResident, setNewResident] = useState({
     caseControlNo: '',
@@ -210,21 +376,9 @@ export default function CaseloadInventory() {
       if (filterRiskLevel !== 'All') params.set('currentRiskLevel', filterRiskLevel);
       if (filterSafehouse !== 'All') params.set('safehouseId', filterSafehouse);
 
-      const activeParams = new URLSearchParams({
-        page: '1',
-        pageSize: '1',
-        caseStatus: 'Active',
-      });
-      const highRiskParams = new URLSearchParams({
-        page: '1',
-        pageSize: '1',
-        currentRiskLevel: 'High',
-      });
-      const criticalRiskParams = new URLSearchParams({
-        page: '1',
-        pageSize: '1',
-        currentRiskLevel: 'Critical',
-      });
+      const activeParams = new URLSearchParams({ page: '1', pageSize: '1', caseStatus: 'Active' });
+      const highRiskParams = new URLSearchParams({ page: '1', pageSize: '1', currentRiskLevel: 'High' });
+      const criticalRiskParams = new URLSearchParams({ page: '1', pageSize: '1', currentRiskLevel: 'Critical' });
 
       const [res, activeRes, highRiskRes, criticalRiskRes] = await Promise.all([
         fetch(`${getApiBaseUrl()}/api/residents?${params}`, { credentials: 'include' }),
@@ -238,12 +392,10 @@ export default function CaseloadInventory() {
         setResidents(data.items);
         setTotal(data.total);
       }
-
       if (activeRes.ok) {
         const activeData: { total: number } = await activeRes.json();
         setTotalActiveResidents(activeData.total);
       }
-
       if (highRiskRes.ok && criticalRiskRes.ok) {
         const highRiskData: { total: number } = await highRiskRes.json();
         const criticalRiskData: { total: number } = await criticalRiskRes.json();
@@ -259,13 +411,12 @@ export default function CaseloadInventory() {
   useEffect(() => { fetchResidents(); }, [fetchResidents]);
 
   useEffect(() => {
-    if (readOnly) {
-      setSafehouses([]);
-      return;
-    }
+    if (readOnly) { setSafehouses([]); return; }
     fetch(`${getApiBaseUrl()}/api/reports/residents-by-safehouse`, { credentials: 'include' })
       .then(r => r.json())
-      .then(data => setSafehouses(data.map((s: { safehouseId: number; name: string; city: string }) => ({ safehouseId: s.safehouseId, name: s.name, city: s.city }))))
+      .then(data => setSafehouses(data.map((s: { safehouseId: number; name: string; city: string }) => ({
+        safehouseId: s.safehouseId, name: s.name, city: s.city,
+      }))))
       .catch(() => {});
   }, [readOnly]);
 
@@ -303,12 +454,7 @@ export default function CaseloadInventory() {
         fetchResidents();
       } else {
         let message = 'Failed to create resident.';
-        try {
-          const err = await res.json();
-          message = err?.message || err?.detail || message;
-        } catch {
-          // keep fallback message
-        }
+        try { const err = await res.json(); message = err?.message || err?.detail || message; } catch { /* keep fallback */ }
         setFormError(message);
       }
     } catch {
@@ -352,7 +498,6 @@ export default function CaseloadInventory() {
         )}
       </div>
 
-      {/* Summary */}
       <div className="metrics-grid metrics-grid-4">
         <div className="metric-card metric-card-blue">
           <div className="metric-value">{total}</div>
@@ -372,12 +517,11 @@ export default function CaseloadInventory() {
         </div>
       </div>
 
-      {/* Add form */}
       {!readOnly && showAddForm && (
         <div className="inline-form-card">
           <div className="inline-form-header">
             <h3><Plus size={16} /> New Resident Record</h3>
-            <button className="btn-icon" onClick={() => setShowAddForm(false)}><X size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setShowAddForm(false)} aria-label="Close add resident form"><X size={16} aria-hidden /></button>
           </div>
           {formError && <div className="alert alert-error"><AlertCircle size={14} /> {formError}</div>}
           <div className="form-row">
@@ -436,14 +580,13 @@ export default function CaseloadInventory() {
         </div>
       )}
 
-      {/* Filters */}
       <div className="filter-bar">
         <div className="search-wrapper">
-          <Search size={16} className="search-icon" />
+          <Search size={16} className="search-icon" aria-hidden />
           <input className="search-input" placeholder="Search by case number…" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
         <div className="filter-group">
-          <Filter size={14} />
+          <Filter size={14} aria-hidden />
           <select className="form-select" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
             <option value="All">All Status</option>
             {CASE_STATUSES.map((s) => <option key={s}>{s}</option>)}
@@ -469,7 +612,6 @@ export default function CaseloadInventory() {
         <span className="results-count">{total} record{total !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* Table */}
       <div className="table-card">
         {loading ? (
           <div style={{ textAlign: 'center', padding: '2rem' }}>Loading residents...</div>
@@ -477,16 +619,16 @@ export default function CaseloadInventory() {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Case #</th>
-                <th>Internal Code</th>
-                <th>Sex</th>
-                <th>Category</th>
-                <th>Safe House</th>
-                <th>Social Worker</th>
-                <th>Admission</th>
-                <th>Risk</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th scope="col">Case #</th>
+                <th scope="col">Internal Code</th>
+                <th scope="col">Sex</th>
+                <th scope="col">Category</th>
+                <th scope="col">Safe House</th>
+                <th scope="col">Social Worker</th>
+                <th scope="col">Admission</th>
+                <th scope="col">Risk</th>
+                <th scope="col">Status</th>
+                <th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -498,16 +640,40 @@ export default function CaseloadInventory() {
                   <td><span className="category-chip">{r.caseCategory}</span></td>
                   <td className="table-secondary">{safehouses.find(s => s.safehouseId === r.safehouseId)?.name ?? `#${r.safehouseId}`}</td>
                   <td className="table-secondary">{r.assignedSocialWorker || '—'}</td>
-                  <td className="table-secondary">{r.dateOfAdmission ? new Date(r.dateOfAdmission).toLocaleDateString() : '—'}</td>
+                  <td className="table-secondary">{r.dateOfAdmission ? r.dateOfAdmission.split("T")[0] :  '—'}</td>
                   <td><span className={`status-badge ${r.currentRiskLevel === 'High' || r.currentRiskLevel === 'Critical' ? 'status-danger' : ''}`}>{r.currentRiskLevel || '—'}</span></td>
                   <td><span className={`status-badge status-${r.caseStatus?.toLowerCase().replace(' ', '-')}`}>{r.caseStatus}</span></td>
                   <td>
                     <div className="action-btns">
-                      <button type="button" className="btn-icon" title="View" onClick={() => setSelectedId(r.residentId)}><Eye size={15} /></button>
-                      {!readOnly && (
+                      {readOnly ? (
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
+                          style={{ fontSize: '0.8125rem', padding: '0.35rem 0.6rem' }}
+                          onClick={() => setSelectedId(r.residentId)}
+                        >
+                          View
+                        </button>
+                      ) : (
                         <>
-                          <button type="button" className="btn-icon" title="Edit"><Edit2 size={15} /></button>
-                          <button type="button" className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(r)}><Trash2 size={15} /></button>
+                          <button
+                            type="button"
+                            className="btn-icon"
+                            title="Edit"
+                            aria-label={`Edit resident ${r.caseControlNo}`}
+                            onClick={() => setEditTarget(r)}
+                          >
+                            <Edit2 size={15} aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-icon btn-icon-danger"
+                            title="Delete"
+                            aria-label={`Delete resident ${r.caseControlNo}`}
+                            onClick={() => setDeleteTarget(r)}
+                          >
+                            <Trash2 size={15} aria-hidden />
+                          </button>
                         </>
                       )}
                     </div>
@@ -523,13 +689,14 @@ export default function CaseloadInventory() {
 
         {totalPages > 1 && (
           <div className="pagination">
-            <button className="btn-icon" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}><ChevronLeft size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} aria-label="Previous page"><ChevronLeft size={16} aria-hidden /></button>
             <span>Page {page} of {totalPages}</span>
-            <button className="btn-icon" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}><ChevronRight size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} aria-label="Next page"><ChevronRight size={16} aria-hidden /></button>
           </div>
         )}
       </div>
 
+      {/* View modal — case managers only */}
       {selectedId !== null && (
         <ResidentModal
           residentId={selectedId}
@@ -537,6 +704,17 @@ export default function CaseloadInventory() {
           caseManagerUi={readOnly}
         />
       )}
+
+      {/* Edit modal — admins via pencil button */}
+      {editTarget !== null && (
+        <EditResidentModal
+          resident={editTarget}
+          safehouses={safehouses}
+          onClose={() => setEditTarget(null)}
+          onSaved={fetchResidents}
+        />
+      )}
+
       <ConfirmDeleteModal
         isOpen={deleteTarget !== null}
         onConfirm={handleDelete}

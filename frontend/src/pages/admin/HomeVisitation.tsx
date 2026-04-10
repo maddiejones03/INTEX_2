@@ -1,36 +1,115 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, Eye, Trash2, X, Check, AlertCircle, Home, Search } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  Plus,
+  Eye,
+  Trash2,
+  X,
+  Check,
+  AlertCircle,
+  Home,
+  Search,
+  CalendarClock,
+  ClipboardList,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import { getApiBaseUrl } from '../../services/authApi';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const API_BASE = getApiBaseUrl();
 
 const VISIT_TYPES = ['Initial Assessment', 'Routine Follow-Up', 'Reintegration Assessment', 'Post-Placement Monitoring', 'Emergency'];
 const COOPERATION_LEVELS = ['High', 'Moderate', 'Low', 'Uncooperative'];
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 100;
+const CONFERENCE_PAGE_SIZE = 100;
+const TABLE_PREVIEW_ROWS = 10;
+
+interface CaseConference {
+  conferenceId: number;
+  residentId: number;
+  conferenceDate: string;
+  conferenceType: string;
+  facilitator: string | null;
+  agenda: string | null;
+  discussionNotes: string | null;
+  actionItems: string | null;
+  status: string;
+}
+
+function conferenceDateKey(s: string | null | undefined): string {
+  if (!s?.trim()) return '';
+  return s.slice(0, 10);
+}
 
 interface HomeVisit {
   visitationId: number;
   residentId: number;
-  visitDate: string;
-  socialWorker: string;
-  visitType: string;
-  locationVisited: string;
-  familyMembersPresent: string;
-  purpose: string;
-  observations: string;
-  familyCooperationLevel: string;
-  safetyConcernsNoted: boolean | number;
-  followUpNeeded: boolean | number;
-  followUpNotes: string;
-  visitOutcome: string;
-  cooperationNumeric: number;
-  outcomeNumeric: number;
+  visitDate: string | null;
+  socialWorker?: string | null;
+  visitType?: string | null;
+  locationVisited?: string | null;
+  familyMembersPresent?: string | null;
+  purpose?: string | null;
+  observations?: string | null;
+  familyCooperationLevel?: string | null;
+  safetyConcernsNoted?: boolean | number | null;
+  followUpNeeded?: boolean | number | null;
+  followUpNotes?: string | null;
+  visitOutcome?: string | null;
+  cooperationNumeric?: number | null;
+  outcomeNumeric?: number | null;
 }
 
 function asBool(value: boolean | number | null | undefined): boolean {
   if (typeof value === 'boolean') return value;
   return (value ?? 0) !== 0;
+}
+
+function startOfTodayMs(): number {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+function parseVisitDate(iso: string | null | undefined): Date | null {
+  if (!iso?.trim()) return null;
+  const d = new Date(iso.includes('T') ? iso : `${iso}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function formatVisitDate(iso: string | null | undefined): string {
+  const d = parseVisitDate(iso);
+  return d ? d.toLocaleDateString() : '—';
+}
+
+function formatConferenceDate(iso: string | null | undefined): string {
+  return formatVisitDate(iso);
+}
+
+function visitDayMs(iso: string | null | undefined): number | null {
+  const d = parseVisitDate(iso);
+  if (!d) return null;
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x.getTime();
+}
+
+/** Scheduled today/future, or open follow-up from a past (or undated) visit. */
+function isUpcomingVisit(v: HomeVisit): boolean {
+  const day = visitDayMs(v.visitDate);
+  const today = startOfTodayMs();
+  if (day != null && day >= today) return true;
+  if (asBool(v.followUpNeeded)) {
+    if (day == null) return true;
+    return day < today;
+  }
+  return false;
+}
+
+function coopBadgeClass(level: string | null | undefined): string {
+  const slug = (level ?? 'unknown').toLowerCase().replace(/\s+/g, '-');
+  return `cooperation-badge coop-${slug}`;
 }
 
 interface Resident {
@@ -39,23 +118,43 @@ interface Resident {
 }
 
 function VisitModal({ visit, onClose }: { visit: HomeVisit; onClose: () => void }) {
+  const visitD = parseVisitDate(visit.visitDate);
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div
+        className="modal modal-lg"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="home-visit-modal-title"
+      >
         <div className="modal-header">
           <div>
-            <h2>Home Visit Record</h2>
-            <p className="modal-subtitle">Resident #{visit.residentId} · {new Date(visit.visitDate).toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <h2 id="home-visit-modal-title">Home Visit Record</h2>
+            <p className="modal-subtitle">
+              Resident #{visit.residentId} ·{' '}
+              {visitD
+                ? visitD.toLocaleDateString('en-PH', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })
+                : 'No date'}
+            </p>
           </div>
-          <button className="modal-close" onClick={onClose}><X size={18} /></button>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Close dialog"><X size={18} aria-hidden /></button>
         </div>
         <div className="modal-body">
           <div className="detail-grid">
-            <div className="detail-item"><span>Visit Type</span><span className="category-chip">{visit.visitType}</span></div>
+            <div className="detail-item"><span>Visit Type</span><span className="category-chip">{visit.visitType ?? '—'}</span></div>
             <div className="detail-item"><span>Social Worker</span><strong>{visit.socialWorker || '—'}</strong></div>
             <div className="detail-item"><span>Location</span><strong>{visit.locationVisited || '—'}</strong></div>
             <div className="detail-item"><span>Family Members Present</span><strong>{visit.familyMembersPresent || '—'}</strong></div>
-            <div className="detail-item"><span>Family Cooperation</span><span className={`cooperation-badge coop-${visit.familyCooperationLevel?.toLowerCase()}`}>{visit.familyCooperationLevel}</span></div>
+            <div className="detail-item">
+              <span>Family Cooperation</span>
+              <span className={coopBadgeClass(visit.familyCooperationLevel)}>{visit.familyCooperationLevel ?? '—'}</span>
+            </div>
             <div className="detail-item"><span>Safety Concerns</span><strong>{asBool(visit.safetyConcernsNoted) ? 'Yes' : 'None'}</strong></div>
             <div className="detail-item"><span>Follow-Up Needed</span><strong>{asBool(visit.followUpNeeded) ? 'Yes' : 'No'}</strong></div>
             <div className="detail-item"><span>Visit Outcome</span><strong>{visit.visitOutcome || '—'}</strong></div>
@@ -85,6 +184,7 @@ function VisitModal({ visit, onClose }: { visit: HomeVisit; onClose: () => void 
 }
 
 export default function HomeVisitation() {
+  useDocumentTitle('Home Visitation & Case Conferences');
   const [visits, setVisits] = useState<HomeVisit[]>([]);
   const [residents, setResidents] = useState<Resident[]>([]);
   const [total, setTotal] = useState(0);
@@ -107,14 +207,20 @@ export default function HomeVisitation() {
     followUpNotes: '',
     purpose: '',
   });
+  const [upcomingLimit, setUpcomingLimit] = useState(TABLE_PREVIEW_ROWS);
+  const [pastLimit, setPastLimit] = useState(TABLE_PREVIEW_ROWS);
+  const [confUpcoming, setConfUpcoming] = useState<CaseConference[]>([]);
+  const [confPast, setConfPast] = useState<CaseConference[]>([]);
+  const [confLoading, setConfLoading] = useState(true);
+  const [confError, setConfError] = useState('');
+  const [confUpcomingLimit, setConfUpcomingLimit] = useState(TABLE_PREVIEW_ROWS);
+  const [confPastLimit, setConfPastLimit] = useState(TABLE_PREVIEW_ROWS);
 
   const fetchVisits = useCallback(async () => {
     setLoading(true);
     setLoadError('');
     try {
       const params = new URLSearchParams({ page: '1', pageSize: String(PAGE_SIZE) });
-      if (filterType !== 'All') params.set('visitType', filterType);
-
       const res = await fetch(`${API_BASE}/api/homevisitations?${params}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
@@ -130,9 +236,103 @@ export default function HomeVisitation() {
     } finally {
       setLoading(false);
     }
-  }, [filterType]);
+  }, []);
 
   useEffect(() => { fetchVisits(); }, [fetchVisits]);
+
+  const fetchCaseConferences = useCallback(async () => {
+    setConfLoading(true);
+    setConfError('');
+    try {
+      const params = new URLSearchParams({ page: '1', pageSize: String(CONFERENCE_PAGE_SIZE) });
+      const up = new URLSearchParams(params);
+      up.set('upcoming', 'true');
+      const past = new URLSearchParams(params);
+      past.set('upcoming', 'false');
+
+      const [resUp, resPast] = await Promise.all([
+        fetch(`${API_BASE}/api/caseconferences?${up}`, { credentials: 'include' }),
+        fetch(`${API_BASE}/api/caseconferences?${past}`, { credentials: 'include' }),
+      ]);
+
+      if (!resUp.ok) {
+        const t = await resUp.text();
+        throw new Error(t || `Upcoming conferences failed (${resUp.status})`);
+      }
+      if (!resPast.ok) {
+        const t = await resPast.text();
+        throw new Error(t || `Past conferences failed (${resPast.status})`);
+      }
+
+      const dataUp = (await resUp.json()) as { items?: CaseConference[] };
+      const dataPast = (await resPast.json()) as { items?: CaseConference[] };
+      setConfUpcoming(dataUp.items ?? []);
+      setConfPast(dataPast.items ?? []);
+    } catch (e) {
+      console.error(e);
+      setConfError(e instanceof Error ? e.message : 'Could not load case conferences.');
+      setConfUpcoming([]);
+      setConfPast([]);
+    } finally {
+      setConfLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchCaseConferences();
+  }, [fetchCaseConferences]);
+
+  const filterConferenceBySearch = useCallback(
+    (list: CaseConference[]) => {
+      const q = search.trim().toLowerCase();
+      if (!q) return list;
+      return list.filter((c) => {
+        const caseNo = residents.find((r) => r.residentId === c.residentId)?.caseControlNo?.toLowerCase() ?? '';
+        return String(c.residentId).includes(q) || caseNo.includes(q);
+      });
+    },
+    [search, residents]
+  );
+
+  const scheduledConferences = useMemo(() => {
+    return filterConferenceBySearch(confUpcoming)
+      .filter((c) => (c.status ?? '').toLowerCase() !== 'cancelled')
+      .slice()
+      .sort((a, b) =>
+        conferenceDateKey(a.conferenceDate).localeCompare(conferenceDateKey(b.conferenceDate))
+      );
+  }, [confUpcoming, filterConferenceBySearch]);
+
+  const pastConferencesSorted = useMemo(() => {
+    return filterConferenceBySearch(confPast)
+      .slice()
+      .sort((a, b) =>
+        conferenceDateKey(b.conferenceDate).localeCompare(conferenceDateKey(a.conferenceDate))
+      );
+  }, [confPast, filterConferenceBySearch]);
+
+  const confUpcomingVisible = useMemo(
+    () => scheduledConferences.slice(0, confUpcomingLimit),
+    [scheduledConferences, confUpcomingLimit]
+  );
+  const confPastVisible = useMemo(
+    () => pastConferencesSorted.slice(0, confPastLimit),
+    [pastConferencesSorted, confPastLimit]
+  );
+
+  useEffect(() => {
+    setConfUpcomingLimit((prev) => {
+      if (scheduledConferences.length === 0) return TABLE_PREVIEW_ROWS;
+      return Math.min(Math.max(TABLE_PREVIEW_ROWS, prev), scheduledConferences.length);
+    });
+  }, [scheduledConferences.length]);
+
+  useEffect(() => {
+    setConfPastLimit((prev) => {
+      if (pastConferencesSorted.length === 0) return TABLE_PREVIEW_ROWS;
+      return Math.min(Math.max(TABLE_PREVIEW_ROWS, prev), pastConferencesSorted.length);
+    });
+  }, [pastConferencesSorted.length]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -160,10 +360,64 @@ export default function HomeVisitation() {
       .catch(() => {});
   }, []);
 
-  const filteredVisits = visits.filter((v) => {
-    const q = search.toLowerCase();
-    return (v.socialWorker?.toLowerCase().includes(q) || String(v.residentId).includes(q));
-  });
+  const baseFiltered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return visits.filter((v) => {
+      if (filterType !== 'All' && v.visitType !== filterType) return false;
+      if (!q) return true;
+      const caseNo = residents.find((r) => r.residentId === v.residentId)?.caseControlNo?.toLowerCase() ?? '';
+      return (
+        (v.socialWorker?.toLowerCase().includes(q) ?? false) ||
+        String(v.residentId).includes(q) ||
+        caseNo.includes(q)
+      );
+    });
+  }, [visits, search, filterType, residents]);
+
+  const upcomingVisits = useMemo(() => {
+    const list = baseFiltered.filter(isUpcomingVisit);
+    const today = startOfTodayMs();
+    list.sort((a, b) => {
+      const overdue = (x: HomeVisit) => {
+        if (!asBool(x.followUpNeeded)) return 1;
+        const d = visitDayMs(x.visitDate);
+        if (d == null) return 0;
+        return d < today ? 0 : 1;
+      };
+      const o = overdue(a) - overdue(b);
+      if (o !== 0) return o;
+      const da = visitDayMs(a.visitDate) ?? Number.MAX_SAFE_INTEGER;
+      const db = visitDayMs(b.visitDate) ?? Number.MAX_SAFE_INTEGER;
+      return da - db;
+    });
+    return list;
+  }, [baseFiltered]);
+
+  const pastVisits = useMemo(() => {
+    const list = baseFiltered.filter((v) => !isUpcomingVisit(v));
+    list.sort((a, b) => (visitDayMs(b.visitDate) ?? 0) - (visitDayMs(a.visitDate) ?? 0));
+    return list;
+  }, [baseFiltered]);
+
+  const upcomingVisible = useMemo(
+    () => upcomingVisits.slice(0, upcomingLimit),
+    [upcomingVisits, upcomingLimit]
+  );
+  const pastVisible = useMemo(() => pastVisits.slice(0, pastLimit), [pastVisits, pastLimit]);
+
+  useEffect(() => {
+    setUpcomingLimit((prev) => {
+      if (upcomingVisits.length === 0) return TABLE_PREVIEW_ROWS;
+      return Math.min(Math.max(TABLE_PREVIEW_ROWS, prev), upcomingVisits.length);
+    });
+  }, [upcomingVisits.length]);
+
+  useEffect(() => {
+    setPastLimit((prev) => {
+      if (pastVisits.length === 0) return TABLE_PREVIEW_ROWS;
+      return Math.min(Math.max(TABLE_PREVIEW_ROWS, prev), pastVisits.length);
+    });
+  }, [pastVisits.length]);
 
   const handleAddVisit = async () => {
     if (!newVisit.observations.trim()) {
@@ -207,14 +461,32 @@ export default function HomeVisitation() {
     }
   };
 
-  const emergencyCount = visits.filter(v => v.visitType === 'Emergency').length;
+  const emergencyCount = visits.filter((v) => v.visitType === 'Emergency').length;
+
+  function upcomingKind(v: HomeVisit): { label: string; className: string } {
+    const day = visitDayMs(v.visitDate);
+    const today = startOfTodayMs();
+    if (day != null && day >= today) return { label: 'Scheduled', className: 'status-badge status-scheduled' };
+    if (asBool(v.followUpNeeded)) return { label: 'Follow-up due', className: 'status-badge' };
+    return { label: '—', className: 'table-secondary' };
+  }
 
   return (
     <div className="admin-page">
       <div className="admin-page-header">
         <div>
-          <h1>Home Visitation</h1>
-          <p>Log field visits and track home visitation history.</p>
+          <h1>Home Visitation &amp; Case Conferences</h1>
+          <p>
+            Log field visits, review visit history, and track <strong>scheduled case conferences</strong> from the database.
+            Visit tables: <strong>Upcoming</strong> includes visits on or after today plus open follow-ups from older visits;{' '}
+            <strong>Past visitations</strong> is completed history. Conference tables mirror upcoming vs past by conference
+            date.
+          </p>
+          {total > PAGE_SIZE && (
+            <p className="table-secondary" style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+              Database has {total} visits; this screen loads the {PAGE_SIZE} most recent rows.
+            </p>
+          )}
         </div>
         <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>
           <Plus size={16} /> Log Visit
@@ -235,8 +507,8 @@ export default function HomeVisitation() {
           <div className="metric-label">Residents Visited</div>
         </div>
         <div className="metric-card metric-card-purple">
-          <div className="metric-value">{visits.filter(v => asBool(v.followUpNeeded)).length}</div>
-          <div className="metric-label">Follow-Ups Needed</div>
+          <div className="metric-value">{scheduledConferences.length}</div>
+          <div className="metric-label">Scheduled conferences (in view)</div>
         </div>
       </div>
 
@@ -245,7 +517,7 @@ export default function HomeVisitation() {
         <div className="inline-form-card">
           <div className="inline-form-header">
             <h3><Home size={16} /> Log Home Visit</h3>
-            <button className="btn-icon" onClick={() => setShowAddForm(false)}><X size={16} /></button>
+            <button type="button" className="btn-icon" onClick={() => setShowAddForm(false)} aria-label="Close log visit form"><X size={16} aria-hidden /></button>
           </div>
           {formError && <div className="alert alert-error"><AlertCircle size={14} /> {formError}</div>}
           <div className="form-row">
@@ -296,76 +568,471 @@ export default function HomeVisitation() {
         </div>
       )}
 
-      {/* Search and filter */}
+      {/* Search filters visits and conferences; visit type applies to visits only */}
       <div className="filter-bar">
         <div className="search-wrapper">
-          <Search size={16} className="search-icon" />
-          <input className="search-input" placeholder="Search by social worker…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Search size={16} className="search-icon" aria-hidden />
+          <input
+            className="search-input"
+            placeholder="Search worker, case no., resident ID (visits & conferences)…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
         <select className="form-select" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
           <option value="All">All Visit Types</option>
-          {VISIT_TYPES.map((t) => <option key={t}>{t}</option>)}
+          {VISIT_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
         </select>
-        <span className="results-count">{filteredVisits.length} visit{filteredVisits.length !== 1 ? 's' : ''}</span>
+        <span className="results-count">
+          {scheduledConferences.length} conf. upcoming · {pastConferencesSorted.length} conf. past · {upcomingVisits.length}{' '}
+          visits up · {pastVisits.length} visits past
+        </span>
       </div>
 
-      {/* Visits table */}
-      <div className="table-card">
-        {loadError && (
-          <div className="alert alert-error" style={{ margin: '1rem' }}>
-            <AlertCircle size={14} /> {loadError}
+      {confError && (
+        <div className="alert alert-error" style={{ margin: '0 0 1rem' }}>
+          <AlertCircle size={14} /> {confError}
+        </div>
+      )}
+
+      {confLoading ? (
+        <div className="table-card" style={{ textAlign: 'center', padding: '2rem', marginBottom: '1.5rem' }}>
+          Loading case conferences…
+        </div>
+      ) : (
+        <div className="table-card" style={{ marginBottom: '1.5rem' }}>
+          <div className="card-header" style={{ padding: '1rem 1rem 0', borderBottom: 'none' }}>
+            <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ClipboardList size={20} aria-hidden />
+              Scheduled case conferences
+            </h2>
+            <p className="table-secondary" style={{ fontSize: '0.875rem', margin: '0.35rem 0 0', lineHeight: 1.45 }}>
+              Stored case conferences with date on or after today (excluding cancelled).
+            </p>
+            {scheduledConferences.length > 0 && (
+              <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0.5rem 0 0' }}>
+                Showing {confUpcomingVisible.length} of {scheduledConferences.length}
+              </p>
+            )}
           </div>
-        )}
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem' }}>Loading visits...</div>
-        ) : (
           <table className="data-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Resident</th>
-                <th>Visit Type</th>
-                <th>Social Worker</th>
-                <th>Family Cooperation</th>
-                <th>Follow-Up</th>
-                <th>Actions</th>
+                <th scope="col">Date</th>
+                <th scope="col">Resident</th>
+                <th scope="col">Type</th>
+                <th scope="col">Facilitator</th>
+                <th scope="col">Status</th>
+                <th scope="col">Agenda</th>
               </tr>
             </thead>
             <tbody>
-              {filteredVisits.map((v) => (
-                <tr key={v.visitationId}>
-                  <td className="table-secondary">{new Date(v.visitDate).toLocaleDateString()}</td>
+              {confUpcomingVisible.map((c) => (
+                <tr key={c.conferenceId}>
+                  <td className="table-secondary">{formatConferenceDate(c.conferenceDate)}</td>
                   <td>
                     <div className="table-name">
-                      {residents.find(r => r.residentId === v.residentId)?.caseControlNo ?? `#${v.residentId}`}
+                      {residents.find((r) => r.residentId === c.residentId)?.caseControlNo ?? `#${c.residentId}`}
                     </div>
                   </td>
-                  <td><span className="category-chip">{v.visitType}</span></td>
-                  <td className="table-secondary">{v.socialWorker || '—'}</td>
-                  <td><span className={`cooperation-badge coop-${v.familyCooperationLevel?.toLowerCase()}`}>{v.familyCooperationLevel}</span></td>
-                  <td className="table-secondary">{asBool(v.followUpNeeded) ? <span className="safety-flag">⚠ Needed</span> : <span className="safety-none">None</span>}</td>
                   <td>
-                    <div className="action-btns">
-                      <button className="btn-icon" onClick={() => setSelectedVisit(v)}><Eye size={15} /></button>
-                      <button type="button" className="btn-icon btn-icon-danger" title="Delete" onClick={() => setDeleteTarget(v)}><Trash2 size={15} /></button>
-                    </div>
+                    <span className="category-chip">{c.conferenceType ?? '—'}</span>
+                  </td>
+                  <td className="table-secondary">{c.facilitator || '—'}</td>
+                  <td>
+                    <span className="status-badge">{c.status ?? '—'}</span>
+                  </td>
+                  <td className="table-secondary" style={{ maxWidth: 220 }}>
+                    {(c.agenda || '—').slice(0, 100)}
+                    {(c.agenda?.length ?? 0) > 100 ? '…' : ''}
                   </td>
                 </tr>
               ))}
-              {filteredVisits.length === 0 && (
-                <tr><td colSpan={7} className="empty-row"><AlertCircle size={16} /> No home visits found.</td></tr>
+              {scheduledConferences.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="empty-row">
+                    <AlertCircle size={16} /> No scheduled case conferences in this view.
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
-        )}
-      </div>
+          {scheduledConferences.length > TABLE_PREVIEW_ROWS && (
+            <div
+              style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+                padding: '0.75rem 1rem 1rem',
+                borderTop: '1px solid var(--gray-200, #e5e7eb)',
+              }}
+            >
+              {confUpcomingLimit < scheduledConferences.length ? (
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() =>
+                    setConfUpcomingLimit((n) => Math.min(n + TABLE_PREVIEW_ROWS, scheduledConferences.length))
+                  }
+                >
+                  <ChevronDown size={16} /> Show more (
+                  {Math.min(TABLE_PREVIEW_ROWS, scheduledConferences.length - confUpcomingLimit)} more)
+                </button>
+              ) : null}
+              {confUpcomingLimit > TABLE_PREVIEW_ROWS ? (
+                <button type="button" className="btn btn-ghost" onClick={() => setConfUpcomingLimit(TABLE_PREVIEW_ROWS)}>
+                  <ChevronUp size={16} /> Show less
+                </button>
+              ) : null}
+            </div>
+          )}
+        </div>
+      )}
+
+      {loadError && (
+        <div className="alert alert-error" style={{ margin: '0 0 1rem' }}>
+          <AlertCircle size={14} /> {loadError}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="table-card" style={{ textAlign: 'center', padding: '2rem' }}>
+          Loading visits…
+        </div>
+      ) : (
+        <>
+          <div className="table-card" style={{ marginBottom: '1.5rem' }}>
+            <div className="card-header" style={{ padding: '1rem 1rem 0', borderBottom: 'none' }}>
+              <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <CalendarClock size={20} aria-hidden />
+                Upcoming visits &amp; follow-ups
+              </h2>
+              <p className="table-secondary" style={{ fontSize: '0.875rem', margin: '0.35rem 0 0', lineHeight: 1.45 }}>
+                Scheduled on or after today, or past visits still flagged for follow-up.
+              </p>
+              {upcomingVisits.length > 0 && (
+                <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0.5rem 0 0' }}>
+                  Showing {upcomingVisible.length} of {upcomingVisits.length}
+                </p>
+              )}
+            </div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Status</th>
+                  <th scope="col">Visit date</th>
+                  <th scope="col">Resident</th>
+                  <th scope="col">Visit type</th>
+                  <th scope="col">Social worker</th>
+                  <th scope="col">Family cooperation</th>
+                  <th scope="col">Follow-up notes</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {upcomingVisible.map((v) => {
+                  const kind = upcomingKind(v);
+                  return (
+                    <tr key={v.visitationId}>
+                      <td>
+                        {kind.label === '—' ? (
+                          <span className="table-secondary">—</span>
+                        ) : (
+                          <span
+                            className={kind.className}
+                            style={
+                              kind.label === 'Follow-up due'
+                                ? { background: 'var(--amber-100, #fef3c7)', color: 'var(--gray-900)' }
+                                : undefined
+                            }
+                          >
+                            {kind.label}
+                          </span>
+                        )}
+                      </td>
+                      <td className="table-secondary">{formatVisitDate(v.visitDate)}</td>
+                      <td>
+                        <div className="table-name">
+                          {residents.find((r) => r.residentId === v.residentId)?.caseControlNo ?? `#${v.residentId}`}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="category-chip">{v.visitType ?? '—'}</span>
+                      </td>
+                      <td className="table-secondary">{v.socialWorker || '—'}</td>
+                      <td>
+                        <span className={coopBadgeClass(v.familyCooperationLevel)}>{v.familyCooperationLevel ?? '—'}</span>
+                      </td>
+                      <td className="table-secondary" style={{ maxWidth: 200 }}>
+                        {(v.followUpNotes || '—').slice(0, 80)}
+                        {(v.followUpNotes?.length ?? 0) > 80 ? '…' : ''}
+                      </td>
+                      <td>
+                        <div className="action-btns">
+                          <button type="button" className="btn-icon" title="View" aria-label={`View visit ${formatVisitDate(v.visitDate)}`} onClick={() => setSelectedVisit(v)}>
+                            <Eye size={15} aria-hidden />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-icon btn-icon-danger"
+                            title="Delete"
+                            aria-label={`Delete visit ${formatVisitDate(v.visitDate)}`}
+                            onClick={() => setDeleteTarget(v)}
+                          >
+                            <Trash2 size={15} aria-hidden />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {upcomingVisits.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="empty-row">
+                      <AlertCircle size={16} /> Nothing due in this view. Log a future-dated visit or flag follow-up on a
+                      past visit.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            {upcomingVisits.length > TABLE_PREVIEW_ROWS && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1rem 1rem',
+                  borderTop: '1px solid var(--gray-200, #e5e7eb)',
+                }}
+              >
+                {upcomingLimit < upcomingVisits.length ? (
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() =>
+                      setUpcomingLimit((n) => Math.min(n + TABLE_PREVIEW_ROWS, upcomingVisits.length))
+                    }
+                  >
+                    <ChevronDown size={16} /> Show more (
+                    {Math.min(TABLE_PREVIEW_ROWS, upcomingVisits.length - upcomingLimit)} more)
+                  </button>
+                ) : null}
+                {upcomingLimit > TABLE_PREVIEW_ROWS ? (
+                  <button type="button" className="btn btn-ghost" onClick={() => setUpcomingLimit(TABLE_PREVIEW_ROWS)}>
+                    <ChevronUp size={16} /> Show less
+                  </button>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          {!confLoading && (
+            <div className="table-card" style={{ marginBottom: '1.5rem' }}>
+              <div className="card-header" style={{ padding: '1rem 1rem 0', borderBottom: 'none' }}>
+                <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ClipboardList size={20} aria-hidden />
+                  Past case conferences
+                </h2>
+                <p className="table-secondary" style={{ fontSize: '0.875rem', margin: '0.35rem 0 0', lineHeight: 1.45 }}>
+                  Conference date before today, newest first.
+                </p>
+                {pastConferencesSorted.length > 0 && (
+                  <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0.5rem 0 0' }}>
+                    Showing {confPastVisible.length} of {pastConferencesSorted.length}
+                  </p>
+                )}
+              </div>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Resident</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Discussion</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {confPastVisible.map((c) => (
+                    <tr key={c.conferenceId}>
+                      <td className="table-secondary">{formatConferenceDate(c.conferenceDate)}</td>
+                      <td>
+                        <div className="table-name">
+                          {residents.find((r) => r.residentId === c.residentId)?.caseControlNo ?? `#${c.residentId}`}
+                        </div>
+                      </td>
+                      <td>
+                        <span className="category-chip">{c.conferenceType ?? '—'}</span>
+                      </td>
+                      <td>
+                        <span className="status-badge">{c.status ?? '—'}</span>
+                      </td>
+                      <td className="table-secondary" style={{ maxWidth: 280 }}>
+                        {(() => {
+                          const raw =
+                            [c.discussionNotes, c.actionItems].filter(Boolean).join(' · ') || '—';
+                          return raw.length > 120 ? `${raw.slice(0, 120)}…` : raw;
+                        })()}
+                      </td>
+                    </tr>
+                  ))}
+                  {pastConferencesSorted.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="empty-row">
+                        <AlertCircle size={16} /> No past case conferences in this view.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              {pastConferencesSorted.length > TABLE_PREVIEW_ROWS && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1rem 1rem',
+                    borderTop: '1px solid var(--gray-200, #e5e7eb)',
+                  }}
+                >
+                  {confPastLimit < pastConferencesSorted.length ? (
+                    <button
+                      type="button"
+                      className="btn btn-outline"
+                      onClick={() =>
+                        setConfPastLimit((n) => Math.min(n + TABLE_PREVIEW_ROWS, pastConferencesSorted.length))
+                      }
+                    >
+                      <ChevronDown size={16} /> Show more (
+                      {Math.min(TABLE_PREVIEW_ROWS, pastConferencesSorted.length - confPastLimit)} more)
+                    </button>
+                  ) : null}
+                  {confPastLimit > TABLE_PREVIEW_ROWS ? (
+                    <button type="button" className="btn btn-ghost" onClick={() => setConfPastLimit(TABLE_PREVIEW_ROWS)}>
+                      <ChevronUp size={16} /> Show less
+                    </button>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="table-card">
+            <div className="card-header" style={{ padding: '1rem 1rem 0', borderBottom: 'none' }}>
+              <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700 }}>Past visitations</h2>
+              <p className="table-secondary" style={{ fontSize: '0.875rem', margin: '0.35rem 0 0', lineHeight: 1.45 }}>
+                Historical visits (no open follow-up queue item for these rows in this view).
+              </p>
+              {pastVisits.length > 0 && (
+                <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0.5rem 0 0' }}>
+                  Showing {pastVisible.length} of {pastVisits.length}
+                </p>
+              )}
+            </div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Resident</th>
+                  <th scope="col">Visit type</th>
+                  <th scope="col">Social worker</th>
+                  <th scope="col">Family cooperation</th>
+                  <th scope="col">Follow-up</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pastVisible.map((v) => (
+                  <tr key={v.visitationId}>
+                    <td className="table-secondary">{formatVisitDate(v.visitDate)}</td>
+                    <td>
+                      <div className="table-name">
+                        {residents.find((r) => r.residentId === v.residentId)?.caseControlNo ?? `#${v.residentId}`}
+                      </div>
+                    </td>
+                    <td>
+                      <span className="category-chip">{v.visitType ?? '—'}</span>
+                    </td>
+                    <td className="table-secondary">{v.socialWorker || '—'}</td>
+                    <td>
+                      <span className={coopBadgeClass(v.familyCooperationLevel)}>{v.familyCooperationLevel ?? '—'}</span>
+                    </td>
+                    <td className="table-secondary">
+                      {asBool(v.followUpNeeded) ? (
+                        <span className="safety-flag">Needed</span>
+                      ) : (
+                        <span className="safety-none">None</span>
+                      )}
+                    </td>
+                    <td>
+                      <div className="action-btns">
+                        <button type="button" className="btn-icon" title="View" aria-label={`View visit ${formatVisitDate(v.visitDate)}`} onClick={() => setSelectedVisit(v)}>
+                          <Eye size={15} aria-hidden />
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-icon btn-icon-danger"
+                          title="Delete"
+                          aria-label={`Delete visit ${formatVisitDate(v.visitDate)}`}
+                          onClick={() => setDeleteTarget(v)}
+                        >
+                          <Trash2 size={15} aria-hidden />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {pastVisits.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="empty-row">
+                      <AlertCircle size={16} /> No past visits in this view (try clearing search or visit type).
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+            {pastVisits.length > TABLE_PREVIEW_ROWS && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1rem 1rem',
+                  borderTop: '1px solid var(--gray-200, #e5e7eb)',
+                }}
+              >
+                {pastLimit < pastVisits.length ? (
+                  <button
+                    type="button"
+                    className="btn btn-outline"
+                    onClick={() => setPastLimit((n) => Math.min(n + TABLE_PREVIEW_ROWS, pastVisits.length))}
+                  >
+                    <ChevronDown size={16} /> Show more (
+                    {Math.min(TABLE_PREVIEW_ROWS, pastVisits.length - pastLimit)} more)
+                  </button>
+                ) : null}
+                {pastLimit > TABLE_PREVIEW_ROWS ? (
+                  <button type="button" className="btn btn-ghost" onClick={() => setPastLimit(TABLE_PREVIEW_ROWS)}>
+                    <ChevronUp size={16} /> Show less
+                  </button>
+                ) : null}
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {selectedVisit && <VisitModal visit={selectedVisit} onClose={() => setSelectedVisit(null)} />}
       <ConfirmDeleteModal
         isOpen={deleteTarget !== null}
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
-        itemName={deleteTarget ? `visit on ${new Date(deleteTarget.visitDate).toLocaleDateString()}` : ''}
+        itemName={deleteTarget ? `visit on ${formatVisitDate(deleteTarget.visitDate)}` : ''}
       />
     </div>
   );

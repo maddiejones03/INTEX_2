@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { logoutUser } from '../../services/authApi';
-import { Menu, X, ChevronDown, LogOut, User, Heart, FolderOpen } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut, User, FolderOpen } from 'lucide-react';
 
 export default function Navbar() {
   const { isAuthenticated, authSession, refreshAuthSession } = useAuth();
@@ -74,8 +74,7 @@ export default function Navbar() {
                 to="/donor/donations"
                 className={`navbar-link ${path === '/donor/donations' ? 'active' : ''}`}
               >
-                <Heart size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                My donations
+                My Donations
               </Link>
             )}
             {isAuthenticated && isCaseManager && (
@@ -90,15 +89,18 @@ export default function Navbar() {
           </div>
         )}
 
-        {isAdmin && <span className="navbar-section-label">Admin portal</span>}
         {isCaseManagerArea && <span className="navbar-section-label">Case manager portal</span>}
 
         <div className="navbar-actions">
           {isAuthenticated ? (
             <div className="profile-menu-wrapper">
               <button
+                type="button"
                 className="profile-trigger"
                 onClick={() => setProfileOpen(!profileOpen)}
+                aria-expanded={profileOpen}
+                aria-haspopup="menu"
+                aria-label="Account menu"
               >
                 <div className="avatar">
                   {authSession.username?.[0]?.toUpperCase() ?? 'U'}
@@ -142,7 +144,7 @@ export default function Navbar() {
                       className="profile-dropdown-item"
                       onClick={() => setProfileOpen(false)}
                     >
-                      <Heart size={14} /> My donations
+                      My Donations
                     </Link>
                   )}
                   <button className="profile-dropdown-item danger" onClick={handleLogout}>
@@ -187,7 +189,7 @@ export default function Navbar() {
                   className="mobile-menu-link"
                   onClick={() => setMobileOpen(false)}
                 >
-                  My donations
+                  My Donations
                 </Link>
               )}
               {isAuthenticated && isCaseManager && (

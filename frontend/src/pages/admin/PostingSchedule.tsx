@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Clock, AlertCircle, ChevronRight, Zap, TrendingUp } from 'lucide-react';
 import { apiFetch } from '../../services/apiClient';
 import type { PostingSchedule } from '../../types/index';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -64,7 +65,7 @@ function DayTile({ dateStr, posts, isToday, isSelected, onSelect }: DayTileProps
   const chipColor  = isSelected ? 'white'                     : 'var(--gray-600)';
 
   return (
-    <button onClick={onSelect} style={{
+    <button type="button" onClick={onSelect} aria-label={`${weekday} ${day} ${month}, ${posts.length} scheduled post${posts.length !== 1 ? 's' : ''}`} style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'space-between', aspectRatio: '1 / 1', padding: '0.6rem 0.4rem',
       background: bg, border, borderRadius: '0.5rem', cursor: 'pointer',
@@ -99,14 +100,14 @@ function DayDetail({ posts }: { posts: PostingSchedule[] }) {
       <table className="data-table">
         <thead>
           <tr>
-            <th>Platform</th>
-            <th>Time</th>
-            <th>Post Type</th>
-            <th>Media</th>
-            <th>Tone</th>
-            <th>Call to Action</th>
-            <th>Boosted</th>
-            <th>Resident Story</th>
+            <th scope="col">Platform</th>
+            <th scope="col">Time</th>
+            <th scope="col">Post Type</th>
+            <th scope="col">Media</th>
+            <th scope="col">Tone</th>
+            <th scope="col">Call to Action</th>
+            <th scope="col">Boosted</th>
+            <th scope="col">Resident Story</th>
           </tr>
         </thead>
         <tbody>
@@ -149,6 +150,7 @@ interface BoostOkr {
 }
 
 export default function PostingSchedulePage() {
+  useDocumentTitle('Posting Schedule');
   const [schedule, setSchedule]       = useState<PostingSchedule[]>([]);
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState<string | null>(null);

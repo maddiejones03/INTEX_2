@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Users, FolderOpen, Calendar,
+  Users, FolderOpen,
   AlertCircle, CheckCircle, Clock, ArrowRight,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import DonorWatchlist from '../../components/ui/DonorWatchlist';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
@@ -65,6 +66,16 @@ interface HomeVisitSummary {
   }[];
 }
 
+interface CaseConferenceRow {
+  conferenceId: number;
+  residentId: number;
+  conferenceDate: string;
+  conferenceType: string;
+  facilitator: string | null;
+  agenda: string | null;
+  status: string;
+}
+
 interface ReintegrationSummaryResponse {
   summary: {
     completed: number;
@@ -79,6 +90,7 @@ function asBool(value: boolean | number | null | undefined): boolean {
 }
 
 export default function AdminDashboard() {
+  useDocumentTitle('Dashboard');
   const { authSession } = useAuth();
   const [safehouses, setSafehouses] = useState<SafehouseData[]>([]);
   const [donationTrends, setDonationTrends] = useState<{ month: string; monetary: number }[]>([]);
@@ -87,17 +99,31 @@ export default function AdminDashboard() {
   const [homeVisits, setHomeVisits] = useState<HomeVisitSummary | null>(null);
   const [reintegrationSummary, setReintegrationSummary] = useState<ReintegrationSummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [overdueCount, setOverdueCount] = useState<number>(0);
+  const [pendingCount, setPendingCount] = useState<number>(0);
+  const [caseConferenceUpcoming, setCaseConferenceUpcoming] = useState<CaseConferenceRow[]>([]);
+  const [caseConferenceTotal, setCaseConferenceTotal] = useState<number>(0);
+  const watchlistRef = useRef<HTMLDivElement>(null);
+
+  const scrollToWatchlist = () => {
+    watchlistRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [safehouseRes, donationRes, residentRes, processRes, homeVisitRes, reintegrationRes] = await Promise.all([
+        const [safehouseRes, donationRes, residentRes, processRes, homeVisitRes, reintegrationRes, conferenceRes] =
+          await Promise.all([
           fetch(`${API_BASE}/api/reports/residents-by-safehouse`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/reports/donations-by-month`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/residents?pageSize=100`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/processrecordings?pageSize=100`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/homevisitations?pageSize=100`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/reports/reintegration-success-rates`, { credentials: 'include' }),
+          fetch(`${API_BASE}/api/caseconferences?upcoming=true&pageSize=100`, { credentials: 'include' }),
         ]);
 
         if (safehouseRes.ok) {
@@ -133,6 +159,48 @@ export default function AdminDashboard() {
           const data = await reintegrationRes.json();
           setReintegrationSummary(data);
         }
+
+        if (conferenceRes.ok) {
+          const data = (await conferenceRes.json()) as { total?: number; items?: CaseConferenceRow[] };
+          const items = data.items ?? [];
+          const filtered = items
+            .filter((c) => (c.status ?? '').toLowerCase() !== 'cancelled')
+            .slice()
+            .sort((a, b) => a.conferenceDate.localeCompare(b.conferenceDate));
+          setCaseConferenceUpcoming(filtered.slice(0, 5));
+          setCaseConferenceTotal(typeof data.total === 'number' ? data.total : filtered.length);
+        }
+
+        const watchlistRes = await fetch(
+          `${API_BASE}/api/donors/risk-watchlist?topN=50`,
+          { credentials: 'include' }
+        );
+        if (watchlistRes.ok) {
+          const watchlistData = await watchlistRes.json();
+          const watchlist = watchlistData?.watchlist ?? [];
+
+          console.log('Watchlist count:', watchlist.length);
+          console.log('First donor:', watchlist[0]);
+
+          const atRisk = watchlist.filter((d: any) =>
+            (d.riskTier === 'High' || d.riskTier === 'Medium') &&
+            !d.snoozeUntil
+          );
+
+          console.log('At risk count:', atRisk.length);
+
+          const overdue = atRisk.filter((d: any) => {
+            const scored = new Date(d.lastScoredAt);
+            const now = new Date();
+            const daysSince = Math.floor(
+              (now.getTime() - scored.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            return daysSince > 7;
+          }).length;
+
+          setPendingCount(atRisk.length);
+          setOverdueCount(overdue);
+        }
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
       } finally {
@@ -160,10 +228,11 @@ export default function AdminDashboard() {
   const reintegrationInProgress = (reintegrationSummary?.summary ?? []).reduce((sum, row) => sum + row.inProgress, 0);
   const reintegrationNotStarted = (reintegrationSummary?.summary ?? []).reduce((sum, row) => sum + row.notStarted, 0);
 
-  const metrics = [
+  const metricsBeforeOutreach = [
     { icon: Users, label: 'Active Residents', value: activeResidents, sub: `${totalOccupied}/${totalCapacity} capacity`, color: 'blue', to: '/admin/caseload' },
     { icon: CheckCircle, label: 'Total Residents', value: residentSummary?.total ?? '—', sub: 'All time', color: 'green', to: '/admin/caseload' },
-    { icon: Calendar, label: 'Follow-Up Queue', value: followUpQueue.length, sub: 'Pending case follow-ups', color: 'rose', to: '/admin/visitation' },
+  ];
+  const metricsAfterOutreach = [
     { icon: FolderOpen, label: 'Recent Sessions', value: recentProcess.length, sub: 'Latest process recordings', color: 'amber', to: '/admin/process-recording' },
   ];
 
@@ -185,7 +254,96 @@ export default function AdminDashboard() {
         <>
           {/* Metric cards */}
           <div className="metrics-grid">
-            {metrics.map((m) => (
+            {metricsBeforeOutreach.map((m) => (
+              <Link key={m.label} to={m.to} className={`metric-card metric-card-${m.color}`}>
+                <div className={`metric-icon icon-${m.color}`}><m.icon size={20} /></div>
+                <div className="metric-value">{m.value}</div>
+                <div className="metric-label">{m.label}</div>
+                <div className="metric-sub">{m.sub}</div>
+              </Link>
+            ))}
+            <div
+              className="metric-card"
+              onClick={scrollToWatchlist}
+              style={{
+                borderTop: overdueCount > 0
+                  ? '3px solid #dc2626'
+                  : pendingCount > 0
+                  ? '3px solid #f59e0b'
+                  : '3px solid #16a34a',
+                cursor: 'pointer',
+                transition: 'box-shadow 0.15s',
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLDivElement).style.boxShadow =
+                  '0 4px 12px rgba(0,0,0,0.1)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLDivElement).style.boxShadow = '';
+              }}
+            >
+              <div
+                className="metric-icon"
+                style={{
+                  background: overdueCount > 0 ? '#fef2f2'
+                    : pendingCount > 0 ? '#fffbeb'
+                    : '#f0fdf4',
+                  color: overdueCount > 0 ? '#dc2626'
+                    : pendingCount > 0 ? '#d97706'
+                    : '#16a34a',
+                  width: 36, height: 36,
+                  borderRadius: 8,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '0.75rem',
+                  fontSize: '16px',
+                }}
+              >
+                ✉
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                <div
+                  className="metric-value"
+                  style={{
+                    color: pendingCount > 0 ? '#d97706' : '#16a34a',
+                    fontSize: '1.75rem',
+                  }}
+                >
+                  {pendingCount}
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                  pending
+                </div>
+                <div style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>|</div>
+                <div
+                  className="metric-value"
+                  style={{
+                    color: overdueCount > 0 ? '#dc2626' : '#16a34a',
+                    fontSize: '1.75rem',
+                  }}
+                >
+                  {overdueCount}
+                </div>
+                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                  overdue
+                </div>
+              </div>
+
+              <div className="metric-label" style={{ marginTop: '0.25rem' }}>
+                Donor Outreach Status
+              </div>
+
+              <div className="metric-sub">
+                {overdueCount > 0
+                  ? `⚠️ ${overdueCount} donor${overdueCount > 1 ? 's' : ''} past 7-day window`
+                  : pendingCount > 0
+                  ? `${pendingCount} at-risk donor${pendingCount > 1 ? 's' : ''} awaiting contact`
+                  : '✓ All at-risk donors contacted'}
+              </div>
+            </div>
+            {metricsAfterOutreach.map((m) => (
               <Link key={m.label} to={m.to} className={`metric-card metric-card-${m.color}`}>
                 <div className={`metric-icon icon-${m.color}`}><m.icon size={20} /></div>
                 <div className="metric-value">{m.value}</div>
@@ -203,7 +361,7 @@ export default function AdminDashboard() {
                 <Link to="/admin/caseload" className="card-link">View all <ArrowRight size={14} /></Link>
               </div>
               <div className="safehouse-list">
-                {safehouses.map((sh) => {
+                {safehouses.slice(0, 5).map((sh) => {
                   const pct = sh.capacityGirls > 0
                     ? Math.round((sh.currentOccupancy / sh.capacityGirls) * 100)
                     : 0;
@@ -277,9 +435,57 @@ export default function AdminDashboard() {
           <div className="dashboard-row">
             <div className="dashboard-card">
               <div className="card-header">
-                <h2>Upcoming Case Conferences (Follow-Up Queue)</h2>
-                <Link to="/admin/visitation" className="card-link">Open queue <ArrowRight size={14} /></Link>
+                <h2>Scheduled case conferences</h2>
+                <Link to="/admin/visitation" className="card-link">
+                  View all ({caseConferenceTotal}) <ArrowRight size={14} />
+                </Link>
               </div>
+              <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0 0 0.75rem', padding: '0 1.25rem' }}>
+                From the case conferences table (next five by date).
+              </p>
+              <div className="conference-list">
+                {caseConferenceUpcoming.map((c) => {
+                  const d = new Date(
+                    c.conferenceDate.includes('T') ? c.conferenceDate : `${c.conferenceDate}T12:00:00`
+                  );
+                  return (
+                    <div key={c.conferenceId} className="conference-item">
+                      <div className="conference-date">
+                        <div className="conf-month">
+                          {d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
+                        </div>
+                        <div className="conf-day">{d.getDate()}</div>
+                      </div>
+                      <div>
+                        <div className="conference-resident">
+                          {residentCaseById.get(c.residentId) ?? `Resident #${c.residentId}`}
+                        </div>
+                        <div className="conference-agenda">
+                          {c.conferenceType}
+                          {c.facilitator ? ` · ${c.facilitator}` : ''}
+                          {c.agenda ? ` — ${c.agenda.slice(0, 80)}${c.agenda.length > 80 ? '…' : ''}` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {caseConferenceUpcoming.length === 0 && (
+                  <div className="empty-state">
+                    <AlertCircle size={20} />
+                    <p>No upcoming case conferences on file</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2>Visit follow-up reminders</h2>
+                <Link to="/admin/visitation" className="card-link">Open visits <ArrowRight size={14} /></Link>
+              </div>
+              <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0 0 0.75rem', padding: '0 1.25rem' }}>
+                Home visits flagged for follow-up (suggested review date: visit + 14 days).
+              </p>
               <div className="conference-list">
                 {followUpQueue.map((v) => {
                   const conferenceDate = new Date(v.visitDate);
@@ -306,7 +512,7 @@ export default function AdminDashboard() {
                 {followUpQueue.length === 0 && (
                   <div className="empty-state">
                     <AlertCircle size={20} />
-                    <p>No pending follow-up conferences</p>
+                    <p>No visits flagged for follow-up</p>
                   </div>
                 )}
               </div>
@@ -388,7 +594,9 @@ export default function AdminDashboard() {
             </div>
           </div>
            {/* Donor Risk Watchlist — ML Pipeline 1 */}
-           <DonorWatchlist topN={10} />
+           <div ref={watchlistRef}>
+             <DonorWatchlist topN={10} />
+           </div>
         </>
       )}
     </div>
