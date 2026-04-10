@@ -137,10 +137,10 @@ public class Resident
 
     // Azure SQL stores these date columns as nvarchar (from CSV import)
     [Column("date_colb_registered")]
-    public string? DateColbRegistered { get; set; }
+    public DateOnly? DateColbRegistered { get; set; }
 
     [Column("date_colb_obtained")]
-    public string? DateColbObtained { get; set; }
+    public DateOnly? DateColbObtained { get; set; }
 
     [MaxLength(255)]
     [Column("assigned_social_worker")]
@@ -157,7 +157,7 @@ public class Resident
 
     // Azure SQL stores these date columns as nvarchar (from CSV import)
     [Column("date_case_study_prepared")]
-    public string? DateCaseStudyPrepared { get; set; }
+    public DateOnly? DateCaseStudyPrepared { get; set; }
 
     [MaxLength(50)]
     [Column("reintegration_type")]
@@ -179,17 +179,17 @@ public class Resident
 
     // Azure SQL stores these date columns as nvarchar (from CSV import)
     [Column("date_enrolled")]
-    public string? DateEnrolled { get; set; }
+    public DateOnly? DateEnrolled { get; set; }
 
     [Column("date_closed")]
-    public string? DateClosed { get; set; }
+    public DateOnly? DateClosed { get; set; }
 
     [Column("created_at")]
     public DateTime? CreatedAt { get; set; }
 
     // Azure SQL stores this as float
     [Column("notes_restricted")]
-    public double? NotesRestricted { get; set; }
+    public string? NotesRestricted { get; set; }
 
     [Column("age_upon_admission_months")]
     public int? AgeUponAdmissionMonths { get; set; }
