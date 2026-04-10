@@ -10,7 +10,7 @@ import { Eye, EyeOff, AlertCircle, Lock, Mail } from 'lucide-react';
 const PORTAL_OPTIONS: { value: AuthPortal; label: string; description: string }[] = [
   { value: 'Admin', label: 'Admin', description: 'Full organization tools' },
   { value: 'CaseManager', label: 'Case manager', description: 'Assigned caseload' },
-  { value: 'Donor', label: 'Donor', description: 'Your giving history' },
+  { value: 'Donor', label: 'Donor', description: 'Your Giving History' },
 ];
 
 export default function Login() {

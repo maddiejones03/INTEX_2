@@ -58,7 +58,7 @@ export default function MyDonations() {
         <header className="my-donations-header">
           <div className="my-donations-header-text">
             <h1 className="section-title" style={{ marginBottom: '0.5rem' }}>
-              Your giving history
+              Your Giving History
             </h1>
             <p className="section-body" style={{ marginBottom: 0 }}>
               Thank you for supporting Laya Foundation. Below is a record of donations tied to your account.
