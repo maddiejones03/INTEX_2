@@ -18,7 +18,7 @@ Run:
 """
 
 import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import joblib
@@ -111,7 +111,7 @@ def build_candidates(df: pd.DataFrame, n_days: int = SCHEDULE_DAYS) -> pd.DataFr
     key_cols   = [c for c in SELECTED_FEATURES if c not in ("day_of_week", "post_month", "post_year")]
     templates  = df[SELECTED_FEATURES].drop_duplicates(subset=key_cols)
 
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
     rows  = []
     for i in range(n_days):
         target_date = today + timedelta(days=i)
@@ -170,7 +170,7 @@ def build_weekly_schedule(
         raise ValueError("[REF] No recognized platforms found in historical posts data.")
     print(f"[REF] Active platforms: {list(active_platforms.keys())}")
 
-    today          = date.today()
+    today          = datetime.now(timezone.utc).date()
     schedule_dates = [today + timedelta(days=i) for i in range(SCHEDULE_DAYS)]
 
     # Build the ordered list of (date, platform, slot) assignments
@@ -297,8 +297,8 @@ def write_posting_schedule(schedule: pd.DataFrame) -> None:
         conn.commit()
 
         # Delete this week's window and re-insert fresh
-        today    = date.today().isoformat()
-        end_date = (date.today() + timedelta(days=SCHEDULE_DAYS)).isoformat()
+        today    = datetime.now(timezone.utc).date().isoformat()
+        end_date = (datetime.now(timezone.utc).date() + timedelta(days=SCHEDULE_DAYS)).isoformat()
         cursor.execute(
             f"DELETE FROM [{POSTING_SCHEDULE_TABLE}] "
             f"WHERE schedule_date >= ? AND schedule_date < ?",
