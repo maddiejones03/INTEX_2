@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export async function apiFetch<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
