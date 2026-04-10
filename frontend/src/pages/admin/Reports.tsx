@@ -3,12 +3,19 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
-import { Download, TrendingUp, Users, Heart, BookOpen, Share2 } from 'lucide-react';
+import { TrendingUp, Users, Heart, BookOpen } from 'lucide-react';
 import ImpactChart from '../../components/ui/ImpactChart';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5030';
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4'];
+const COLORS = [
+  'var(--primary)',
+  'var(--accent)',
+  'var(--blue)',
+  'var(--teal)',
+  'var(--purple)',
+  'var(--gray-400)',
+];
 
 function formatCurrency(value: number) {
   if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
@@ -20,8 +27,6 @@ interface DonationMonth { year: number; month: number; totalAmount: number; dona
 interface SafehouseData { safehouseId: number; name: string; capacityGirls: number; currentOccupancy: number; activeResidents: number; totalResidents: number; highRisk: number; }
 interface ReintegrationSummary { caseCategory: string; total: number; completed: number; inProgress: number; notStarted: number; }
 interface PublicImpact { totalResidents: number; activeResidents: number; reintegrated: number; reintegrationRate: number; totalSafehouses: number; totalDonationsPhp: number; caseByCategory: { category: string; count: number }[]; }
-interface SocialPlatform { platform: string; postCount: number; avgEngagementRate: number; totalImpressions: number; totalReach: number; totalLikes: number; totalShares: number; totalDonationRefs: number; totalEstDonationVal: number; }
-interface SocialPostType { postType: string; postCount: number; avgEngagementRate: number; totalImpressions: number; }
 interface HealthScore { year: number; month: number; avgGeneralHealth: number; recordCount: number; }
 interface EducationScore { educationLevel: string; avgProgress: number; recordCount: number; }
 
@@ -34,20 +39,17 @@ export default function Reports() {
   const [healthScores, setHealthScores] = useState<HealthScore[]>([]);
   const [educationScores, setEducationScores] = useState<EducationScore[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'overview' | 'social'>('overview');
-  const [socialData, setSocialData] = useState<{ byPlatform: SocialPlatform[]; byPostType: SocialPostType[] } | null>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [donRes, safehouseRes, reintRes, impactRes, healthRes, eduRes, socialRes] = await Promise.all([
+        const [donRes, safehouseRes, reintRes, impactRes, healthRes, eduRes] = await Promise.all([
           fetch(`${API_BASE}/api/reports/donations-by-month`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/reports/residents-by-safehouse`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/reports/reintegration-success-rates`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/reports/public-impact`),
           fetch(`${API_BASE}/api/reports/avg-health-scores`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/reports/avg-education-scores`, { credentials: 'include' }),
-          fetch(`${API_BASE}/api/reports/social-media-performance`, { credentials: 'include' }),
         ]);
 
         if (donRes.ok) {
@@ -64,7 +66,6 @@ export default function Reports() {
           const data: HealthScore[] = await healthRes.json();
           setHealthScores(data.slice(-6));
         }
-        if (socialRes.ok) setSocialData(await socialRes.json());
         if (eduRes.ok) {
           const data: EducationScore[] = await eduRes.json();
           setEducationScores(data);
@@ -106,109 +107,12 @@ export default function Reports() {
           <h1>Reports &amp; Analytics</h1>
           <p>Aggregated insights and trends to support decision-making.</p>
         </div>
-        <button type="button" className="btn btn-outline">
-          <Download size={16} aria-hidden /> Export Report
-        </button>
-      </div>
-
-      {/* Tab bar */}
-      <div className="tab-bar" role="tablist" aria-label="Report sections">
-        <button
-          type="button"
-          role="tab"
-          id="reports-tab-overview"
-          aria-selected={tab === 'overview'}
-          aria-controls="reports-panel-overview"
-          className={`tab-btn ${tab === 'overview' ? 'active' : ''}`}
-          onClick={() => setTab('overview')}
-        >
-          <TrendingUp size={15} aria-hidden /> Overview
-        </button>
-        <button
-          type="button"
-          role="tab"
-          id="reports-tab-social"
-          aria-selected={tab === 'social'}
-          aria-controls="reports-panel-social"
-          className={`tab-btn ${tab === 'social' ? 'active' : ''}`}
-          onClick={() => setTab('social')}
-        >
-          <Share2 size={15} aria-hidden /> Social Media Insights
-        </button>
       </div>
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '2rem' }}>Loading report data...</div>
-      ) : tab === 'social' ? (
-        <div id="reports-panel-social" role="tabpanel" aria-labelledby="reports-tab-social">
-          <div className="metrics-grid metrics-grid-4">
-            {socialData?.byPlatform.map((p) => (
-              <div key={p.platform} className="metric-card metric-card-blue">
-                <div className="metric-value">{p.platform}</div>
-                <div className="metric-label">Avg Engagement</div>
-                <div className="metric-sub">{p.avgEngagementRate ? (p.avgEngagementRate * 100).toFixed(2) + '%' : '—'}</div>
-              </div>
-            ))}
-          </div>
-          <div className="charts-row">
-            <div className="chart-card">
-              <h2>Engagement Rate by Platform</h2>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={socialData?.byPlatform.map(p => ({ platform: p.platform, engagement: p.avgEngagementRate ? +(p.avgEngagementRate * 100).toFixed(2) : 0 }))} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="engagement" name="Avg Engagement %" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="chart-card">
-              <h2>Donation Referrals by Platform</h2>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={socialData?.byPlatform.map(p => ({ platform: p.platform, referrals: p.totalDonationRefs }))} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="platform" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip />
-                  <Bar dataKey="referrals" name="Donation Referrals" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          <div className="chart-card">
-            <h2>Engagement Rate by Post Type</h2>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={socialData?.byPostType.map(p => ({ type: p.postType, engagement: p.avgEngagementRate ? +(p.avgEngagementRate * 100).toFixed(2) : 0 }))} margin={{ top: 5, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="type" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="engagement" name="Avg Engagement %" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="report-section">
-            <h2 className="report-section-title">ML pipeline recommendations</h2>
-            <p className="report-section-sub">Coming soon — our ML pipeline will analyze post timing, content type, and audience behavior to recommend optimal posting strategies.</p>
-            <div className="aar-grid">
-              <div className="aar-card aar-blue">
-                <h3>Best Time to Post</h3>
-                <p style={{padding: '1rem'}}>ML pipeline integration pending. Will analyze historical post performance by hour and day.</p>
-              </div>
-              <div className="aar-card aar-green">
-                <h3>Content Recommendations</h3>
-                <p style={{padding: '1rem'}}>ML pipeline integration pending. Will identify which content types drive the most donation referrals.</p>
-              </div>
-              <div className="aar-card aar-amber">
-                <h3>Audience Insights</h3>
-                <p style={{padding: '1rem'}}>ML pipeline integration pending. Will segment audience behavior to optimize outreach campaigns.</p>
-              </div>
-            </div>
-          </div>
-        </div>
       ) : (
-        <div id="reports-panel-overview" role="tabpanel" aria-labelledby="reports-tab-overview">
+        <div>
           {/* KPI summary */}
           <div className="metrics-grid metrics-grid-4">
             <div className="metric-card metric-card-blue">
@@ -247,7 +151,7 @@ export default function Reports() {
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11 }} />
                   <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                  <Line type="monotone" dataKey="monetary" name="Monetary" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="monetary" name="Monetary" stroke="var(--primary)" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -276,9 +180,9 @@ export default function Reports() {
                   <YAxis dataKey="category" type="category" tick={{ fontSize: 11 }} width={130} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="completed" name="Completed" fill="#10b981" stackId="a" />
-                  <Bar dataKey="inProgress" name="In Progress" fill="#3b82f6" stackId="a" />
-                  <Bar dataKey="notStarted" name="Not Started" fill="#f59e0b" stackId="a" />
+                  <Bar dataKey="completed" name="Completed" fill="var(--primary)" stackId="a" />
+                  <Bar dataKey="inProgress" name="In Progress" fill="var(--blue)" stackId="a" />
+                  <Bar dataKey="notStarted" name="Not Started" fill="var(--accent-dark)" stackId="a" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -295,7 +199,7 @@ export default function Reports() {
                     <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                     <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
                     <Tooltip />
-                    <Line type="monotone" dataKey="avgHealth" name="Avg Health Score" stroke="#10b981" strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="avgHealth" name="Avg Health Score" stroke="var(--teal)" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -310,7 +214,7 @@ export default function Reports() {
                     <XAxis dataKey="level" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip />
-                    <Bar dataKey="avgProgress" name="Avg Progress %" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="avgProgress" name="Avg Progress %" fill="var(--accent)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

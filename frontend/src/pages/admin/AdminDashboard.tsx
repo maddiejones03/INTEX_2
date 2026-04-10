@@ -87,10 +87,10 @@ export default function AdminDashboard() {
   const [residentSummary, setResidentSummary] = useState<ResidentSummary | null>(null);
   const [processSummary, setProcessSummary] = useState<ProcessSummary | null>(null);
   const [homeVisits, setHomeVisits] = useState<HomeVisitSummary | null>(null);
-  const [reintegrationSummary, setReintegrationSummary] = useState<ReintegrationSummaryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [overdueCount, setOverdueCount] = useState<number>(0);
   const [pendingCount, setPendingCount] = useState<number>(0);
+  const [reintegrationSummary, setReintegrationSummary] = useState<ReintegrationSummaryResponse | null>(null);
   const watchlistRef = useRef<HTMLDivElement>(null);
 
   const scrollToWatchlist = () => {
@@ -451,22 +451,99 @@ export default function AdminDashboard() {
 
             <div className="dashboard-card">
               <div className="card-header">
-                <h2>High Risk Residents by Safehouse</h2>
+                <h2>
+                  Girls Requiring Immediate Attention
+                  <span style={{
+                    marginLeft: '8px',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    background: '#fef2f2',
+                    color: '#dc2626',
+                    border: '1px solid #fecaca',
+                    borderRadius: '20px',
+                    padding: '2px 10px',
+                  }}>
+                    {safehouses
+                      .filter(sh => sh.highRisk > 0)
+                      .reduce((sum, sh) => sum + sh.highRisk, 0)
+                    }
+                  </span>
+                </h2>
               </div>
               <div className="conference-list">
-                {safehouses.filter(sh => sh.highRisk > 0).map((sh) => (
-                  <div key={sh.safehouseId} className="conference-item">
-                    <div className="conference-date">
-                      <div className="conf-month" style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#ef4444' }}>{sh.highRisk}</div>
-                      <div style={{ fontSize: '10px' }}>high risk</div>
+                {safehouses
+                  .filter(sh => sh.highRisk > 0)
+                  .sort((a, b) => b.highRisk - a.highRisk)
+                  .map((sh) => (
+                  <div
+                    key={sh.safehouseId}
+                    className="conference-item"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}>
+                      <div className="conference-date">
+                        <div className="conf-month" style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#ef4444' }}>{sh.highRisk}</div>
+                        <div style={{ fontSize: '10px' }}>need attention</div>
+                      </div>
+                      <div>
+                        <div className="conference-resident">{sh.name}</div>
+                        <div className="conference-agenda">
+                          {sh.highRisk} of {sh.activeResidents} girls
+                          at risk
+                          <span style={{
+                            marginLeft: '8px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            color: sh.activeResidents > 0 &&
+                              (sh.highRisk / sh.activeResidents) > 0.4
+                              ? '#dc2626' : '#f59e0b',
+                          }}>
+                            ({sh.activeResidents > 0
+                              ? Math.round((sh.highRisk / sh.activeResidents) * 100)
+                              : 0}%)
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="conference-resident">{sh.name}</div>
-                      <div className="conference-agenda">{sh.activeResidents} active residents</div>
-                    </div>
+                    <Link
+                      to={`/admin/caseload?safehouse=${sh.safehouseId}&risk=High`}
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: '#4f8a68',
+                        textDecoration: 'none',
+                        whiteSpace: 'nowrap',
+                        padding: '4px 10px',
+                        border: '1px solid #95c8a8',
+                        borderRadius: '6px',
+                        background: '#f0fdf4',
+                        flexShrink: 0,
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLAnchorElement)
+                          .style.background = '#dcfce7';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLAnchorElement)
+                          .style.background = '#f0fdf4';
+                      }}
+                    >
+                      View Girls →
+                    </Link>
                   </div>
                 ))}
-                {safehouses.filter(sh => sh.highRisk > 0).length === 0 && (
+                {safehouses
+                  .filter(sh => sh.highRisk > 0)
+                  .sort((a, b) => b.highRisk - a.highRisk)
+                  .length === 0 && (
                   <div className="empty-state">
                     <AlertCircle size={20} />
                     <p>No high risk residents</p>
