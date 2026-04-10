@@ -165,11 +165,13 @@ public class AuthController : ControllerBase
             return BadRequest(new { error = "Registration failed.", details = errors });
         }
 
-        var roleResult = await _userManager.AddToRoleAsync(user, AuthRoles.Donor);
+        // Re-fetch user to ensure all Identity fields are populated
+        var createdUser = await _userManager.FindByEmailAsync(body.Email.Trim());
+        var roleResult = await _userManager.AddToRoleAsync(createdUser!, AuthRoles.Donor);
         if (!roleResult.Succeeded)
         {
             var errors = roleResult.Errors.Select(e => e.Description);
-            return StatusCode(500, new { error = "User created but role assignment failed.", details = errors });
+            return StatusCode(500, new { error = "Role assignment failed.", details = errors });
         }
 
         return Ok(new { message = "Account created successfully." });
