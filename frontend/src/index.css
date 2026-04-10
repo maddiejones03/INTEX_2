@@ -480,10 +480,15 @@ button:focus-visible,
 .participant-list { list-style: disc; padding-left: 1.25rem; font-size: 0.875rem; color: var(--gray-700); display: flex; flex-direction: column; gap: 0.25rem; }
 .next-conf { display: flex; align-items: center; gap: 0.3rem; font-size: 0.775rem; color: var(--gray-500); margin-top: 0.5rem; }
 .cooperation-badge { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; }
+/* home_visitations.family_cooperation_level (DB chk_visits_coop) */
+.coop-highly-cooperative { background: var(--green-light); color: #065f46; }
+.coop-cooperative { background: var(--blue-light); color: #1e40af; }
+.coop-neutral { background: var(--amber-light); color: #92400e; }
+.coop-uncooperative { background: #fef2f2; color: #991b1b; }
+/* legacy slugs if any cached rows used old UI values */
 .coop-high { background: var(--green-light); color: #065f46; }
 .coop-moderate { background: var(--blue-light); color: #1e40af; }
 .coop-low { background: var(--amber-light); color: #92400e; }
-.coop-uncooperative { background: #fef2f2; color: #991b1b; }
 .safety-flag { font-size: 0.775rem; color: #b45309; }
 .safety-none { font-size: 0.775rem; color: var(--gray-400); }
 
