@@ -18,6 +18,17 @@ export default function CaseManagerSidebar() {
   return (
     <aside className={`admin-sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-inner">
+        <div className="sidebar-collapse-header">
+          <button
+            type="button"
+            className="sidebar-collapse-arrow"
+            onClick={() => setCollapsed(!collapsed)}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <ChevronRight size={18} aria-hidden /> : <ChevronLeft size={18} aria-hidden />}
+          </button>
+        </div>
         <nav className="sidebar-nav" aria-label="Case manager">
           {navItems.map((item) => (
             <Link
@@ -32,14 +43,6 @@ export default function CaseManagerSidebar() {
             </Link>
           ))}
         </nav>
-        <button
-          className="sidebar-collapse-btn"
-          onClick={() => setCollapsed(!collapsed)}
-          aria-label="Toggle sidebar"
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          {!collapsed && <span>Collapse</span>}
-        </button>
       </div>
     </aside>
   );

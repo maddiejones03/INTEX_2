@@ -8,7 +8,8 @@ export default defineConfig({
     // Same-origin /api in dev so auth cookies work and CORS/HTTPS redirects do not break fetch()
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:5031',
+        // Must match backend Properties/launchSettings.json (http://localhost:5030)
+        target: 'http://127.0.0.1:5030',
         changeOrigin: true,
       },
     },

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Users, FolderOpen,
-  AlertCircle, CheckCircle, Clock, ArrowRight,
+  AlertCircle, CheckCircle, Clock, ArrowRight, Mail,
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
@@ -88,7 +88,6 @@ export default function AdminDashboard() {
   const [processSummary, setProcessSummary] = useState<ProcessSummary | null>(null);
   const [homeVisits, setHomeVisits] = useState<HomeVisitSummary | null>(null);
   const [loading, setLoading] = useState(true);
-  const [overdueCount, setOverdueCount] = useState<number>(0);
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [reintegrationSummary, setReintegrationSummary] = useState<ReintegrationSummaryResponse | null>(null);
   const watchlistRef = useRef<HTMLDivElement>(null);
@@ -155,27 +154,12 @@ export default function AdminDashboard() {
           const watchlistData = await watchlistRes.json();
           const watchlist = watchlistData?.watchlist ?? [];
 
-          console.log('Watchlist count:', watchlist.length);
-          console.log('First donor:', watchlist[0]);
-
           const atRisk = watchlist.filter((d: any) =>
             (d.riskTier === 'High' || d.riskTier === 'Medium') &&
             !d.snoozeUntil
           );
 
-          console.log('At risk count:', atRisk.length);
-
-          const overdue = atRisk.filter((d: any) => {
-            const scored = new Date(d.lastScoredAt);
-            const now = new Date();
-            const daysSince = Math.floor(
-              (now.getTime() - scored.getTime()) / (1000 * 60 * 60 * 24)
-            );
-            return daysSince > 7;
-          }).length;
-
           setPendingCount(atRisk.length);
-          setOverdueCount(overdue);
         }
       } catch (err) {
         console.error('Failed to fetch dashboard data', err);
@@ -242,9 +226,7 @@ export default function AdminDashboard() {
               className="metric-card"
               onClick={scrollToWatchlist}
               style={{
-                borderTop: overdueCount > 0
-                  ? '3px solid #dc2626'
-                  : pendingCount > 0
+                borderTop: pendingCount > 0
                   ? '3px solid #f59e0b'
                   : '3px solid #16a34a',
                 cursor: 'pointer',
@@ -261,12 +243,8 @@ export default function AdminDashboard() {
               <div
                 className="metric-icon"
                 style={{
-                  background: overdueCount > 0 ? '#fef2f2'
-                    : pendingCount > 0 ? '#fffbeb'
-                    : '#f0fdf4',
-                  color: overdueCount > 0 ? '#dc2626'
-                    : pendingCount > 0 ? '#d97706'
-                    : '#16a34a',
+                  background: pendingCount > 0 ? '#fffbeb' : '#f0fdf4',
+                  color: pendingCount > 0 ? '#d97706' : '#16a34a',
                   width: 36, height: 36,
                   borderRadius: 8,
                   display: 'flex',
@@ -276,47 +254,15 @@ export default function AdminDashboard() {
                   fontSize: '16px',
                 }}
               >
-                ✉
+                <Mail size={20} aria-hidden />
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-                <div
-                  className="metric-value"
-                  style={{
-                    color: pendingCount > 0 ? '#d97706' : '#16a34a',
-                    fontSize: '1.75rem',
-                  }}
-                >
-                  {pendingCount}
-                </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-                  pending
-                </div>
-                <div style={{ color: '#cbd5e1', fontSize: '0.9rem' }}>|</div>
-                <div
-                  className="metric-value"
-                  style={{
-                    color: overdueCount > 0 ? '#dc2626' : '#16a34a',
-                    fontSize: '1.75rem',
-                  }}
-                >
-                  {overdueCount}
-                </div>
-                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
-                  overdue
-                </div>
-              </div>
-
-              <div className="metric-label" style={{ marginTop: '0.25rem' }}>
-                Donor Outreach Status
-              </div>
-
+              <div className="metric-value">{pendingCount}</div>
+              <div className="metric-label">Pending outreach</div>
               <div className="metric-sub">
-                {overdueCount > 0
-                  ? `⚠️ ${overdueCount} donor${overdueCount > 1 ? 's' : ''} past 7-day window`
-                  : pendingCount > 0
-                  ? `${pendingCount} at-risk donor${pendingCount > 1 ? 's' : ''} awaiting contact`
-                  : '✓ All at-risk donors contacted'}
+                {pendingCount > 0
+                  ? 'High or medium risk on watchlist — click to review'
+                  : 'No donors waiting on the risk watchlist'}
               </div>
             </div>
             {metricsAfterOutreach.map((m) => (
