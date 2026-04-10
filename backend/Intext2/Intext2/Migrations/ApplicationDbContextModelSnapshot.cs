@@ -81,10 +81,6 @@ namespace Intext2.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("SupporterId")
-                        .HasColumnType("int")
-                        .HasColumnName("supporter_id");
-
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -104,8 +100,6 @@ namespace Intext2.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex("SupporterId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -139,8 +133,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(10)")
                         .HasColumnName("currency_code");
 
-                    b.Property<string>("DonationDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly>("DonationDate")
+                        .HasColumnType("date")
                         .HasColumnName("donation_date");
 
                     b.Property<string>("DonationType")
@@ -197,8 +191,8 @@ namespace Intext2.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AllocationId"));
 
-                    b.Property<string>("AllocationDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly>("AllocationDate")
+                        .HasColumnType("date")
                         .HasColumnName("allocation_date");
 
                     b.Property<string>("AllocationNotes")
@@ -324,8 +318,8 @@ namespace Intext2.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("progress_percent");
 
-                    b.Property<string>("RecordDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly>("RecordDate")
+                        .HasColumnType("date")
                         .HasColumnName("record_date");
 
                     b.Property<int>("ResidentId")
@@ -389,8 +383,8 @@ namespace Intext2.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("psychological_checkup_done");
 
-                    b.Property<string>("RecordDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly>("RecordDate")
+                        .HasColumnType("date")
                         .HasColumnName("record_date");
 
                     b.Property<int>("ResidentId")
@@ -464,8 +458,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("social_worker");
 
-                    b.Property<string>("VisitDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly>("VisitDate")
+                        .HasColumnType("date")
                         .HasColumnName("visit_date");
 
                     b.Property<string>("VisitOutcome")
@@ -558,8 +552,8 @@ namespace Intext2.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("follow_up_required");
 
-                    b.Property<string>("IncidentDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly>("IncidentDate")
+                        .HasColumnType("date")
                         .HasColumnName("incident_date");
 
                     b.Property<string>("IncidentType")
@@ -577,8 +571,8 @@ namespace Intext2.Migrations
                         .HasColumnType("int")
                         .HasColumnName("resident_id");
 
-                    b.Property<string>("ResolutionDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("ResolutionDate")
+                        .HasColumnType("date")
                         .HasColumnName("resolution_date");
 
                     b.Property<bool>("Resolved")
@@ -617,12 +611,12 @@ namespace Intext2.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PlanId"));
 
-                    b.Property<string>("CaseConferenceDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("CaseConferenceDate")
+                        .HasColumnType("date")
                         .HasColumnName("case_conference_date");
 
-                    b.Property<string>("CreatedAt")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
                     b.Property<string>("PlanCategory")
@@ -650,16 +644,16 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(20)")
                         .HasColumnName("status");
 
-                    b.Property<string>("TargetDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("TargetDate")
+                        .HasColumnType("date")
                         .HasColumnName("target_date");
 
                     b.Property<decimal?>("TargetValue")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("target_value");
 
-                    b.Property<string>("UpdatedAt")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2")
                         .HasColumnName("updated_at");
 
                     b.HasKey("PlanId");
@@ -688,8 +682,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("email");
 
-                    b.Property<string>("EndDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date")
                         .HasColumnName("end_date");
 
                     b.Property<string>("Notes")
@@ -724,8 +718,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("role_type");
 
-                    b.Property<string>("StartDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date")
                         .HasColumnName("start_date");
 
                     b.Property<string>("Status")
@@ -748,12 +742,12 @@ namespace Intext2.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AssignmentId"));
 
-                    b.Property<string>("AssignmentEnd")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("AssignmentEnd")
+                        .HasColumnType("date")
                         .HasColumnName("assignment_end");
 
-                    b.Property<string>("AssignmentStart")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly>("AssignmentStart")
+                        .HasColumnType("date")
                         .HasColumnName("assignment_start");
 
                     b.Property<bool>("IsPrimary")
@@ -806,8 +800,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("call_to_action_type");
 
-                    b.Property<string>("ComputedAt")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateTime?>("ComputedAt")
+                        .HasColumnType("datetime2")
                         .HasColumnName("computed_at");
 
                     b.Property<string>("DayOfWeek")
@@ -914,8 +908,8 @@ namespace Intext2.Migrations
                         .HasColumnType("int")
                         .HasColumnName("resident_id");
 
-                    b.Property<string>("SessionDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly>("SessionDate")
+                        .HasColumnType("date")
                         .HasColumnName("session_date");
 
                     b.Property<int?>("SessionDurationMinutes")
@@ -966,12 +960,12 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("metric_payload_json");
 
-                    b.Property<string>("PublishedAt")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("PublishedAt")
+                        .HasColumnType("date")
                         .HasColumnName("published_at");
 
-                    b.Property<string>("SnapshotDate")
-                        .HasColumnType("nvarchar(450)")
+                    b.Property<DateOnly>("SnapshotDate")
+                        .HasColumnType("date")
                         .HasColumnName("snapshot_date");
 
                     b.Property<string>("SummaryText")
@@ -981,8 +975,7 @@ namespace Intext2.Migrations
                     b.HasKey("SnapshotId");
 
                     b.HasIndex("SnapshotDate")
-                        .IsUnique()
-                        .HasFilter("[snapshot_date] IS NOT NULL");
+                        .IsUnique();
 
                     b.ToTable("public_impact_snapshots", (string)null);
                 });
@@ -1023,19 +1016,14 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("case_control_no");
 
-                    b.Property<string>("CaseManagerId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("case_manager_id");
-
                     b.Property<string>("CaseStatus")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)")
                         .HasColumnName("case_status");
 
-                    b.Property<string>("CreatedAt")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
                     b.Property<string>("CurrentRiskLevel")
@@ -1044,32 +1032,32 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(10)")
                         .HasColumnName("current_risk_level");
 
-                    b.Property<string>("DateCaseStudyPrepared")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("DateCaseStudyPrepared")
+                        .HasColumnType("date")
                         .HasColumnName("date_case_study_prepared");
 
-                    b.Property<string>("DateClosed")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("DateClosed")
+                        .HasColumnType("date")
                         .HasColumnName("date_closed");
 
-                    b.Property<string>("DateColbObtained")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("DateColbObtained")
+                        .HasColumnType("date")
                         .HasColumnName("date_colb_obtained");
 
-                    b.Property<string>("DateColbRegistered")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("DateColbRegistered")
+                        .HasColumnType("date")
                         .HasColumnName("date_colb_registered");
 
-                    b.Property<string>("DateEnrolled")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("DateEnrolled")
+                        .HasColumnType("date")
                         .HasColumnName("date_enrolled");
 
-                    b.Property<string>("DateOfAdmission")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly>("DateOfAdmission")
+                        .HasColumnType("date")
                         .HasColumnName("date_of_admission");
 
-                    b.Property<string>("DateOfBirth")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("DateOfBirth")
+                        .HasColumnType("date")
                         .HasColumnName("date_of_birth");
 
                     b.Property<bool>("FamilyIndigenous")
@@ -1225,8 +1213,6 @@ namespace Intext2.Migrations
                     b.HasIndex("CaseControlNo")
                         .IsUnique();
 
-                    b.HasIndex("CaseManagerId");
-
                     b.HasIndex("SafehouseId");
 
                     b.ToTable("residents", (string)null);
@@ -1241,8 +1227,8 @@ namespace Intext2.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ResidentId"));
 
-                    b.Property<string>("ComputedAt")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateTime?>("ComputedAt")
+                        .HasColumnType("datetime2")
                         .HasColumnName("computed_at");
 
                     b.Property<double?>("CooperationSlope3m")
@@ -1315,8 +1301,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("alert_type");
 
-                    b.Property<string>("ComputedAt")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateTime?>("ComputedAt")
+                        .HasColumnType("datetime2")
                         .HasColumnName("computed_at");
 
                     b.Property<string>("CurrentRiskLevel")
@@ -1383,8 +1369,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("notes");
 
-                    b.Property<string>("OpenDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("OpenDate")
+                        .HasColumnType("date")
                         .HasColumnName("open_date");
 
                     b.Property<string>("Province")
@@ -1448,12 +1434,12 @@ namespace Intext2.Migrations
                         .HasColumnType("int")
                         .HasColumnName("incident_count");
 
-                    b.Property<string>("MonthEnd")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly>("MonthEnd")
+                        .HasColumnType("date")
                         .HasColumnName("month_end");
 
-                    b.Property<string>("MonthStart")
-                        .HasColumnType("nvarchar(450)")
+                    b.Property<DateOnly>("MonthStart")
+                        .HasColumnType("date")
                         .HasColumnName("month_start");
 
                     b.Property<string>("Notes")
@@ -1471,8 +1457,7 @@ namespace Intext2.Migrations
                     b.HasKey("MetricId");
 
                     b.HasIndex("SafehouseId", "MonthStart")
-                        .IsUnique()
-                        .HasFilter("[month_start] IS NOT NULL");
+                        .IsUnique();
 
                     b.ToTable("safehouse_monthly_metrics", (string)null);
                 });
@@ -1526,8 +1511,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(30)")
                         .HasColumnName("content_topic");
 
-                    b.Property<string>("CreatedAt")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateTime?>("CreatedAt")
+                        .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
                     b.Property<string>("DayOfWeek")
@@ -1691,8 +1676,8 @@ namespace Intext2.Migrations
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("email");
 
-                    b.Property<string>("FirstDonationDate")
-                        .HasColumnType("nvarchar(max)")
+                    b.Property<DateOnly?>("FirstDonationDate")
+                        .HasColumnType("date")
                         .HasColumnName("first_donation_date");
 
                     b.Property<string>("FirstName")
@@ -1874,16 +1859,6 @@ namespace Intext2.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("Intext2.Models.ApplicationUser", b =>
-                {
-                    b.HasOne("Intext2.Models.Supporter", "Supporter")
-                        .WithMany()
-                        .HasForeignKey("SupporterId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Supporter");
                 });
 
             modelBuilder.Entity("Intext2.Models.Donation", b =>

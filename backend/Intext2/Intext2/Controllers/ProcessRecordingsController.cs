@@ -100,7 +100,7 @@ public class ProcessRecordingsController : ControllerBase
         {
             if (IsSchemaTypeMismatch(ex))
                 return StatusCode(500, new { message = SchemaMismatchMessage });
-            return StatusCode(500, new { message = "Failed to create process recording.", detail = ex.Message });
+            return StatusCode(500, new { message = "Failed to create process recording.", detail = ex.Message, inner = ex.InnerException?.Message, inner2 = ex.InnerException?.InnerException?.Message });
         }
     }
 
