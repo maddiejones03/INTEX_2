@@ -5,6 +5,7 @@ using Intext2.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Intext2.Controllers;
 
@@ -14,13 +15,16 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser>   _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly ApplicationDbContext _db;
 
     public AuthController(
         UserManager<ApplicationUser>   userManager,
-        SignInManager<ApplicationUser> signInManager)
+        SignInManager<ApplicationUser> signInManager,
+        ApplicationDbContext           db)
     {
         _userManager   = userManager;
         _signInManager = signInManager;
+        _db            = db;
     }
 
     // ----------------------------------------------------------------
@@ -173,7 +177,27 @@ public class AuthController : ControllerBase
             var errors = roleResult.Errors.Select(e => e.Description);
             return StatusCode(500, new { error = "Role assignment failed.", details = errors });
         }
+        // link or create a supporter record
+        var supporter = await _db.Supporters.FirstOrDefaultAsync(s => s.Email == body.Email.Trim());
+        if (supporter is null)        {
+            supporter = new Supporter
+            {
+                SupporterType = "Individual",
+                DisplayName     = $"{body.FirstName.Trim()} {body.LastName.Trim()}",
+                FirstName       = body.FirstName.Trim(),
+                LastName        = body.LastName.Trim(),
+                Email           = body.Email.Trim(),
+                Status          = "Active",
+                RelationshipType = "Local",
+                AcquisitionChannel = "Self-Registered",
+            };
+            _db.Supporters.Add(supporter);
+            await _db.SaveChangesAsync();
+        }
+        createdUser!.SupporterId = supporter.SupporterId;
+        await _userManager.UpdateAsync(createdUser);    
 
-        return Ok(new { message = "Account created successfully." });
+        return Ok(new { message = "Registration successful. You can now sign in." });
     }
 }
+    
