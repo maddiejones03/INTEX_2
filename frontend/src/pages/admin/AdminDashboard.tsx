@@ -66,14 +66,12 @@ interface HomeVisitSummary {
   }[];
 }
 
-interface CaseConferenceRow {
-  conferenceId: number;
-  residentId: number;
-  conferenceDate: string;
-  conferenceType: string;
-  facilitator: string | null;
-  agenda: string | null;
-  status: string;
+interface ReintegrationSummaryResponse {
+  summary: {
+    completed: number;
+    inProgress: number;
+    notStarted: number;
+  }[];
 }
 
 function asBool(value: boolean | number | null | undefined): boolean {
@@ -92,8 +90,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [overdueCount, setOverdueCount] = useState<number>(0);
   const [pendingCount, setPendingCount] = useState<number>(0);
-  const [caseConferenceUpcoming, setCaseConferenceUpcoming] = useState<CaseConferenceRow[]>([]);
-  const [caseConferenceTotal, setCaseConferenceTotal] = useState<number>(0);
+  const [reintegrationSummary, setReintegrationSummary] = useState<ReintegrationSummaryResponse | null>(null);
   const watchlistRef = useRef<HTMLDivElement>(null);
 
   const scrollToWatchlist = () => {
@@ -106,14 +103,14 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [safehouseRes, donationRes, residentRes, processRes, homeVisitRes, conferenceRes] =
+        const [safehouseRes, donationRes, residentRes, processRes, homeVisitRes, reintegrationRes] =
           await Promise.all([
           fetch(`${API_BASE}/api/reports/residents-by-safehouse`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/reports/donations-by-month`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/residents?pageSize=100`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/processrecordings?pageSize=100`, { credentials: 'include' }),
           fetch(`${API_BASE}/api/homevisitations?pageSize=100`, { credentials: 'include' }),
-          fetch(`${API_BASE}/api/caseconferences?upcoming=true&pageSize=100`, { credentials: 'include' }),
+          fetch(`${API_BASE}/api/reports/reintegration-success-rates`, { credentials: 'include' }),
         ]);
 
         if (safehouseRes.ok) {
@@ -145,15 +142,9 @@ export default function AdminDashboard() {
           setHomeVisits(data);
         }
 
-        if (conferenceRes.ok) {
-          const data = (await conferenceRes.json()) as { total?: number; items?: CaseConferenceRow[] };
-          const items = data.items ?? [];
-          const filtered = items
-            .filter((c) => (c.status ?? '').toLowerCase() !== 'cancelled')
-            .slice()
-            .sort((a, b) => a.conferenceDate.localeCompare(b.conferenceDate));
-          setCaseConferenceUpcoming(filtered.slice(0, 5));
-          setCaseConferenceTotal(typeof data.total === 'number' ? data.total : filtered.length);
+        if (reintegrationRes.ok) {
+          const data = await reintegrationRes.json();
+          setReintegrationSummary(data);
         }
 
         const watchlistRes = await fetch(
@@ -209,6 +200,9 @@ export default function AdminDashboard() {
     .slice(0, 5);
 
   const residentCaseById = new Map((residentSummary?.items ?? []).map((r) => [r.residentId, r.caseControlNo]));
+  const reintegrationCompleted = (reintegrationSummary?.summary ?? []).reduce((sum, row) => sum + row.completed, 0);
+  const reintegrationInProgress = (reintegrationSummary?.summary ?? []).reduce((sum, row) => sum + row.inProgress, 0);
+  const reintegrationNotStarted = (reintegrationSummary?.summary ?? []).reduce((sum, row) => sum + row.notStarted, 0);
 
   const metricsBeforeOutreach = [
     { icon: Users, label: 'Active Residents', value: activeResidents, sub: `${totalOccupied}/${totalCapacity} capacity`, color: 'blue', to: '/admin/caseload' },
@@ -417,51 +411,6 @@ export default function AdminDashboard() {
           <div className="dashboard-row">
             <div className="dashboard-card">
               <div className="card-header">
-                <h2>Scheduled case conferences</h2>
-                <Link to="/admin/visitation" className="card-link">
-                  View all ({caseConferenceTotal}) <ArrowRight size={14} />
-                </Link>
-              </div>
-              <p className="table-secondary" style={{ fontSize: '0.8125rem', margin: '0 0 0.75rem', padding: '0 1.25rem' }}>
-                From the case conferences table (next five by date).
-              </p>
-              <div className="conference-list">
-                {caseConferenceUpcoming.map((c) => {
-                  const d = new Date(
-                    c.conferenceDate.includes('T') ? c.conferenceDate : `${c.conferenceDate}T12:00:00`
-                  );
-                  return (
-                    <div key={c.conferenceId} className="conference-item">
-                      <div className="conference-date">
-                        <div className="conf-month">
-                          {d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
-                        </div>
-                        <div className="conf-day">{d.getDate()}</div>
-                      </div>
-                      <div>
-                        <div className="conference-resident">
-                          {residentCaseById.get(c.residentId) ?? `Resident #${c.residentId}`}
-                        </div>
-                        <div className="conference-agenda">
-                          {c.conferenceType}
-                          {c.facilitator ? ` · ${c.facilitator}` : ''}
-                          {c.agenda ? ` — ${c.agenda.slice(0, 80)}${c.agenda.length > 80 ? '…' : ''}` : ''}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {caseConferenceUpcoming.length === 0 && (
-                  <div className="empty-state">
-                    <AlertCircle size={20} />
-                    <p>No upcoming case conferences on file</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="dashboard-card">
-              <div className="card-header">
                 <h2>Visit follow-up reminders</h2>
                 <Link to="/admin/visitation" className="card-link">Open visits <ArrowRight size={14} /></Link>
               </div>
@@ -598,6 +547,55 @@ export default function AdminDashboard() {
                   <div className="empty-state">
                     <AlertCircle size={20} />
                     <p>No high risk residents</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="dashboard-row">
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2>Progress Snapshot</h2>
+                <Link to="/admin/reports" className="card-link">View analytics <ArrowRight size={14} /></Link>
+              </div>
+              <div className="metrics-grid metrics-grid-3">
+                <div className="metric-card metric-card-green">
+                  <div className="metric-value">{reintegrationCompleted}</div>
+                  <div className="metric-label">Reintegrated</div>
+                </div>
+                <div className="metric-card metric-card-blue">
+                  <div className="metric-value">{reintegrationInProgress}</div>
+                  <div className="metric-label">In Progress</div>
+                </div>
+                <div className="metric-card metric-card-amber">
+                  <div className="metric-value">{reintegrationNotStarted}</div>
+                  <div className="metric-label">Not Started</div>
+                </div>
+              </div>
+            </div>
+            <div className="dashboard-card">
+              <div className="card-header">
+                <h2>Recent Process Notes</h2>
+                <Link to="/admin/process-recording" className="card-link">View all <ArrowRight size={14} /></Link>
+              </div>
+              <div className="activity-feed">
+                {recentProcess.map((entry) => (
+                  <div key={entry.recordingId} className="activity-item">
+                    <div className="activity-icon icon-amber"><FolderOpen size={14} /></div>
+                    <div className="activity-content">
+                      <div className="activity-text">
+                        {residentCaseById.get(entry.residentId) ?? `Resident #${entry.residentId}`} - {entry.sessionType}
+                      </div>
+                      <div className="activity-time">
+                        {new Date(entry.sessionDate).toLocaleDateString()} - {entry.emotionalStateObserved || 'No mood noted'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {recentProcess.length === 0 && (
+                  <div className="empty-state">
+                    <AlertCircle size={20} />
+                    <p>No recent process recordings</p>
                   </div>
                 )}
               </div>

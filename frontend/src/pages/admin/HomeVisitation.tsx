@@ -19,7 +19,13 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 const API_BASE = getApiBaseUrl();
 
 const VISIT_TYPES = ['Initial Assessment', 'Routine Follow-Up', 'Reintegration Assessment', 'Post-Placement Monitoring', 'Emergency'];
-const COOPERATION_LEVELS = ['High', 'Moderate', 'Low', 'Uncooperative'];
+/** Must match database chk_visits_coop on home_visitations.family_cooperation_level */
+const COOPERATION_LEVELS = [
+  'Highly Cooperative',
+  'Cooperative',
+  'Neutral',
+  'Uncooperative',
+] as const;
 const PAGE_SIZE = 100;
 const TABLE_PREVIEW_ROWS = 10;
 
@@ -180,7 +186,7 @@ export default function HomeVisitation() {
     visitDate: new Date().toISOString().split('T')[0],
     visitType: 'Routine Follow-Up',
     observations: '',
-    familyCooperationLevel: 'Moderate',
+    familyCooperationLevel: 'Cooperative',
     followUpNotes: '',
     purpose: '',
   });
@@ -314,22 +320,32 @@ export default function HomeVisitation() {
         credentials: 'include',
         body: JSON.stringify({
           residentId: Number(newVisit.residentId),
-          socialWorker: newVisit.socialWorker,
+          socialWorker: newVisit.socialWorker || null,
           visitDate: newVisit.visitDate,
           visitType: newVisit.visitType,
           observations: newVisit.observations,
           familyCooperationLevel: newVisit.familyCooperationLevel,
-          followUpNotes: newVisit.followUpNotes,
-          purpose: newVisit.purpose,
+          followUpNotes: newVisit.followUpNotes || null,
+          purpose: newVisit.purpose || null,
           followUpNeeded: newVisit.followUpNotes.trim() ? 1 : 0,
+          safetyConcernsNoted: 0,
         }),
       });
       if (res.ok) {
         setShowAddForm(false);
-        setNewVisit({ residentId: '', socialWorker: '', visitDate: new Date().toISOString().split('T')[0], visitType: 'Routine Follow-Up', observations: '', familyCooperationLevel: 'Moderate', followUpNotes: '', purpose: '' });
+        setNewVisit({ residentId: '', socialWorker: '', visitDate: new Date().toISOString().split('T')[0], visitType: 'Routine Follow-Up', observations: '', familyCooperationLevel: 'Cooperative', followUpNotes: '', purpose: '' });
         fetchVisits();
       } else {
-        setFormError('Failed to save visit.');
+        const text = await res.text();
+        let msg = 'Failed to save visit.';
+        try {
+          const j = JSON.parse(text) as { message?: string; detail?: string; title?: string };
+          if (typeof j.detail === 'string' && j.detail) msg = `${msg} ${j.detail}`;
+          else if (typeof j.message === 'string' && j.message) msg = j.message;
+        } catch {
+          if (text) msg = text.slice(0, 200);
+        }
+        setFormError(msg);
       }
     } catch {
       setFormError('Failed to save visit.');

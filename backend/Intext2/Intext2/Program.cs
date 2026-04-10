@@ -35,15 +35,27 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 
 // ----------------------------------------------------------------
-// Cookie settings (per professor's instructions)
+// Cookie settings (per professor's instructions in production)
+// Development: Safari and many incognito profiles do not treat http:// like Chrome's
+// "localhost is secure" exception, so SecurePolicy.Always blocks the auth cookie on http://.
 // ----------------------------------------------------------------
+var isDevelopment = builder.Environment.IsDevelopment();
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.Cookie.HttpOnly      = true;
-    options.Cookie.SecurePolicy  = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
-    options.Cookie.SameSite      = Microsoft.AspNetCore.Http.SameSiteMode.None;
-    options.ExpireTimeSpan       = TimeSpan.FromHours(1);
-    options.SlidingExpiration    = true;
+    options.Cookie.HttpOnly   = true;
+    options.ExpireTimeSpan    = TimeSpan.FromHours(1);
+    options.SlidingExpiration = true;
+
+    if (isDevelopment)
+    {
+        options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SameSite     = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+    }
+    else
+    {
+        options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+        options.Cookie.SameSite     = Microsoft.AspNetCore.Http.SameSiteMode.None;
+    }
 });
 
 // ----------------------------------------------------------------
@@ -62,6 +74,11 @@ var defaultCorsOrigins = new[]
 {
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://127.0.0.1:5175",
     "https://jolly-moss-00018721e.1.azurestaticapps.net",
     "https://jolly-moss-00018721e.5.azurestaticapps.net",
 };

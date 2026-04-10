@@ -152,14 +152,14 @@ export default function PrivacyPolicy() {
               <Mail size={18} />
               <div>
                 <strong>Email</strong>
-                <a href="mailto:dpo@kanlungan.org">dpo@kanlungan.org</a>
+                <a href="mailto:Info@LighthouseSanctuary.org">Info@LighthouseSanctuary.org</a>
               </div>
             </div>
             <div className="contact-card">
               <Phone size={18} />
               <div>
                 <strong>Phone</strong>
-                <a href="tel:+6328123456">+63 2 8123 4567</a>
+                <a href="tel:+18018313323">(801) 831-3323</a>
               </div>
             </div>
           </div>
