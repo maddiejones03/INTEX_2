@@ -247,13 +247,14 @@ button:focus-visible,
 .card-header h2 { font-size: 0.95rem; font-weight: 600; color: var(--gray-800); }
 .card-link { display: flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; color: var(--primary); font-weight: 500; }
 .card-link:hover { text-decoration: underline; }
-.safehouse-list { padding: 0.75rem 1.25rem; }
-.safehouse-item { padding: 0.75rem 0; border-bottom: 1px solid var(--gray-100); }
+/* Dashboard: match height/spacing of .resident-list / .resident-item (5 rows each) */
+.safehouse-list { padding: 0.5rem 1.25rem; }
+.safehouse-item { padding: 0.625rem 0; border-bottom: 1px solid var(--gray-100); }
 .safehouse-item:last-child { border-bottom: none; }
 .safehouse-name { font-size: 0.875rem; font-weight: 600; color: var(--gray-800); }
 .safehouse-location { font-size: 0.775rem; color: var(--gray-500); }
-.safehouse-capacity { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem; font-size: 0.775rem; color: var(--gray-600); }
-.capacity-bar { flex: 1; height: 6px; background: var(--gray-200); border-radius: 3px; overflow: hidden; }
+.safehouse-capacity { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.125rem; font-size: 0.75rem; color: var(--gray-600); }
+.capacity-bar { flex: 1; height: 5px; background: var(--gray-200); border-radius: 3px; overflow: hidden; }
 .capacity-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
 .capacity-fill.good { background: var(--green); }
 .capacity-fill.warning { background: var(--amber); }
@@ -543,7 +544,19 @@ button:focus-visible,
 }
 .portal-segment-btn-label { font-weight: 600; color: var(--gray-900); }
 .portal-segment-btn-hint { font-size: 0.75rem; color: var(--gray-500); font-weight: 400; }
-.login-footer { text-align: center; margin-top: 1.5rem; font-size: 0.825rem; color: var(--gray-500); display: flex; flex-direction: column; gap: 0.5rem; }
+.login-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.825rem;
+  color: var(--gray-500);
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+}
+.login-footer-sep { user-select: none; opacity: 0.6; }
 .login-hint { font-size: 0.775rem; color: var(--gray-400); }
 .login-hint code { background: var(--gray-100); padding: 0.1rem 0.35rem; border-radius: 4px; font-size: 0.75rem; }
 .login-bg-pattern { position: absolute; inset: 0; opacity: 0.04; background-image: radial-gradient(circle, #fff 1px, transparent 1px); background-size: 24px 24px; }

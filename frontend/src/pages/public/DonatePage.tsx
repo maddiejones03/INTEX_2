@@ -6,6 +6,7 @@ import {
   Users, Home as HomeIcon, TrendingUp, Shield,
 } from 'lucide-react';
 import { apiFetch, apiPost } from '../../services/apiClient';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 type DonationType = 'Monetary' | 'Time' | 'InKind';
 
@@ -97,6 +98,7 @@ function formatPeso(value: number) {
 }
 
 export default function DonatePage() {
+  useDocumentTitle('Donate', 'public');
   const [selectedType, setSelectedType] = useState<DonationType | null>(null);
   const [impact, setImpact] = useState<ImpactData | null>(null);
 

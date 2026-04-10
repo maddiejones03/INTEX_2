@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
-  Search, Plus, Filter, AlertCircle, Eye, Edit2, Trash2,
+  Search, Plus, Filter, AlertCircle, Edit2, Trash2,
   ChevronLeft, ChevronRight, X, Check,
 } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
@@ -505,8 +505,16 @@ export default function CaseloadInventory() {
                   <td><span className={`status-badge status-${r.caseStatus?.toLowerCase().replace(' ', '-')}`}>{r.caseStatus}</span></td>
                   <td>
                     <div className="action-btns">
-                      <button type="button" className="btn-icon" title="View" aria-label={`View resident ${r.caseControlNo}`} onClick={() => setSelectedId(r.residentId)}><Eye size={15} aria-hidden /></button>
-                      {!readOnly && (
+                      {readOnly ? (
+                        <button
+                          type="button"
+                          className="btn btn-ghost"
+                          style={{ fontSize: '0.8125rem', padding: '0.35rem 0.6rem' }}
+                          onClick={() => setSelectedId(r.residentId)}
+                        >
+                          View
+                        </button>
+                      ) : (
                         <>
                           <button type="button" className="btn-icon" title="Edit" aria-label={`Edit resident ${r.caseControlNo}`} onClick={() => setSelectedId(r.residentId)}><Edit2 size={15} aria-hidden /></button>
                           <button type="button" className="btn-icon btn-icon-danger" title="Delete" aria-label={`Delete resident ${r.caseControlNo}`} onClick={() => setDeleteTarget(r)}><Trash2 size={15} aria-hidden /></button>
