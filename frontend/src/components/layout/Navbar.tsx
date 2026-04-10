@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { logoutUser } from '../../services/authApi';
-import { Menu, X, ChevronDown, LogOut, User, Heart, FolderOpen } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut, User, FolderOpen } from 'lucide-react';
 
 export default function Navbar() {
   const { isAuthenticated, authSession, refreshAuthSession } = useAuth();
@@ -74,8 +74,7 @@ export default function Navbar() {
                 to="/donor/donations"
                 className={`navbar-link ${path === '/donor/donations' ? 'active' : ''}`}
               >
-                <Heart size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
-                My donations
+                My Donations
               </Link>
             )}
             {isAuthenticated && isCaseManager && (
@@ -145,7 +144,7 @@ export default function Navbar() {
                       className="profile-dropdown-item"
                       onClick={() => setProfileOpen(false)}
                     >
-                      <Heart size={14} /> My donations
+                      My Donations
                     </Link>
                   )}
                   <button className="profile-dropdown-item danger" onClick={handleLogout}>
@@ -190,7 +189,7 @@ export default function Navbar() {
                   className="mobile-menu-link"
                   onClick={() => setMobileOpen(false)}
                 >
-                  My donations
+                  My Donations
                 </Link>
               )}
               {isAuthenticated && isCaseManager && (
