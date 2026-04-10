@@ -8,7 +8,14 @@ import { TrendingUp, Users, Heart, Home, BookOpen, Activity } from 'lucide-react
 import { getApiBaseUrl } from '../../services/authApi';
 import ImpactChart from '../../components/ui/ImpactChart';
 
-const COLORS = ['#4f8a68', '#6aa17f', '#5a9b76', '#e99bb8', '#f0b6cc', '#f7d3e1'];
+const COLORS = [
+  '#2d6a4f',
+  '#c9375a',
+  '#4f8a68',
+  '#e99bb8',
+  '#95c8a8',
+  '#f7d3e1',
+];
 
 type PublicImpactResponse = {
   totalResidents: number;
@@ -260,12 +267,16 @@ export default function ImpactDashboard() {
               <AreaChart data={donationTrendData} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorMonetary" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4f8a68" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#4f8a68" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#2d6a4f" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#2d6a4f" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorInKind" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6aa17f" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6aa17f" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#c9375a" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#c9375a" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorVolunteer" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#95c8a8" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#95c8a8" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -273,9 +284,9 @@ export default function ImpactDashboard() {
                 <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
                 <Legend />
-                <Area type="monotone" dataKey="monetary" name="Monetary" stroke="#4f8a68" fill="url(#colorMonetary)" strokeWidth={2} />
-                <Area type="monotone" dataKey="inKind" name="In-Kind" stroke="#6aa17f" fill="url(#colorInKind)" strokeWidth={2} />
-                <Area type="monotone" dataKey="volunteer" name="Volunteer" stroke="#e99bb8" fill="none" strokeWidth={2} strokeDasharray="5 5" />
+                <Area type="monotone" dataKey="monetary" name="Monetary" stroke="#2d6a4f" fill="url(#colorMonetary)" strokeWidth={2} />
+                <Area type="monotone" dataKey="inKind" name="In-Kind" stroke="#c9375a" fill="url(#colorInKind)" strokeWidth={2} />
+                <Area type="monotone" dataKey="volunteer" name="Volunteer" stroke="#95c8a8" fill="url(#colorVolunteer)" strokeWidth={2} strokeDasharray="5 5" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -313,17 +324,20 @@ export default function ImpactDashboard() {
             <h2>Safe House Occupancy</h2>
             <p className="chart-sub">Current capacity vs. occupancy and total reintegrated per facility</p>
             <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={safeHouseData} margin={{ top: 5, right: 10, left: 0, bottom: 40 }}>
+              <BarChart data={safeHouseData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-15} textAnchor="end" />
+                <XAxis dataKey="name" tick={false} height={10} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Legend />
-                <Bar dataKey="capacity" name="Capacity" fill="#e7f4eb" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="occupied" name="Occupied" fill="#4f8a68" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="reintegrated" name="Reintegrated (All Time)" fill="#6aa17f" radius={[4, 4, 0, 0]} />
+                <Legend wrapperStyle={{ paddingTop: '8px' }} />
+                <Bar dataKey="capacity" name="Capacity" fill="#95c8a8" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="occupied" name="Occupied" fill="#2d6a4f" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="reintegrated" name="Reintegrated (All Time)" fill="#c9375a" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+            <p style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center', marginTop: '4px' }}>
+              9 safehouses — hover over bars for details
+            </p>
           </div>
         </div>
 
@@ -341,9 +355,9 @@ export default function ImpactDashboard() {
                 <YAxis dataKey="category" type="category" tick={{ fontSize: 12 }} width={110} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="reintegrated" name="Reintegrated" fill="#6aa17f" stackId="a" />
-                <Bar dataKey="inProgress" name="In Progress" fill="#4f8a68" stackId="a" />
-                <Bar dataKey="transferred" name="Transferred" fill="#e99bb8" stackId="a" />
+                <Bar dataKey="reintegrated" name="Reintegrated" fill="#2d6a4f" stackId="a" />
+                <Bar dataKey="inProgress" name="In Progress" fill="#95c8a8" stackId="a" />
+                <Bar dataKey="transferred" name="Transferred" fill="#c9375a" stackId="a" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -363,9 +377,9 @@ export default function ImpactDashboard() {
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="reintegrated" name="Reintegrated" fill="#6aa17f" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="transferred" name="Transferred" fill="#e99bb8" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="independent" name="Independent Living" fill="#f0b6cc" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="reintegrated" name="Reintegrated" fill="#2d6a4f" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="transferred" name="Transferred" fill="#c9375a" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="independent" name="Independent Living" fill="#95c8a8" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
