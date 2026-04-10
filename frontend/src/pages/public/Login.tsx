@@ -173,9 +173,9 @@ export default function Login() {
 
         <div className="login-footer">
           <Link to="/">← Back to public site</Link>
-          <span className="login-footer-sep" aria-hidden>
-            ·
-          </span>
+          <span className="login-footer-sep" aria-hidden>·</span>
+          <Link to="/register">Create account</Link>
+          <span className="login-footer-sep" aria-hidden>·</span>
           <Link to="/privacy">Privacy policy</Link>
         </div>
       </div>
