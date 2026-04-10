@@ -115,6 +115,7 @@ public class ResidentsController : ControllerBase
                     r.DateOfAdmission,
                     r.ReintegrationStatus,
                     r.AssignedSocialWorker,
+                    r.CaseManagerId,
                     r.CreatedAt,
                 })
                 .ToListAsync();
