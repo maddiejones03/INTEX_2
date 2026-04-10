@@ -135,4 +135,43 @@ public class AuthController : ControllerBase
         await _signInManager.SignOutAsync();
         return Ok(new { message = "Logged out successfully." });
     }
+        // ----------------------------------------------------------------
+    // POST /api/auth/register
+    // Public donor self-registration.
+    // ----------------------------------------------------------------
+    [HttpPost("register")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Register([FromBody] RegisterDto body)
+    {
+        var existing = await _userManager.FindByEmailAsync(body.Email.Trim());
+        if (existing is not null)
+            return Conflict(new { error = "An account with this email already exists." });
+
+        var user = new ApplicationUser
+        {
+            UserName  = body.Email.Trim(),
+            Email     = body.Email.Trim(),
+            FirstName = body.FirstName.Trim(),
+            LastName  = body.LastName.Trim(),
+            IsActive  = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+
+        var result = await _userManager.CreateAsync(user, body.Password);
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors.Select(e => e.Description);
+            return BadRequest(new { error = "Registration failed.", details = errors });
+        }
+
+        var roleResult = await _userManager.AddToRoleAsync(user, AuthRoles.Donor);
+        if (!roleResult.Succeeded)
+        {
+            var errors = roleResult.Errors.Select(e => e.Description);
+            return StatusCode(500, new { error = "User created but role assignment failed.", details = errors });
+        }
+
+        return Ok(new { message = "Account created successfully." });
+    }
 }
