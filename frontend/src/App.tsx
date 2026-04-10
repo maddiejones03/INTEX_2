@@ -12,6 +12,7 @@ import Home from './pages/public/Home';
 import DonatePage from './pages/public/DonatePage';
 import ImpactDashboard from './pages/public/ImpactDashboard';
 import Login from './pages/public/Login';
+import Register from './pages/public/Register';
 import PrivacyPolicy from './pages/public/PrivacyPolicy';
 
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -94,6 +95,7 @@ export default function App() {
           </Route>
 
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
           <Route path="/case-manager" element={<CaseManagerLayout />}>
             <Route index element={<Navigate to="caseload" replace />} />
