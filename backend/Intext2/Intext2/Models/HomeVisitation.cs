@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Intext2.Models;
 
@@ -67,7 +68,8 @@ public class HomeVisitation
     [NotMapped]
     public double? OutcomeNumeric { get; set; }
 
-    // Navigation
+    // Navigation (never bind from JSON on create/update — prevents EF from tracking a related graph)
     [ForeignKey(nameof(ResidentId))]
+    [JsonIgnore]
     public Resident? Resident { get; set; }
 }

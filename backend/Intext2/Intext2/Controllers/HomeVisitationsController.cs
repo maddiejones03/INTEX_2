@@ -23,6 +23,46 @@ public class HomeVisitationsController : ControllerBase
         => ex is InvalidCastException
            || ex.Message.Contains("Unable to cast object of type", StringComparison.OrdinalIgnoreCase);
 
+    private static string DeepestExceptionMessage(Exception ex)
+    {
+        for (var cur = ex; cur != null; cur = cur.InnerException!)
+        {
+            if (cur is SqlException sx)
+                return string.IsNullOrWhiteSpace(sx.Message) ? ex.Message : sx.Message;
+        }
+
+        var parts = new List<string>();
+        for (var cur = ex; cur != null; cur = cur.InnerException!)
+        {
+            var m = cur.Message;
+            if (string.IsNullOrWhiteSpace(m)) continue;
+            if (m.Contains("See the inner exception", StringComparison.OrdinalIgnoreCase)) continue;
+            parts.Add(m);
+        }
+
+        return parts.Count > 0 ? string.Join(" — ", parts) : ex.Message;
+    }
+
+    private static readonly HashSet<string> AllowedVisitTypes = new(StringComparer.Ordinal)
+    {
+        "Initial Assessment",
+        "Routine Follow-Up",
+        "Reintegration Assessment",
+        "Post-Placement Monitoring",
+        "Emergency",
+    };
+
+    private static readonly HashSet<string> AllowedCooperationLevels = new(StringComparer.Ordinal)
+    {
+        "Highly Cooperative",
+        "Cooperative",
+        "Neutral",
+        "Uncooperative",
+    };
+
+    private static string? NullIfWhiteSpace(string? s)
+        => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
     private const string HomeVisitationSelectColumns = """
         SELECT
             ISNULL(visitation_id, 0) AS VisitationId,
@@ -219,21 +259,115 @@ public class HomeVisitationsController : ControllerBase
     // POST /api/homevisitations
     [HttpPost]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Create([FromBody] HomeVisitation model)
+    public async Task<IActionResult> Create([FromBody] HomeVisitationCreateDto dto)
     {
-        if (!ModelState.IsValid) return BadRequest(ModelState);
+        if (dto.ResidentId <= 0)
+            return BadRequest(new { message = "A valid resident is required." });
+        if (string.IsNullOrWhiteSpace(dto.Observations))
+            return BadRequest(new { message = "Observations are required." });
+        if (string.IsNullOrWhiteSpace(dto.VisitType))
+            return BadRequest(new { message = "Visit type is required." });
+        if (string.IsNullOrWhiteSpace(dto.FamilyCooperationLevel))
+            return BadRequest(new { message = "Family cooperation level is required." });
+
+        var visitType = dto.VisitType.Trim();
+        var coop      = dto.FamilyCooperationLevel.Trim();
+        if (!AllowedVisitTypes.Contains(visitType))
+            return BadRequest(new { message = "Visit type is not allowed for this database.", detail = visitType });
+        if (!AllowedCooperationLevels.Contains(coop))
+            return BadRequest(new { message = "Family cooperation level is not allowed for this database.", detail = coop });
+
+        var visitOutcome = NullIfWhiteSpace(dto.VisitOutcome);
+        if (visitOutcome is not null)
+        {
+            const StringComparison o = StringComparison.Ordinal;
+            if (!visitOutcome.Equals("Favorable", o)
+                && !visitOutcome.Equals("Needs Improvement", o)
+                && !visitOutcome.Equals("Unfavorable", o)
+                && !visitOutcome.Equals("Inconclusive", o))
+                return BadRequest(new { message = "Visit outcome is not allowed for this database.", detail = visitOutcome });
+        }
+
+        var residentExists = await _db.Residents.AnyAsync(r => r.ResidentId == dto.ResidentId, HttpContext.RequestAborted);
+        if (!residentExists)
+            return BadRequest(new { message = "No resident exists with the given id.", detail = dto.ResidentId.ToString() });
+
         try
         {
-            model.VisitationId = 0;
-            _db.HomeVisitations.Add(model);
-            await _db.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = model.VisitationId }, model);
+            await _db.Database.OpenConnectionAsync(HttpContext.RequestAborted);
+            try
+            {
+                var conn = _db.Database.GetDbConnection();
+                await using var cmd = conn.CreateCommand();
+                cmd.CommandText = """
+                    INSERT INTO home_visitations (
+                        resident_id, visit_date, social_worker, visit_type,
+                        location_visited, family_members_present, purpose, observations,
+                        family_cooperation_level, safety_concerns_noted, follow_up_needed,
+                        follow_up_notes, visit_outcome
+                    ) VALUES (
+                        @resident_id, @visit_date, @social_worker, @visit_type,
+                        @location_visited, @family_members_present, @purpose, @observations,
+                        @family_cooperation_level, @safety_concerns_noted, @follow_up_needed,
+                        @follow_up_notes, @visit_outcome
+                    );
+                    SELECT CAST(SCOPE_IDENTITY() AS int);
+                    """;
+
+                static object DbStr(string? s) => string.IsNullOrWhiteSpace(s) ? DBNull.Value : s.Trim();
+
+                cmd.Parameters.Add(new SqlParameter("@resident_id", SqlDbType.Int) { Value = dto.ResidentId });
+                cmd.Parameters.Add(new SqlParameter("@visit_date", SqlDbType.Date)
+                {
+                    Value = dto.VisitDate.ToDateTime(TimeOnly.MinValue),
+                });
+                cmd.Parameters.Add(new SqlParameter("@social_worker", SqlDbType.NVarChar, 255) { Value = DbStr(dto.SocialWorker) });
+                cmd.Parameters.Add(new SqlParameter("@visit_type", SqlDbType.NVarChar, 30) { Value = visitType });
+                cmd.Parameters.Add(new SqlParameter("@location_visited", SqlDbType.NVarChar, -1) { Value = DbStr(dto.LocationVisited) });
+                cmd.Parameters.Add(new SqlParameter("@family_members_present", SqlDbType.NVarChar, -1) { Value = DbStr(dto.FamilyMembersPresent) });
+                cmd.Parameters.Add(new SqlParameter("@purpose", SqlDbType.NVarChar, -1) { Value = DbStr(dto.Purpose) });
+                cmd.Parameters.Add(new SqlParameter("@observations", SqlDbType.NVarChar, -1) { Value = dto.Observations.Trim() });
+                cmd.Parameters.Add(new SqlParameter("@family_cooperation_level", SqlDbType.NVarChar, 25) { Value = coop });
+                cmd.Parameters.Add(new SqlParameter("@safety_concerns_noted", SqlDbType.Bit) { Value = dto.SafetyConcernsNoted });
+                cmd.Parameters.Add(new SqlParameter("@follow_up_needed", SqlDbType.Bit) { Value = dto.FollowUpNeeded });
+                cmd.Parameters.Add(new SqlParameter("@follow_up_notes", SqlDbType.NVarChar, -1) { Value = DbStr(dto.FollowUpNotes) });
+                cmd.Parameters.Add(new SqlParameter("@visit_outcome", SqlDbType.NVarChar, 25)
+                {
+                    Value = visitOutcome is null ? DBNull.Value : visitOutcome,
+                });
+
+                var scalar = await cmd.ExecuteScalarAsync(HttpContext.RequestAborted);
+                var newId  = Convert.ToInt32(scalar);
+
+                return CreatedAtAction(
+                    nameof(GetById),
+                    new { id = newId },
+                    new { visitationId = newId, residentId = dto.ResidentId, visitDate = dto.VisitDate, visitType });
+            }
+            finally
+            {
+                await _db.Database.CloseConnectionAsync();
+            }
+        }
+        catch (DbException ex)
+        {
+            if (IsSchemaTypeMismatch(ex))
+                return StatusCode(500, new { message = SchemaMismatchMessage });
+            return StatusCode(500, new
+            {
+                message = "Failed to create home visitation.",
+                detail  = DeepestExceptionMessage(ex),
+            });
         }
         catch (Exception ex)
         {
             if (IsSchemaTypeMismatch(ex))
                 return StatusCode(500, new { message = SchemaMismatchMessage });
-            return StatusCode(500, new { message = "Failed to create home visitation.", detail = ex.Message });
+            return StatusCode(500, new
+            {
+                message = "Failed to create home visitation.",
+                detail  = DeepestExceptionMessage(ex),
+            });
         }
     }
 
