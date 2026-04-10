@@ -109,6 +109,7 @@ function EditRecordingModal({ rec, onClose, onSaved }: { rec: ProcessRecording; 
 
   const handleSave = async () => {
     if (!form.sessionNarrative.trim()) { setError('Narrative summary is required.'); return; }
+    if (!form.sessionDate) { setError('Session date is required.'); return; }
     setSaving(true);
     setError('');
     try {
@@ -136,7 +137,17 @@ function EditRecordingModal({ rec, onClose, onSaved }: { rec: ProcessRecording; 
         body: JSON.stringify(body),
       });
       if (res.ok) { onSaved(); }
-      else { setError('Failed to save changes.'); }
+      else {
+        const text = await res.text();
+        let msg = 'Failed to save changes.';
+        try {
+          const j = JSON.parse(text) as { message?: string; detail?: string; title?: string };
+          if (typeof j.detail === 'string' && j.detail) msg = j.detail;
+          else if (typeof j.message === 'string' && j.message) msg = j.message;
+          else if (typeof j.title === 'string' && j.title) msg = j.title;
+        } catch { if (text) msg = text.slice(0, 300); }
+        setError(msg);
+      }
     } catch { setError('Failed to save changes.'); }
     finally { setSaving(false); }
   };
@@ -312,8 +323,8 @@ export default function ProcessRecordingPage() {
   };
 
   const handleAdd = async () => {
-    if (!newRec.emotionalStateObserved || !newRec.sessionNarrative.trim() || !newRec.followUpActions.trim()) {
-      setFormError('Emotional state, narrative, and follow-up actions are required.');
+    if (!newRec.emotionalStateObserved || !newRec.sessionNarrative.trim()) {
+      setFormError('Emotional state and narrative summary are required.');
       return;
     }
     if (!newRec.residentId) {
@@ -344,7 +355,15 @@ export default function ProcessRecordingPage() {
         setNewRec({ residentId: '', socialWorker: '', sessionDate: new Date().toISOString().split('T')[0], sessionType: 'Individual', emotionalStateObserved: '', sessionNarrative: '', interventionsApplied: [], followUpActions: '' });
         fetchRecordings();
       } else {
-        setFormError('Failed to save recording.');
+        const text = await res.text();
+        let msg = 'Failed to save recording.';
+        try {
+          const j = JSON.parse(text) as { message?: string; detail?: string; title?: string };
+          if (typeof j.detail === 'string' && j.detail) msg = j.detail;
+          else if (typeof j.message === 'string' && j.message) msg = j.message;
+          else if (typeof j.title === 'string' && j.title) msg = j.title;
+        } catch { if (text) msg = text.slice(0, 300); }
+        setFormError(msg);
       }
     } catch {
       setFormError('Failed to save recording.');
@@ -434,7 +453,7 @@ export default function ProcessRecordingPage() {
             </div>
           </div>
           <div className="form-group">
-            <label className="form-label">Follow-Up Actions *</label>
+            <label className="form-label">Follow-Up Actions</label>
             <textarea className="form-textarea" rows={3} value={newRec.followUpActions} onChange={(e) => setNewRec({ ...newRec, followUpActions: e.target.value })} placeholder="Actions to be taken before next session…" />
           </div>
           <div className="form-actions">
