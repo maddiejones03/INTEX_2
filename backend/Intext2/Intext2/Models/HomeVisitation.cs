@@ -43,10 +43,10 @@ public class HomeVisitation
     public string FamilyCooperationLevel { get; set; } = "Cooperative";
 
     [Column("safety_concerns_noted")]
-    public int? SafetyConcernsNoted { get; set; } = 0;
+    public bool SafetyConcernsNoted { get; set; }
 
     [Column("follow_up_needed")]
-    public int? FollowUpNeeded { get; set; } = 0;
+    public bool FollowUpNeeded { get; set; }
 
     [Column("follow_up_notes")]
     public string? FollowUpNotes { get; set; }
@@ -55,10 +55,16 @@ public class HomeVisitation
     [Column("visit_outcome")]
     public string? VisitOutcome { get; set; }
 
-    [Column("cooperation_numeric")]
+    /// <summary>
+    /// Derived in ML/data prep only; not a column on Azure SQL home_visitations (see schema_sqlserver.sql).
+    /// </summary>
+    [NotMapped]
     public int? CooperationNumeric { get; set; }
 
-    [Column("outcome_numeric")]
+    /// <summary>
+    /// Derived in ML/data prep only; not a column on Azure SQL home_visitations.
+    /// </summary>
+    [NotMapped]
     public double? OutcomeNumeric { get; set; }
 
     // Navigation
