@@ -117,6 +117,65 @@ public class EarlyWarningController : ControllerBase
         }
     }
 
+    // GET /api/earlywarning/kr-compliance
+    // KR: % of residents with a High alert OR High/Critical EW risk that have ≥1 process recording
+    // AND ≥1 home visitation in the last 14 days
+    [HttpGet("kr-compliance")]
+    public async Task<IActionResult> GetKrCompliance()
+    {
+        try
+        {
+            var today    = DateOnly.FromDateTime(DateTime.UtcNow);
+            var pastDate = today.AddDays(-14);
+
+            // Group 1: residents with at least one High severity active alert
+            var alertResidentIds = await _db.RiskAlerts
+                .Where(a => a.Severity == "High")
+                .Select(a => a.ResidentId)
+                .Distinct()
+                .ToListAsync();
+
+            // Group 2: residents the EW model flags as High or Critical risk
+            var ewResidentIds = await _db.ResidentEarlyWarnings
+                .Where(r => r.RiskCategory == "High" || r.RiskCategory == "Critical")
+                .Select(r => r.ResidentId)
+                .Distinct()
+                .ToListAsync();
+
+            // Union of both groups
+            var targetIds = alertResidentIds.Union(ewResidentIds).Distinct().ToList();
+            var total = targetIds.Count;
+
+            // Session logged in the last 14 days (past)
+            var recordingIds = await _db.ProcessRecordings
+                .Where(p => targetIds.Contains(p.ResidentId) && p.SessionDate >= pastDate && p.SessionDate <= today)
+                .Select(p => p.ResidentId)
+                .Distinct()
+                .ToListAsync();
+
+            // Home visit in the last 14 days (past)
+            var visitationIds = await _db.HomeVisitations
+                .Where(h => targetIds.Contains(h.ResidentId) && h.VisitDate >= pastDate && h.VisitDate <= today)
+                .Select(h => h.ResidentId)
+                .Distinct()
+                .ToListAsync();
+
+            var fullyEngaged = recordingIds.Intersect(visitationIds).Count();
+
+            return Ok(new
+            {
+                totalAtRisk  = total,
+                fullyEngaged = fullyEngaged,
+                krPct        = total == 0 ? 100 : (int)Math.Round((double)fullyEngaged / total * 100),
+                krMet        = total == 0 || fullyEngaged == total,
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Failed to retrieve KR compliance.", detail = ex.Message });
+        }
+    }
+
     // GET /api/earlywarning/alerts?severity=High&alertType=CooperationDecline
     [HttpGet("alerts")]
     public async Task<IActionResult> GetAlerts(

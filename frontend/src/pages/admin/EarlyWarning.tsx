@@ -82,28 +82,38 @@ function SeverityBadge({ severity }: { severity: string }) {
   return <span className={`badge badge-${color}`}>{severity}</span>;
 }
 
+interface KrCompliance {
+  totalAtRisk:  number;
+  fullyEngaged: number;
+  krPct:        number;
+  krMet:        boolean;
+}
+
 // ---- Main Component ----
 export default function EarlyWarning() {
   useDocumentTitle('Early Warning');
-  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
-  const [residents, setResidents] = useState<ResidentEarlyWarning[]>([]);
-  const [alerts, setAlerts] = useState<RiskAlert[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [riskFilter, setRiskFilter] = useState('');
+  const [dashboard, setDashboard]       = useState<DashboardResponse | null>(null);
+  const [residents, setResidents]       = useState<ResidentEarlyWarning[]>([]);
+  const [alerts, setAlerts]             = useState<RiskAlert[]>([]);
+  const [krCompliance, setKrCompliance] = useState<KrCompliance | null>(null);
+  const [loading, setLoading]           = useState(true);
+  const [error, setError]               = useState<string | null>(null);
+  const [riskFilter, setRiskFilter]     = useState('');
   const [lowRiskExpanded, setLowRiskExpanded] = useState(false);
 
   useEffect(() => {
     async function load() {
       try {
-        const [dash, res, alrt] = await Promise.all([
+        const [dash, res, alrt, kr] = await Promise.all([
           apiFetch<DashboardResponse>('/api/earlywarning/dashboard'),
           apiFetch<PagedResponse<ResidentEarlyWarning>>('/api/earlywarning/residents?pageSize=100'),
           apiFetch<PagedResponse<RiskAlert>>('/api/earlywarning/alerts?pageSize=200'),
+          apiFetch<KrCompliance>('/api/earlywarning/kr-compliance'),
         ]);
         setDashboard(dash);
         setResidents(res.items);
         setAlerts(alrt.items.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
+        setKrCompliance(kr);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load early warning data.');
       } finally {
@@ -121,10 +131,14 @@ export default function EarlyWarning() {
   const alertCount = (sev: string) =>
     (dashboard?.alertCounts ?? []).find((a) => a.severity === sev)?.count ?? 0;
 
+  const ewHighCriticalCount = residents.filter(
+    r => r.riskCategory === 'Critical' || r.riskCategory === 'High'
+  ).length;
+
   if (loading) {
     return (
       <div className="admin-page">
-        <div className="admin-page-header"><h1>Early Warning System</h1></div>
+        <div className="admin-page-header"><h1>Risk Monitoring & Early Warning</h1></div>
         <p className="loading-text">Loading early warning data...</p>
       </div>
     );
@@ -133,7 +147,7 @@ export default function EarlyWarning() {
   if (error) {
     return (
       <div className="admin-page">
-        <div className="admin-page-header"><h1>Early Warning System</h1></div>
+        <div className="admin-page-header"><h1>Risk Monitoring & Early Warning</h1></div>
         <div className="error-banner">
           <AlertCircle size={16} />
           <span>{error}</span>
@@ -147,8 +161,8 @@ export default function EarlyWarning() {
       {/* Header */}
       <div className="admin-page-header">
         <div>
-          <h1>Early Warning System</h1>
-          <p>Rule-based alerts and risk assessments to help prioritise resident attention.</p>
+          <h1>Risk Monitoring & Early Warning</h1>
+          <p>Current resident alerts and predictive risk assessments to help prioritise resident attention.</p>
         </div>
         <div className="header-date">
           <Clock size={14} />
@@ -157,29 +171,61 @@ export default function EarlyWarning() {
       </div>
 
       {/* ── Alert Summary Cards ── */}
-      <div className="metrics-grid">
+      <div className="metrics-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+
+        {/* Card 1: High severity rule-based alerts */}
         <div className="metric-card metric-card-rose">
           <div className="metric-icon icon-rose"><AlertCircle size={20} /></div>
           <div className="metric-value">{alertCount('High')}</div>
-          <div className="metric-label">High Severity Alerts</div>
-          <div className="metric-sub">Requires immediate attention</div>
+          <div className="metric-label">Current High Severity Alerts</div>
+          <div className="metric-sub">Active rule-based flags requiring immediate attention</div>
         </div>
+
+        {/* Card 2: EW model Critical/High predictions */}
         <div className="metric-card metric-card-amber">
           <div className="metric-icon icon-amber"><AlertCircle size={20} /></div>
-          <div className="metric-value">{alertCount('Medium')}</div>
-          <div className="metric-label">Medium Severity Alerts</div>
-          <div className="metric-sub">Monitor closely</div>
+          <div className="metric-value">{ewHighCriticalCount}</div>
+          <div className="metric-label">Critical / High Future Risk Warnings</div>
+          <div className="metric-sub">Residents predicted at elevated risk by the ML model</div>
         </div>
+
+        {/* Card 3: KR — engagement rate */}
+        <div className="metric-card metric-card-green">
+          <div className="metric-icon icon-green"><AlertCircle size={20} /></div>
+          <div className="metric-value" style={{ color: krCompliance ? (krCompliance.krMet ? 'var(--green)' : 'var(--amber)') : 'var(--gray-400)' }}>
+            {krCompliance ? `${krCompliance.krPct}%` : '—'}
+          </div>
+          <div className="metric-sub" style={{ fontWeight: 600, color: 'var(--gray-600)' }}>
+            % of high risk residents with a session and a home visit in the last 14 days
+          </div>
+          {krCompliance && (
+            <div style={{ marginTop: '0.75rem', width: '100%' }}>
+              <div style={{ height: 6, background: 'var(--gray-200)', borderRadius: '999px', overflow: 'hidden', marginBottom: '0.4rem' }}>
+                <div style={{
+                  width: `${krCompliance.krPct}%`,
+                  height: '100%',
+                  background: krCompliance.krMet ? 'var(--green)' : 'var(--amber)',
+                  borderRadius: '999px',
+                  transition: 'width 0.4s ease',
+                }} />
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--gray-500)' }}>
+                {krCompliance.fullyEngaged} of {krCompliance.totalAtRisk} residents fully engaged
+              </div>
+            </div>
+          )}
+        </div>
+
       </div>
 
       {/* ── Active Alerts Table ── */}
       {alerts.length > 0 && (
         <div className="dashboard-card" style={{ marginBottom: '1.5rem' }}>
           <div className="card-header">
-            <h2>Active Alerts</h2>
+            <h2>Residents Currently at Risk</h2>
           </div>
           <p style={{ padding: '0 1.5rem 1rem', color: 'var(--gray-500)', fontSize: '0.875rem' }}>
-            Real-time flags for residents showing signs of risk or declining progress.
+            Active flags for residents showing signs of concern — generated from recent session and visit data.
           </p>
           <div className="table-wrapper">
             <table className="data-table">
@@ -209,7 +255,7 @@ export default function EarlyWarning() {
       {/* ── Resident Risk Assessment ── */}
       <div className="dashboard-card">
         <div className="card-header">
-          <h2>Resident Risk Assessment</h2>
+          <h2>Residents at Potential Future Risk</h2>
           <select
             className="filter-select"
             value={riskFilter}
@@ -223,7 +269,7 @@ export default function EarlyWarning() {
           </select>
         </div>
         <p style={{ padding: '0 1.5rem 1rem', color: 'var(--gray-500)', fontSize: '0.875rem' }}>
-          Likelihood of a resident's risk level worsening, based on recent family cooperation, health, counseling sessions, and incident trends.
+          Predicted likelihood of risk worsening, based on family cooperation, health trends, and counseling patterns. These residents are not yet flagged with active alerts but warrant proactive attention.
         </p>
         <div className="table-wrapper">
           <table className="data-table">
