@@ -327,8 +327,8 @@ export default function HomeVisitation() {
           familyCooperationLevel: newVisit.familyCooperationLevel,
           followUpNotes: newVisit.followUpNotes || null,
           purpose: newVisit.purpose || null,
-          followUpNeeded: newVisit.followUpNotes.trim() ? 1 : 0,
-          safetyConcernsNoted: 0,
+          followUpNeeded: Boolean(newVisit.followUpNotes.trim()),
+          safetyConcernsNoted: false,
         }),
       });
       if (res.ok) {

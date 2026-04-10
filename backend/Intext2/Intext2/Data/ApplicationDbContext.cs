@@ -69,6 +69,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey(u => u.SupporterId)
             .OnDelete(DeleteBehavior.SetNull);
 
-
+        // Align with Azure SQL: DATE + BIT columns (see database/schema_sqlserver.sql)
+        builder.Entity<HomeVisitation>(e =>
+        {
+            e.Property(h => h.VisitDate).HasColumnType("date");
+        });
     }
 }
