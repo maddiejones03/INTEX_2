@@ -92,13 +92,13 @@ interface KrCompliance {
 // ---- Main Component ----
 export default function EarlyWarning() {
   useDocumentTitle('Early Warning');
-  const [dashboard, setDashboard]       = useState<DashboardResponse | null>(null);
-  const [residents, setResidents]       = useState<ResidentEarlyWarning[]>([]);
-  const [alerts, setAlerts]             = useState<RiskAlert[]>([]);
+  const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
+  const [residents, setResidents] = useState<ResidentEarlyWarning[]>([]);
+  const [alerts, setAlerts] = useState<RiskAlert[]>([]);
   const [krCompliance, setKrCompliance] = useState<KrCompliance | null>(null);
-  const [loading, setLoading]           = useState(true);
-  const [error, setError]               = useState<string | null>(null);
-  const [riskFilter, setRiskFilter]     = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [riskFilter, setRiskFilter] = useState('');
   const [lowRiskExpanded, setLowRiskExpanded] = useState(false);
 
   useEffect(() => {

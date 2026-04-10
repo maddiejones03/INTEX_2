@@ -5,6 +5,7 @@ using Intext2.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Intext2.Controllers;
 
@@ -14,13 +15,16 @@ public class AuthController : ControllerBase
 {
     private readonly UserManager<ApplicationUser>   _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly ApplicationDbContext _db;
 
     public AuthController(
         UserManager<ApplicationUser>   userManager,
-        SignInManager<ApplicationUser> signInManager)
+        SignInManager<ApplicationUser> signInManager,
+        ApplicationDbContext           db)
     {
         _userManager   = userManager;
         _signInManager = signInManager;
+        _db            = db;
     }
 
     // ----------------------------------------------------------------
@@ -135,4 +139,65 @@ public class AuthController : ControllerBase
         await _signInManager.SignOutAsync();
         return Ok(new { message = "Logged out successfully." });
     }
+        // ----------------------------------------------------------------
+    // POST /api/auth/register
+    // Public donor self-registration.
+    // ----------------------------------------------------------------
+    [HttpPost("register")]
+    [AllowAnonymous]
+    public async Task<IActionResult> Register([FromBody] RegisterDto body)
+    {
+        var existing = await _userManager.FindByEmailAsync(body.Email.Trim());
+        if (existing is not null)
+            return Conflict(new { error = "An account with this email already exists." });
+
+        var user = new ApplicationUser
+        {
+            UserName  = body.Email.Trim(),
+            Email     = body.Email.Trim(),
+            FirstName = body.FirstName.Trim(),
+            LastName  = body.LastName.Trim(),
+            IsActive  = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+
+        var result = await _userManager.CreateAsync(user, body.Password);
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors.Select(e => e.Description);
+            return BadRequest(new { error = "Registration failed.", details = errors });
+        }
+
+        // Re-fetch user to ensure all Identity fields are populated
+        var createdUser = await _userManager.FindByEmailAsync(body.Email.Trim());
+        var roleResult = await _userManager.AddToRoleAsync(createdUser!, AuthRoles.Donor);
+        if (!roleResult.Succeeded)
+        {
+            var errors = roleResult.Errors.Select(e => e.Description);
+            return StatusCode(500, new { error = "Role assignment failed.", details = errors });
+        }
+        // link or create a supporter record
+        var supporter = await _db.Supporters.FirstOrDefaultAsync(s => s.Email == body.Email.Trim());
+        if (supporter is null)        {
+            supporter = new Supporter
+            {
+                SupporterType = "Individual",
+                DisplayName     = $"{body.FirstName.Trim()} {body.LastName.Trim()}",
+                FirstName       = body.FirstName.Trim(),
+                LastName        = body.LastName.Trim(),
+                Email           = body.Email.Trim(),
+                Status          = "Active",
+                RelationshipType = "Local",
+                AcquisitionChannel = "Self-Registered",
+            };
+            _db.Supporters.Add(supporter);
+            await _db.SaveChangesAsync();
+        }
+        createdUser!.SupporterId = supporter.SupporterId;
+        await _userManager.UpdateAsync(createdUser);    
+
+        return Ok(new { message = "Registration successful. You can now sign in." });
+    }
 }
+    

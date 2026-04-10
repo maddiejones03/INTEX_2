@@ -24,7 +24,7 @@ export default function Register() {
   });
 
   const passwordsMatch = password === confirm;
-  const passwordLongEnough = password.length >= 12;
+  const passwordLongEnough = password.length >= 14;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -32,7 +32,7 @@ export default function Register() {
     setError('');
 
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password || !confirm) return;
-    if (!passwordLongEnough) { setError('Password must be at least 12 characters.'); return; }
+    if (!passwordLongEnough) { setError('Password must be at least 14 characters.'); return; }
     if (!passwordsMatch) { setError('Passwords do not match.'); return; }
 
     setSubmitting(true);
@@ -189,7 +189,7 @@ export default function Register() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 onBlur={() => setTouched(t => ({ ...t, password: true }))}
-                placeholder="At least 12 characters"
+                placeholder="At least 14 characters"
                 autoComplete="new-password"
                 disabled={submitting}
               />
@@ -203,7 +203,7 @@ export default function Register() {
               </button>
             </div>
             {touched.password && !passwordLongEnough && (
-              <span className="field-error">Password must be at least 12 characters.</span>
+              <span className="field-error">Password must be at least 14 characters.</span>
             )}
           </div>
 
