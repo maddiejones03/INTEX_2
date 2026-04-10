@@ -7,6 +7,7 @@ namespace Intext2.Models;
 public class ProcessRecording
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     [Column("recording_id")]
     public int RecordingId { get; set; }
 
