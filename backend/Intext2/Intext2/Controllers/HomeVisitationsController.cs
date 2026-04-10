@@ -298,21 +298,29 @@ public class HomeVisitationsController : ControllerBase
             try
             {
                 var conn = _db.Database.GetDbConnection();
+
+                // visitation_id has no IDENTITY in Azure SQL — assign manually
+                await using var idCmd = conn.CreateCommand();
+                idCmd.CommandText = "SELECT ISNULL(MAX(visitation_id), 0) + 1 FROM home_visitations;";
+                var nextId = Convert.ToInt32(await idCmd.ExecuteScalarAsync(HttpContext.RequestAborted));
+
                 await using var cmd = conn.CreateCommand();
                 cmd.CommandText = """
                     INSERT INTO home_visitations (
+                        visitation_id,
                         resident_id, visit_date, social_worker, visit_type,
                         location_visited, family_members_present, purpose, observations,
                         family_cooperation_level, safety_concerns_noted, follow_up_needed,
                         follow_up_notes, visit_outcome
                     ) VALUES (
+                        @visitation_id,
                         @resident_id, @visit_date, @social_worker, @visit_type,
                         @location_visited, @family_members_present, @purpose, @observations,
                         @family_cooperation_level, @safety_concerns_noted, @follow_up_needed,
                         @follow_up_notes, @visit_outcome
                     );
-                    SELECT CAST(SCOPE_IDENTITY() AS int);
                     """;
+                cmd.Parameters.Add(new SqlParameter("@visitation_id", SqlDbType.Int) { Value = nextId });
 
                 static object DbStr(string? s) => string.IsNullOrWhiteSpace(s) ? DBNull.Value : s.Trim();
 
@@ -336,13 +344,12 @@ public class HomeVisitationsController : ControllerBase
                     Value = visitOutcome is null ? DBNull.Value : visitOutcome,
                 });
 
-                var scalar = await cmd.ExecuteScalarAsync(HttpContext.RequestAborted);
-                var newId  = Convert.ToInt32(scalar);
+                await cmd.ExecuteNonQueryAsync(HttpContext.RequestAborted);
 
                 return CreatedAtAction(
                     nameof(GetById),
-                    new { id = newId },
-                    new { visitationId = newId, residentId = dto.ResidentId, visitDate = dto.VisitDate, visitType });
+                    new { id = nextId },
+                    new { visitationId = nextId, residentId = dto.ResidentId, visitDate = dto.VisitDate, visitType });
             }
             finally
             {
