@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Plus, Eye, Trash2, X, Check, AlertCircle, FileText } from 'lucide-react';
+import { Search, Plus, Eye, Edit2, Trash2, X, Check, AlertCircle, FileText } from 'lucide-react';
 import ConfirmDeleteModal from '../../components/ui/ConfirmDeleteModal';
 import { getApiBaseUrl } from '../../services/authApi';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -85,6 +85,142 @@ function RecordingModal({ rec, onClose }: { rec: ProcessRecording; onClose: () =
   );
 }
 
+function EditRecordingModal({ rec, onClose, onSaved }: { rec: ProcessRecording; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    socialWorker: rec.socialWorker ?? '',
+    sessionDate: rec.sessionDate,
+    sessionType: rec.sessionType ?? 'Individual',
+    emotionalStateObserved: rec.emotionalStateObserved ?? '',
+    emotionalStateEnd: rec.emotionalStateEnd ?? '',
+    sessionDurationMinutes: rec.sessionDurationMinutes ? String(rec.sessionDurationMinutes) : '',
+    sessionNarrative: rec.sessionNarrative ?? '',
+    followUpActions: rec.followUpActions ?? '',
+    interventions: rec.interventionsList ? rec.interventionsList.split(',').map((s) => s.trim()).filter(Boolean) : [],
+    progressNoted: asBool(rec.progressNoted),
+    concernsFlagged: asBool(rec.concernsFlagged),
+    referralMade: asBool(rec.referralMade),
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const toggleIntervention = (i: string) => {
+    setForm((f) => ({ ...f, interventions: f.interventions.includes(i) ? f.interventions.filter((x) => x !== i) : [...f.interventions, i] }));
+  };
+
+  const handleSave = async () => {
+    if (!form.sessionNarrative.trim()) { setError('Narrative summary is required.'); return; }
+    setSaving(true);
+    setError('');
+    try {
+      const body = {
+        recordingId: rec.recordingId,
+        residentId: rec.residentId,
+        socialWorker: form.socialWorker,
+        sessionDate: form.sessionDate,
+        sessionType: form.sessionType,
+        emotionalStateObserved: form.emotionalStateObserved,
+        emotionalStateEnd: form.emotionalStateEnd,
+        sessionDurationMinutes: form.sessionDurationMinutes ? Number(form.sessionDurationMinutes) : null,
+        sessionNarrative: form.sessionNarrative,
+        followUpActions: form.followUpActions,
+        interventionsApplied: form.interventions.join(', '),
+        interventionsList: form.interventions.join(', '),
+        progressNoted: form.progressNoted ? 1 : 0,
+        concernsFlagged: form.concernsFlagged ? 1 : 0,
+        referralMade: form.referralMade ? 1 : 0,
+      };
+      const res = await fetch(`${API_BASE}/api/processrecordings/${rec.recordingId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+      if (res.ok) { onSaved(); }
+      else { setError('Failed to save changes.'); }
+    } catch { setError('Failed to save changes.'); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div>
+            <h2>Edit Process Recording</h2>
+            <p className="modal-subtitle">Resident #{rec.residentId}</p>
+          </div>
+          <button className="modal-close" onClick={onClose}><X size={18} /></button>
+        </div>
+        <div className="modal-body">
+          {error && <div className="alert alert-error"><AlertCircle size={14} /> {error}</div>}
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Social Worker</label>
+              <input className="form-input" value={form.socialWorker} onChange={(e) => setForm({ ...form, socialWorker: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Session Date</label>
+              <input className="form-input" type="date" value={form.sessionDate} onChange={(e) => setForm({ ...form, sessionDate: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Session Type</label>
+              <select className="form-select" value={form.sessionType} onChange={(e) => setForm({ ...form, sessionType: e.target.value })}>
+                <option>Individual</option><option>Group</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Duration (minutes)</label>
+              <input className="form-input" type="number" min="0" value={form.sessionDurationMinutes} onChange={(e) => setForm({ ...form, sessionDurationMinutes: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Emotional State (Start)</label>
+              <select className="form-select" value={form.emotionalStateObserved} onChange={(e) => setForm({ ...form, emotionalStateObserved: e.target.value })}>
+                <option value="">Select…</option>
+                {EMOTIONAL_STATES.map((s) => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Emotional State (End)</label>
+              <select className="form-select" value={form.emotionalStateEnd} onChange={(e) => setForm({ ...form, emotionalStateEnd: e.target.value })}>
+                <option value="">Select…</option>
+                {EMOTIONAL_STATES.map((s) => <option key={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Narrative Summary *</label>
+            <textarea className="form-textarea" rows={4} value={form.sessionNarrative} onChange={(e) => setForm({ ...form, sessionNarrative: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Interventions Applied</label>
+            <div className="checkbox-grid">
+              {INTERVENTIONS.map((i) => (
+                <label key={i} className="checkbox-label">
+                  <input type="checkbox" checked={form.interventions.includes(i)} onChange={() => toggleIntervention(i)} />
+                  {i}
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Follow-Up Actions</label>
+            <textarea className="form-textarea" rows={3} value={form.followUpActions} onChange={(e) => setForm({ ...form, followUpActions: e.target.value })} />
+          </div>
+          <div className="form-row">
+            <label className="checkbox-label"><input type="checkbox" checked={form.progressNoted} onChange={(e) => setForm({ ...form, progressNoted: e.target.checked })} /> Progress Noted</label>
+            <label className="checkbox-label"><input type="checkbox" checked={form.concernsFlagged} onChange={(e) => setForm({ ...form, concernsFlagged: e.target.checked })} /> Concerns Flagged</label>
+            <label className="checkbox-label"><input type="checkbox" checked={form.referralMade} onChange={(e) => setForm({ ...form, referralMade: e.target.checked })} /> Referral Made</label>
+          </div>
+          <div className="form-actions">
+            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleSave} disabled={saving}><Check size={14} /> {saving ? 'Saving...' : 'Save Changes'}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProcessRecordingPage() {
   useDocumentTitle('Process Recording');
   const [recordings, setRecordings] = useState<ProcessRecording[]>([]);
@@ -99,6 +235,7 @@ export default function ProcessRecordingPage() {
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ProcessRecording | null>(null);
+  const [editTarget, setEditTarget] = useState<ProcessRecording | null>(null);
   const [newRec, setNewRec] = useState({
     residentId: '',
     socialWorker: '',
@@ -366,6 +503,7 @@ export default function ProcessRecordingPage() {
                     <td>
                       <div className="action-btns">
                         <button type="button" className="btn-icon" aria-label="View recording details" onClick={() => setSelected(r)}><Eye size={15} aria-hidden /></button>
+                        <button type="button" className="btn-icon" title="Edit" aria-label="Edit recording" onClick={() => setEditTarget(r)}><Edit2 size={15} aria-hidden /></button>
                         <button type="button" className="btn-icon btn-icon-danger" title="Delete" aria-label="Delete recording" onClick={() => setDeleteTarget(r)}><Trash2 size={15} aria-hidden /></button>
                       </div>
                     </td>
@@ -383,6 +521,7 @@ export default function ProcessRecordingPage() {
       )}
 
       {selected && <RecordingModal rec={selected} onClose={() => setSelected(null)} />}
+      {editTarget && <EditRecordingModal rec={editTarget} onClose={() => setEditTarget(null)} onSaved={() => { setEditTarget(null); fetchRecordings(); }} />}
       <ConfirmDeleteModal
         isOpen={deleteTarget !== null}
         onConfirm={handleDelete}
