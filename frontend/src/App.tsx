@@ -94,6 +94,7 @@ export default function App() {
           </Route>
 
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
           <Route path="/case-manager" element={<CaseManagerLayout />}>
             <Route index element={<Navigate to="caseload" replace />} />
