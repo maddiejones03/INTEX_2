@@ -35,27 +35,15 @@ builder.Services.Configure<IdentityOptions>(options =>
 });
 
 // ----------------------------------------------------------------
-// Cookie settings (per professor's instructions in production)
-// Development: Safari and many incognito profiles do not treat http:// like Chrome's
-// "localhost is secure" exception, so SecurePolicy.Always blocks the auth cookie on http://.
+// Cookie settings (per professor's instructions)
 // ----------------------------------------------------------------
-var isDevelopment = builder.Environment.IsDevelopment();
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.Cookie.HttpOnly   = true;
-    options.ExpireTimeSpan    = TimeSpan.FromHours(1);
-    options.SlidingExpiration = true;
-
-    if (isDevelopment)
-    {
-        options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
-        options.Cookie.SameSite     = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
-    }
-    else
-    {
-        options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
-        options.Cookie.SameSite     = Microsoft.AspNetCore.Http.SameSiteMode.None;
-    }
+    options.Cookie.HttpOnly      = true;
+    options.Cookie.SecurePolicy  = Microsoft.AspNetCore.Http.CookieSecurePolicy.Always;
+    options.Cookie.SameSite      = Microsoft.AspNetCore.Http.SameSiteMode.None;
+    options.ExpireTimeSpan       = TimeSpan.FromHours(1);
+    options.SlidingExpiration    = true;
 });
 
 // ----------------------------------------------------------------
