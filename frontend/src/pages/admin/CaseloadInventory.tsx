@@ -640,7 +640,7 @@ export default function CaseloadInventory() {
                   <td><span className="category-chip">{r.caseCategory}</span></td>
                   <td className="table-secondary">{safehouses.find(s => s.safehouseId === r.safehouseId)?.name ?? `#${r.safehouseId}`}</td>
                   <td className="table-secondary">{r.assignedSocialWorker || '—'}</td>
-                  <td className="table-secondary">{r.dateOfAdmission ? new Date(r.dateOfAdmission).toLocaleDateString() : '—'}</td>
+                  <td className="table-secondary">{r.dateOfAdmission ? r.dateOfAdmission.split("T")[0] :  '—'}</td>
                   <td><span className={`status-badge ${r.currentRiskLevel === 'High' || r.currentRiskLevel === 'Critical' ? 'status-danger' : ''}`}>{r.currentRiskLevel || '—'}</span></td>
                   <td><span className={`status-badge status-${r.caseStatus?.toLowerCase().replace(' ', '-')}`}>{r.caseStatus}</span></td>
                   <td>
