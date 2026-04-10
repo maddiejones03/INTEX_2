@@ -6,15 +6,6 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const PLATFORM_COLORS: Record<string, string> = {
-  Instagram: 'rose',
-  TikTok:    'blue',
-  Facebook:  'blue',
-  LinkedIn:  'green',
-  WhatsApp:  'green',
-  YouTube:   'rose',
-  Twitter:   'blue',
-};
 
 
 function formatLabel(val: string | null): string {
@@ -38,10 +29,6 @@ function formatDayParts(dateStr: string): { weekday: string; day: string; month:
   };
 }
 
-function PlatformBadge({ platform }: { platform: string | null }) {
-  const color = PLATFORM_COLORS[platform ?? ''] ?? 'blue';
-  return <span className={`badge badge-${color}`}>{platform ?? '—'}</span>;
-}
 
 function PostTypeBadge({ postType }: { postType: string | null }) {
   return (
@@ -126,24 +113,24 @@ function DayDetail({ posts }: { posts: PostingSchedule[] }) {
         <tbody>
           {posts.map(post => (
             <tr key={post.scheduleId}>
-              <td><PlatformBadge platform={post.platform} /></td>
+              <td><PostTypeBadge postType={post.platform} /></td>
               <td>{formatHour(post.postHour)}</td>
               <td><PostTypeBadge postType={post.postType} /></td>
               <td>{formatLabel(post.mediaType)}</td>
               <td>{formatLabel(post.sentimentTone)}</td>
               <td>
                 {post.hasCallToAction
-                  ? <span className="badge badge-green">{formatLabel(post.callToActionType)}</span>
+                  ? <PostTypeBadge postType={post.callToActionType} />
                   : <span style={{ color: 'var(--gray-400)' }}>None</span>}
               </td>
               <td>
                 {post.isBoosted
-                  ? <span className="badge badge-amber"><Zap size={11} style={{ marginRight: 2 }} />Boosted</span>
+                  ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', padding: '0.15rem 0.5rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: 600, background: '#f5b8d0', color: '#9d3060' }}><Zap size={11} />Boosted</span>
                   : <span style={{ color: 'var(--gray-400)' }}>—</span>}
               </td>
               <td>
                 {post.featuresResidentStory
-                  ? <span className="badge badge-rose">Yes</span>
+                  ? <PostTypeBadge postType="Yes" />
                   : <span style={{ color: 'var(--gray-400)' }}>—</span>}
               </td>
             </tr>
