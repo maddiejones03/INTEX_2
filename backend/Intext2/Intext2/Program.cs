@@ -134,10 +134,10 @@ app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map Identity API endpoints (register, login, etc.)
-app.MapGroup("/api/auth")
-    .RequireCors("AllowFrontend")
-    .MapIdentityApi<ApplicationUser>();
+// // Map Identity API endpoints (register, login, etc.)
+// app.MapGroup("/api/auth")
+//     .RequireCors("AllowFrontend")
+//     .MapIdentityApi<ApplicationUser>();
 
 app.MapControllers();
 app.Run();
