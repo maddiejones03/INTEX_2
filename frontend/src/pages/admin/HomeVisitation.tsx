@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Plus,
-  Eye,
+  Edit2,
   Trash2,
   X,
   Check,
@@ -100,66 +100,127 @@ interface Resident {
   caseControlNo: string;
 }
 
-function VisitModal({ visit, onClose }: { visit: HomeVisit; onClose: () => void }) {
-  const visitD = parseVisitDate(visit.visitDate);
+const VISIT_OUTCOMES = ['', 'Favorable', 'Needs Improvement', 'Unfavorable', 'Inconclusive'];
+
+function EditVisitModal({ visit, onClose, onSaved }: { visit: HomeVisit; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = useState({
+    socialWorker: visit.socialWorker ?? '',
+    visitDate: visit.visitDate ? visit.visitDate.split('T')[0] : '',
+    visitType: visit.visitType ?? 'Routine Follow-Up',
+    locationVisited: visit.locationVisited ?? '',
+    familyMembersPresent: visit.familyMembersPresent ?? '',
+    purpose: visit.purpose ?? '',
+    observations: visit.observations ?? '',
+    familyCooperationLevel: visit.familyCooperationLevel ?? 'Cooperative',
+    safetyConcernsNoted: asBool(visit.safetyConcernsNoted),
+    followUpNeeded: asBool(visit.followUpNeeded),
+    followUpNotes: visit.followUpNotes ?? '',
+    visitOutcome: visit.visitOutcome ?? '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    if (!form.observations.trim()) { setError('Observations are required.'); return; }
+    setSaving(true);
+    setError('');
+    try {
+      const body = {
+        visitationId: visit.visitationId,
+        residentId: visit.residentId,
+        visitDate: form.visitDate,
+        socialWorker: form.socialWorker || null,
+        visitType: form.visitType,
+        locationVisited: form.locationVisited || null,
+        familyMembersPresent: form.familyMembersPresent || null,
+        purpose: form.purpose || null,
+        observations: form.observations,
+        familyCooperationLevel: form.familyCooperationLevel,
+        safetyConcernsNoted: form.safetyConcernsNoted ? 1 : 0,
+        followUpNeeded: form.followUpNeeded ? 1 : 0,
+        followUpNotes: form.followUpNotes || null,
+        visitOutcome: form.visitOutcome || null,
+      };
+      const res = await fetch(`${API_BASE}/api/homevisitations/${visit.visitationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+      if (res.ok) { onSaved(); }
+      else { setError('Failed to save changes.'); }
+    } catch { setError('Failed to save changes.'); }
+    finally { setSaving(false); }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
-      <div
-        className="modal modal-lg"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="home-visit-modal-title"
-      >
+      <div className="modal modal-lg" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         <div className="modal-header">
           <div>
-            <h2 id="home-visit-modal-title">Home Visit Record</h2>
-            <p className="modal-subtitle">
-              Resident #{visit.residentId} ·{' '}
-              {visitD
-                ? visitD.toLocaleDateString('en-PH', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })
-                : 'No date'}
-            </p>
+            <h2>Edit Home Visit</h2>
+            <p className="modal-subtitle">Resident #{visit.residentId}</p>
           </div>
           <button type="button" className="modal-close" onClick={onClose} aria-label="Close dialog"><X size={18} aria-hidden /></button>
         </div>
         <div className="modal-body">
-          <div className="detail-grid">
-            <div className="detail-item"><span>Visit Type</span><span className="category-chip">{visit.visitType ?? '—'}</span></div>
-            <div className="detail-item"><span>Social Worker</span><strong>{visit.socialWorker || '—'}</strong></div>
-            <div className="detail-item"><span>Location</span><strong>{visit.locationVisited || '—'}</strong></div>
-            <div className="detail-item"><span>Family Members Present</span><strong>{visit.familyMembersPresent || '—'}</strong></div>
-            <div className="detail-item">
-              <span>Family Cooperation</span>
-              <span className={coopBadgeClass(visit.familyCooperationLevel)}>{visit.familyCooperationLevel ?? '—'}</span>
+          {error && <div className="alert alert-error"><AlertCircle size={14} /> {error}</div>}
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Social Worker</label>
+              <input className="form-input" value={form.socialWorker} onChange={(e) => setForm({ ...form, socialWorker: e.target.value })} />
             </div>
-            <div className="detail-item"><span>Safety Concerns</span><strong>{asBool(visit.safetyConcernsNoted) ? 'Yes' : 'None'}</strong></div>
-            <div className="detail-item"><span>Follow-Up Needed</span><strong>{asBool(visit.followUpNeeded) ? 'Yes' : 'No'}</strong></div>
-            <div className="detail-item"><span>Visit Outcome</span><strong>{visit.visitOutcome || '—'}</strong></div>
+            <div className="form-group">
+              <label className="form-label">Visit Date</label>
+              <input className="form-input" type="date" value={form.visitDate} onChange={(e) => setForm({ ...form, visitDate: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Visit Type</label>
+              <select className="form-select" value={form.visitType} onChange={(e) => setForm({ ...form, visitType: e.target.value })}>
+                {VISIT_TYPES.map((t) => <option key={t}>{t}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Family Cooperation Level</label>
+              <select className="form-select" value={form.familyCooperationLevel} onChange={(e) => setForm({ ...form, familyCooperationLevel: e.target.value })}>
+                {COOPERATION_LEVELS.map((l) => <option key={l}>{l}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Location Visited</label>
+              <input className="form-input" value={form.locationVisited} onChange={(e) => setForm({ ...form, locationVisited: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Family Members Present</label>
+              <input className="form-input" value={form.familyMembersPresent} onChange={(e) => setForm({ ...form, familyMembersPresent: e.target.value })} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Visit Outcome</label>
+              <select className="form-select" value={form.visitOutcome} onChange={(e) => setForm({ ...form, visitOutcome: e.target.value })}>
+                {VISIT_OUTCOMES.map((o) => <option key={o} value={o}>{o || '—'}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Purpose</label>
+              <input className="form-input" value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} />
+            </div>
           </div>
-          {visit.purpose && (
-            <div className="narrative-section">
-              <h3>Purpose</h3>
-              <p>{visit.purpose}</p>
-            </div>
-          )}
-          {visit.observations && (
-            <div className="narrative-section">
-              <h3>Observations</h3>
-              <p>{visit.observations}</p>
-            </div>
-          )}
-          {visit.followUpNotes && (
-            <div className="narrative-section">
-              <h3>Follow-Up Notes</h3>
-              <p>{visit.followUpNotes}</p>
-            </div>
-          )}
+          <div className="form-group">
+            <label className="form-label">Observations *</label>
+            <textarea className="form-textarea" rows={3} value={form.observations} onChange={(e) => setForm({ ...form, observations: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Follow-Up Notes</label>
+            <textarea className="form-textarea" rows={2} value={form.followUpNotes} onChange={(e) => setForm({ ...form, followUpNotes: e.target.value })} />
+          </div>
+          <div className="form-row">
+            <label className="checkbox-label"><input type="checkbox" checked={form.safetyConcernsNoted} onChange={(e) => setForm({ ...form, safetyConcernsNoted: e.target.checked })} /> Safety Concerns Noted</label>
+            <label className="checkbox-label"><input type="checkbox" checked={form.followUpNeeded} onChange={(e) => setForm({ ...form, followUpNeeded: e.target.checked })} /> Follow-Up Needed</label>
+          </div>
+          <div className="form-actions">
+            <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleSave} disabled={saving}><Check size={14} /> {saving ? 'Saving...' : 'Save Changes'}</button>
+          </div>
         </div>
       </div>
     </div>
@@ -175,7 +236,7 @@ export default function HomeVisitation() {
   const [loadError, setLoadError] = useState('');
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('All');
-  const [selectedVisit, setSelectedVisit] = useState<HomeVisit | null>(null);
+  const [editTarget, setEditTarget] = useState<HomeVisit | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -549,8 +610,8 @@ export default function HomeVisitation() {
                       </td>
                       <td>
                         <div className="action-btns">
-                          <button type="button" className="btn-icon" title="View" aria-label={`View visit ${formatVisitDate(v.visitDate)}`} onClick={() => setSelectedVisit(v)}>
-                            <Eye size={15} aria-hidden />
+                          <button type="button" className="btn-icon" title="Edit" aria-label={`Edit visit ${formatVisitDate(v.visitDate)}`} onClick={() => setEditTarget(v)}>
+                            <Edit2 size={15} aria-hidden />
                           </button>
                           <button
                             type="button"
@@ -655,8 +716,8 @@ export default function HomeVisitation() {
                     </td>
                     <td>
                       <div className="action-btns">
-                        <button type="button" className="btn-icon" title="View" aria-label={`View visit ${formatVisitDate(v.visitDate)}`} onClick={() => setSelectedVisit(v)}>
-                          <Eye size={15} aria-hidden />
+                        <button type="button" className="btn-icon" title="Edit" aria-label={`Edit visit ${formatVisitDate(v.visitDate)}`} onClick={() => setEditTarget(v)}>
+                          <Edit2 size={15} aria-hidden />
                         </button>
                         <button
                           type="button"
@@ -711,7 +772,7 @@ export default function HomeVisitation() {
         </>
       )}
 
-      {selectedVisit && <VisitModal visit={selectedVisit} onClose={() => setSelectedVisit(null)} />}
+      {editTarget && <EditVisitModal visit={editTarget} onClose={() => setEditTarget(null)} onSaved={() => { setEditTarget(null); fetchVisits(); }} />}
       <ConfirmDeleteModal
         isOpen={deleteTarget !== null}
         onConfirm={handleDelete}
