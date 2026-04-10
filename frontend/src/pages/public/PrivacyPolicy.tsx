@@ -1,6 +1,8 @@
 import { Shield, Mail, Phone } from 'lucide-react';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 export default function PrivacyPolicy() {
+  useDocumentTitle('Privacy Policy', 'public');
   return (
     <div className="page-privacy">
       <div className="privacy-hero">

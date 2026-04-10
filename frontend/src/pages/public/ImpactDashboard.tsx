@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import { TrendingUp, Users, Heart, Home, BookOpen, Activity } from 'lucide-react';
 import { getApiBaseUrl } from '../../services/authApi';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import ImpactChart from '../../components/ui/ImpactChart';
 
 const COLORS = ['#4f8a68', '#6aa17f', '#5a9b76', '#e99bb8', '#f0b6cc', '#f7d3e1'];
@@ -102,6 +103,7 @@ function AnimatedNumber({ value, duration = 1500 }: { value: string; duration?: 
 }
 
 export default function ImpactDashboard() {
+  useDocumentTitle('Our Impact', 'public');
   const location = useLocation();
   const [impact, setImpact] = useState<PublicImpactResponse | null>(null);
   const [loading, setLoading] = useState(true);

@@ -5,6 +5,7 @@ import {
   TrendingUp, Home as HomeIcon, Star, ChevronRight, Quote, Leaf,
 } from 'lucide-react';
 import { getApiBaseUrl } from '../../services/authApi';
+import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 
 const programs: Array<{
   icon: typeof Shield;
@@ -141,6 +142,7 @@ function formatCurrency(value: number) {
 }
 
 export default function Home() {
+  useDocumentTitle('Home', 'public');
   const [impact, setImpact] = useState<PublicImpactResponse | null>(null);
   const heroSectionRef = useRef<HTMLElement>(null);
   const prevHeroInViewRef = useRef(false);
