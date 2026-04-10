@@ -258,6 +258,18 @@ export default function CaseloadInventory() {
     }
   }, [page, search, filterStatus, filterCategory, filterRiskLevel, filterSafehouse]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const safehouseParam = params.get('safehouse');
+    const riskParam = params.get('risk');
+    if (safehouseParam) {
+      setFilterSafehouse(safehouseParam);
+    }
+    if (riskParam) {
+      setFilterRiskLevel(riskParam);
+    }
+  }, [location.search]);
+
   useEffect(() => { fetchResidents(); }, [fetchResidents]);
 
   useEffect(() => {
