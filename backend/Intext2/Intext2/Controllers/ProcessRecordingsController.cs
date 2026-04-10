@@ -91,7 +91,8 @@ public class ProcessRecordingsController : ControllerBase
         if (!ModelState.IsValid) return BadRequest(ModelState);
         try
         {
-            model.RecordingId = 0;
+            var nextId = (await _db.ProcessRecordings.MaxAsync(p => (int?)p.RecordingId) ?? 0) + 1;
+            model.RecordingId = nextId;
             _db.ProcessRecordings.Add(model);
             await _db.SaveChangesAsync();
             return CreatedAtAction(nameof(GetById), new { id = model.RecordingId }, model);
@@ -100,7 +101,7 @@ public class ProcessRecordingsController : ControllerBase
         {
             if (IsSchemaTypeMismatch(ex))
                 return StatusCode(500, new { message = SchemaMismatchMessage });
-            return StatusCode(500, new { message = "Failed to create process recording.", detail = ex.Message, inner = ex.InnerException?.Message, inner2 = ex.InnerException?.InnerException?.Message });
+            return StatusCode(500, new { message = "Failed to create process recording.", detail = ex.Message });
         }
     }
 
