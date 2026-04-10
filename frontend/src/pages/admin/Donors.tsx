@@ -30,6 +30,15 @@ interface Supporter {
   firstDonationDate: string;
   acquisitionChannel: string;
   donations?: Donation[];
+  overallImpact?: {
+    monetaryTotal: number;
+    monetaryCount: number;
+    inKindCount: number;
+    timeCount: number;
+    skillsCount: number;
+    socialMediaCount: number;
+    totalDonationCount: number;
+  } | null;
 }
 
 interface Donation {
@@ -93,6 +102,99 @@ interface AllocationBreakdownResponse {
 interface SafehouseOption {
   safehouseId: number;
   name: string;
+}
+
+function OverallImpactBadge({ impact }: { impact: Supporter['overallImpact'] }) {
+  if (!impact || impact.totalDonationCount === 0) {
+    return (
+      <span style={{ color: '#94a3b8', fontSize: '12px' }}>
+        No contributions
+      </span>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      {impact.monetaryCount > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{
+            background: '#edf6f0',
+            color: '#2d6a4f',
+            border: '1px solid #95c8a8',
+            borderRadius: '6px',
+            padding: '2px 8px',
+            fontSize: '12px',
+            fontWeight: 700,
+            whiteSpace: 'nowrap',
+          }}>
+            ${impact.monetaryTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+          </span>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>
+            {impact.monetaryCount} gift{impact.monetaryCount !== 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+        {impact.inKindCount > 0 && (
+          <span style={{
+            background: '#fdf4e7',
+            color: '#92400e',
+            border: '1px solid #fcd34d',
+            borderRadius: '6px',
+            padding: '2px 6px',
+            fontSize: '11px',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+          }}>
+            🎁 {impact.inKindCount}
+          </span>
+        )}
+        {impact.timeCount > 0 && (
+          <span style={{
+            background: '#ede9fe',
+            color: '#5b21b6',
+            border: '1px solid #c4b5fd',
+            borderRadius: '6px',
+            padding: '2px 6px',
+            fontSize: '11px',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+          }}>
+            ⏱ {impact.timeCount}
+          </span>
+        )}
+        {impact.skillsCount > 0 && (
+          <span style={{
+            background: '#eff6ff',
+            color: '#1e40af',
+            border: '1px solid #93c5fd',
+            borderRadius: '6px',
+            padding: '2px 6px',
+            fontSize: '11px',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+          }}>
+            🛠 {impact.skillsCount}
+          </span>
+        )}
+        {impact.socialMediaCount > 0 && (
+          <span style={{
+            background: '#fdf2f8',
+            color: '#9d174d',
+            border: '1px solid #f9a8d4',
+            borderRadius: '6px',
+            padding: '2px 6px',
+            fontSize: '11px',
+            fontWeight: 600,
+            whiteSpace: 'nowrap',
+          }}>
+            📣 {impact.socialMediaCount}
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function SupporterModal({ supporterId, onClose }: { supporterId: number; onClose: () => void }) {
@@ -550,7 +652,8 @@ export default function Donors() {
         {loading ? (
           <div style={{ textAlign: 'center', padding: '2rem' }}>Loading supporters...</div>
         ) : (
-          <table className="data-table">
+          <div style={{ overflowX: 'auto' }}>
+          <table className="data-table" style={{ minWidth: '900px' }}>
             <thead>
               <tr>
                 <th scope="col" className="sortable" aria-sort={sortField === 'name' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
@@ -565,6 +668,9 @@ export default function Donors() {
                   <button type="button" className="th-sort-btn" onClick={() => handleSort('date')} aria-label="Sort by first donation date">
                     First Donation <SortIcon field="date" />
                   </button>
+                </th>
+                <th scope="col" style={{ minWidth: '160px' }}>
+                  Overall Impact
                 </th>
                 <th scope="col">Status</th>
                 <th scope="col">Actions</th>
@@ -583,9 +689,12 @@ export default function Donors() {
                     </div>
                   </td>
                   <td><span className="category-chip">{s.supporterType}</span></td>
-                  <td className="table-secondary">{s.email || '—'}</td>
+                  <td className="table-secondary" style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={s.email || ''}>{s.email || '—'}</td>
                   <td className="table-secondary">{s.region || s.country || '—'}</td>
                   <td className="table-secondary">{s.firstDonationDate ? new Date(s.firstDonationDate).toLocaleDateString() : '—'}</td>
+                  <td style={{ minWidth: '160px' }}>
+                    <OverallImpactBadge impact={s.overallImpact} />
+                  </td>
                   <td><span className={`status-badge status-${s.status?.toLowerCase()}`}>{s.status}</span></td>
                   <td>
                     <div className="action-btns">
@@ -596,10 +705,11 @@ export default function Donors() {
                 </tr>
               ))}
               {sorted.length === 0 && (
-                <tr><td colSpan={7} className="empty-row"><AlertCircle size={16} /> No donors found.</td></tr>
+                <tr><td colSpan={8} className="empty-row"><AlertCircle size={16} /> No donors found.</td></tr>
               )}
             </tbody>
           </table>
+          </div>
         )}
 
         {totalPages > 1 && (

@@ -56,6 +56,47 @@ public class SupportersController : ControllerBase
                 .OrderBy(s => s.DisplayName)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
+                .Select(s => new
+                {
+                    s.SupporterId,
+                    s.SupporterType,
+                    s.DisplayName,
+                    s.OrganizationName,
+                    s.FirstName,
+                    s.LastName,
+                    s.RelationshipType,
+                    s.Region,
+                    s.Country,
+                    s.Email,
+                    s.Phone,
+                    s.Status,
+                    s.CreatedAt,
+                    s.FirstDonationDate,
+                    s.AcquisitionChannel,
+                    OverallImpact = new
+                    {
+                        MonetaryTotal = s.Donations
+                            .Where(d => d.DonationType == "Monetary" && d.Amount != null)
+                            .Sum(d => (decimal?)d.Amount) ?? 0,
+
+                        MonetaryCount = s.Donations
+                            .Count(d => d.DonationType == "Monetary"),
+
+                        InKindCount = s.Donations
+                            .Count(d => d.DonationType == "InKind"),
+
+                        TimeCount = s.Donations
+                            .Count(d => d.DonationType == "Time"),
+
+                        SkillsCount = s.Donations
+                            .Count(d => d.DonationType == "Skills"),
+
+                        SocialMediaCount = s.Donations
+                            .Count(d => d.DonationType == "SocialMedia"),
+
+                        TotalDonationCount = s.Donations.Count(),
+                    }
+                })
                 .ToListAsync();
 
             return Ok(new { total, page, pageSize, items });
